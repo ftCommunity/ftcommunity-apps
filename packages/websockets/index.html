@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>WebSocket demo</title>
+    </head>
+    <body>
+      <h1>WebSocket demo</h1>
+
+      <h2>Current state:</h2>
+
+      <table border="0">
+	<tr><td>Connection:</td><td id="state"><font color="yellow">setup</font></td></tr>
+	<tr><td>Input 1:</td><td id="I1">Off</td></tr>
+	<tr><td>Output 1:</td><td id="O1">Off</td></tr>
+	<tr><td>Output 2:</td><td id="O2">Off</td></tr>
+      </table>
+
+      <h2>Control:</h2>
+
+      Toggle output:
+      <!-- buttons send the output number and true on press and false on release -->
+      <button type="button" onmousedown="mouse(1,true)" onmouseup="mouse(1,false)">O1</button> 
+      <button type="button" onmousedown="mouse(2,true)" onmouseup="mouse(2,false)">O2</button> 
+
+      <script language="javascript">
+        // open the additional websocket connection to the same host
+        var ws = new WebSocket("ws://"+document.location.hostname+":9001/");
+
+	function mouse(num, on) {
+	  cmd = "O"+num+":"+(on?"On":"Off");
+	  ws.send(cmd);
+	}
+
+	// When the connection is open, send some data to the server
+	ws.onopen = function () {
+	  document.getElementById("state").innerHTML = '<font color="green">open</font>';
+	};
+
+	ws.onclose = function () {
+	  document.getElementById("state").innerHTML = '<font color="red">closed</font>';
+	}
+
+	// Log errors
+	ws.onerror = function (error) {
+	  console.log('WebSocket Error ' + error);
+	};
+
+        ws.onmessage = function (event) {
+	  var res = event.data.split(":");
+	  document.getElementById(res[0]).innerHTML = res[1];
+        };
+
+      </script>
+    </body>
+</html>

@@ -1,0 +1,14 @@
+[app]
+name: WSDemo
+category: System
+author: Till Harbaum &lt;till@harbaum.org&gt;
+html: index.html
+icon: icon.png
+desc: Websockets demo for TXT remote control
+exec: server.py
+managed: yes
+set: 524328 ROBOTICS TXT Discovery Set
+model: Pedestrian Light
+uuid: 934ece63-892d-49d8-ad66-143844da0c11
+version: 0.1
+firmware: 0.9

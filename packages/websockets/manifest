@@ -1,6 +1,6 @@
 [app]
 name: WSDemo
-category: System
+category: Tests
 author: Till Harbaum &lt;till@harbaum.org&gt;
 html: index.html
 icon: icon.png

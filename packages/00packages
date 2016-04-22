@@ -3,7 +3,7 @@
 
 [websockets]
 name: WSDemo
-category: System
+category: Tests
 author: Till Harbaum &lt;till@harbaum.org&gt;
 html: index.html
 icon: icon.png
@@ -31,7 +31,7 @@ firmware: 0.9
 
 [app_tutorial_3]
 name: Tut_3
-category: Test
+category: Tests
 author: Till Harbaum &lt;till@harbaum.org&gt;
 icon: icon.png
 desc: Tutorial No 3

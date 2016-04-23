@@ -53,3 +53,17 @@ managed: yes
 uuid: 3682679c-9438-4516-a528-83de5e27e5e5
 version: 1.0
 firmware: 0.9
+
+[pinball]
+name: Pinball
+category: Models
+author: Till Harbaum &lt;till@harbaum.org&gt;
+icon: icon.png
+desc: Pinball
+exec: pinball.py
+set: 516186 ROBO TX ElectroPneumatic
+model: Pinball machine
+managed: yes
+uuid: 28dd2ddd-76b1-431a-9669-8abca2af313f
+version: 0.1
+firmware: 0.9

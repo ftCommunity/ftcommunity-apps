@@ -12,7 +12,7 @@ LED_ROWS = 5
 
 MAX_BALLS = 3
 
-TIMEOUT = 5
+TIMEOUT = 10
 
 RATIO = LED_ROWS/LED_COLS
 
@@ -232,6 +232,8 @@ class FtcGuiApplication(TxtApplication):
     def __init__(self, args):
         TxtApplication.__init__(self, args)
 
+        self.hiscore = self.read_hiscore()
+
         # connect to TXTs IO board
         txt_ip = os.environ.get('TXT_IP')
         if txt_ip == None: txt_ip = "localhost"
@@ -272,6 +274,8 @@ class FtcGuiApplication(TxtApplication):
 
         self.current_score = 0
         self.lcd = QLCDNumber(5)
+        # initially display hi score
+        self.lcd.display(str(self.hiscore))
         self.vbox.addWidget(self.lcd)
 
         # start button an progress bar 
@@ -300,6 +304,15 @@ class FtcGuiApplication(TxtApplication):
         self.w.show()
         self.exec_()
 
+    def read_hiscore(self):
+        hi_fname = os.path.join(os.path.dirname(os.path.realpath(__file__)), "hiscore.dat")
+        try:
+            with open(hi_fname) as f:
+                score = int(next(f))
+                return score
+        except:
+            return 0
+        
     def isRunning(self):
         # a game is running if the progress bar is
         # visible
@@ -312,6 +325,11 @@ class FtcGuiApplication(TxtApplication):
         self.stack.setCurrentWidget(self.pbar)  # raise progressbar widget
         self.pbar.setValue(0)                   # progress bar not running
         self.scoreReset()                       # reset score to zero
+
+        Pal = QPalette(self.lcd.palette())
+        Pal.setColor(QPalette.WindowText, Qt.white)
+        self.lcd.setSegmentStyle(QLCDNumber.Filled)
+        self.lcd.setPalette(Pal)
 
         # light lamps and start compressor
         self.txt.setPwm(2,512)
@@ -347,7 +365,21 @@ class FtcGuiApplication(TxtApplication):
         self.txt.setPwm(6,0)
 
         self.stack.setCurrentWidget(self.start)  # raise start button widget
-        
+
+        # self hi score
+        if self.current_score > self.hiscore:
+            self.hiscore = self.current_score
+            self.led.setText("NEW HIGH SCORE "+str(self.hiscore))
+            # save hiscore to card
+            hi_fname = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                    "hiscore.dat")
+            try:
+                with open(hi_fname, "w") as f:
+                    f.write(str(self.hiscore))
+                    f.close()
+            except:
+                pass
+            
     def scoreReset(self):
         self.current_score = 0
         self.lcd.display(self.current_score)
@@ -356,6 +388,13 @@ class FtcGuiApplication(TxtApplication):
         if self.isRunning():
             self.current_score += n
             self.lcd.display(self.current_score)
+            if self.current_score > self.hiscore:
+                Pal = QPalette(self.lcd.palette())
+                Pal.setColor(QPalette.WindowText, Qt.red)
+                self.lcd.setSegmentStyle(QLCDNumber.Filled)
+                self.lcd.setPalette(Pal)
+                self.txt.setSoundIndex(3)
+                self.txt.incrSoundCmdId()
 
     def on_timeout_tick(self):
         # timeout counter runs down ...
@@ -398,7 +437,6 @@ class FtcGuiApplication(TxtApplication):
                 self.txt.incrSoundCmdId()
 
                 if not self.ball_in_game:
-                    print("Ball entered game")
                     self.ball_in_game = True
         
                 self.led.setText("HIT AGAIN")
@@ -429,7 +467,7 @@ class FtcGuiApplication(TxtApplication):
 
         # the color sensor
         color_value = self.txt.getCurrentInput(7)
-        color = color_value < 1500
+        color = color_value < 1300
         if color != self.color:
             if color:
                 self.scoreAdd(100)

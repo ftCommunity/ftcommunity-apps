@@ -67,3 +67,48 @@ managed: yes
 uuid: 28dd2ddd-76b1-431a-9669-8abca2af313f
 version: 0.2
 firmware: 0.9
+
+[idas_ampel]
+name: Idas Ampel
+category: Tests
+icon: icon.png
+desc: Idas Schleichtierampel
+exec: idas_ampel.py
+managed: yes
+uuid: 368f15ca-9907-4096-942c-0eebd7b1695d
+version: 1.0
+firmware: 0.9
+
+[thermometer]
+name: Thermo
+category: Tools
+author: Till Harbaum &lt;till@harbaum.org&gt;
+icon: icon.png
+desc: A simple thermometer app using the TXTs temperature sensor on I1
+exec: thermometer.py
+managed: yes
+uuid: d23829ea-326a-4f85-8627-169b0dc56669
+version: 1.0
+firmware: 0.9
+
+[wedotest]
+name: WeDo
+category: Tests
+icon: icon.png
+desc: WeDo test application
+exec: wedotest.py
+managed: yes
+uuid: 91dceedd-9292-417d-a12f-8ac7eda34267
+version: 1.0
+firmware: 0.9
+
+[widgetgallery]
+name: Gallery
+category: Tests
+icon: icon.png
+desc: QT Widgets gallery
+exec: widgetgallery.py
+managed: yes
+uuid: 94cac4ea-14ef-49a2-a000-20ca5720fb78
+version: 1.0
+firmware: 0.9

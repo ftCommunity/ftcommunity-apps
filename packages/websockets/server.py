@@ -45,7 +45,6 @@ class ServerThread(QThread):
                 msg = yield from websocket.recv()
                 # forward message to main thread
                 self.message.emit(msg)
-#                yield from websocket.send("ECHO: "+msg)
                 
             except websockets.exceptions.ConnectionClosed:
                 self.clients.remove(websocket)
@@ -96,10 +95,32 @@ class FtcGuiApplication(TxtApplication):
         TxtApplication.__init__(self, args)
         self.w = TxtWindow("WSDemo")
 
+        txt_ip = os.environ.get('TXT_IP')
+        if txt_ip == None: txt_ip = "localhost"
+        try:
+            self.txt = ftrobopy.ftrobopy(txt_ip, 65000)
+        except:
+            self.txt = None
+
+        if self.txt:
+            # all outputs normal mode
+            M = [ self.txt.C_OUTPUT, self.txt.C_OUTPUT, 
+                  self.txt.C_OUTPUT, self.txt.C_OUTPUT ]
+            I = [ (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ) ]
+            self.txt.setConfig(M, I)
+            self.txt.updateConfig()
+            
         # poll button at 10 Hz
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.do_timer)
-        self.timer.start(1000);
+        self.timer.start(100);
 
         # create the websocket server thread and connect it via some signal
         thread = ServerThread()
@@ -192,16 +213,31 @@ class FtcGuiApplication(TxtApplication):
             if self.state[name] == 1:
                 self.name2widget(name).set("On")
                 self.message.emit(name+":On")
+
+                # set txt's physical outputs accordingly
+                if self.txt:
+                    if name == "O1": self.txt.setPwm(0,512)
+                    if name == "O2": self.txt.setPwm(1,512)
         else:
             self.state[name] -= 1
             if self.state[name] == 0:
                 self.name2widget(name).set("Off")
                 self.message.emit(name+":Off")
 
+                # set txt's physical outputs accordingly
+                if self.txt:
+                    if name == "O1": self.txt.setPwm(0,0)
+                    if name == "O2": self.txt.setPwm(1,0)
+
     # this timer regularily checks the input I1 for changes
     def do_timer(self):
+
         # poll input
-        i1 = True      # fake true input
+        if self.txt:
+            i1 = self.txt.getCurrentInput(0)
+        else:
+            i1 = True      # fake true input
+
         if self.state['I1'] != i1:
             self.state['I1'] = i1
             if self.state['I1']:

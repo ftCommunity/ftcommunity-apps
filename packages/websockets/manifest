@@ -10,5 +10,5 @@ managed: yes
 set: 524328 ROBOTICS TXT Discovery Set
 model: Pedestrian Light
 uuid: 934ece63-892d-49d8-ad66-143844da0c11
-version: 0.1
+version: 1.0
 firmware: 0.9

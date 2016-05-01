@@ -27,7 +27,7 @@ class FtcGuiApplication(TxtApplication):
             err = QLabel("Error")
             err.setAlignment(Qt.AlignCenter)
             self.vbox.addWidget(err)
-            lbl = QLabel("No WeDo hub found. Please make sure one is connected to the TXTs USB host port.")
+            lbl = QLabel("No WeDo hub found. Please make sure one is connected to the TXTs USB1 port.")
             lbl.setObjectName("smalllabel")
             lbl.setWordWrap(True)
             lbl.setAlignment(Qt.AlignCenter)

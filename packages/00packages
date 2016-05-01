@@ -116,7 +116,7 @@ desc: Robo LT test application
 exec: robolttest.py
 managed: yes
 uuid: 3682679c-9438-4516-a528-83de5e27e5e5
-version: 1.0
+version: 1.0.1
 firmware: 0.9
 
 [thermometer]
@@ -164,5 +164,5 @@ desc: WeDo test application
 exec: wedotest.py
 managed: yes
 uuid: 91dceedd-9292-417d-a12f-8ac7eda34267
-version: 1.0
+version: 1.0.1
 firmware: 0.9

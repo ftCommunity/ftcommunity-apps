@@ -133,6 +133,18 @@ uuid: d23829ea-326a-4f85-8627-169b0dc56669
 version: 1.0
 firmware: 0.9
 
+[cube]
+name: Cube
+category: Models
+author: Till Harbaum &lt;till@harbaum.org&gt;
+icon: icon.png
+desc: Rubiks Cube solver
+exec: cube.py
+managed: yes
+uuid: be743ea4-187b-43d8-8f7b-1779fa589bec
+version: 0.1
+firmware: 0.9
+
 [idas_ampel]
 name: Idas Ampel
 category: Tests

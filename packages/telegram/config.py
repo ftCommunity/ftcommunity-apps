@@ -61,7 +61,7 @@ print('<tr><td>')
 if language == 'EN':
 	print('To install Telegram visit <a href=https://telegram.org/>Telegram</a> and download the version for your device.<br>Then write these messages to @BotFather:<br>1. /newbot<br>2. *Chose a name for your bot*<br>3. *Chose a username ending with "bot"*<br>Now copy the Token into the Formular and press "Send"')
 elif language == 'DE':
-	print('Um Telegram zu installieren, besuche <a href=https://telegram.org/>Telegram</a> und lade die Vesion für dein Gerät herunter.<br>Anschließend schreibe folgende Nachrichten an @BotFather:<br>1. /newbot<br>2. *Wähle einen Nicknamen für deinen Bot*<br>3. *Wähle einen Benutzerneman mit der Endung "bot"*<br>Kopiere den Token in das Formular und drücke "Senden"')
+	print('Um Telegram zu installieren, besuche <a href=https://telegram.org/>Telegram</a> und lade die Vesion f&uuml;r dein Ger&auml;t herunter.<br>Anschlie&szlig;end schreibe folgende Nachrichten an @BotFather:<br>1. /newbot<br>2. *W&auml;hle einen Nicknamen f&uuml;r deinen Bot*<br>3. *W&auml;hle einen Benutzerneman mit der Endung "bot"*<br>Kopiere den Token in das Formular und dr&uuml;cke "Senden"')
 print('</td></tr>')
 print('<tr><td>')
 if language == 'EN':

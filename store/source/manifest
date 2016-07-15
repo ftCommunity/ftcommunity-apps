@@ -1,0 +1,11 @@
+[app]
+name: JR Store
+category: System
+author: Till Harbaum &lt;till@harbaum.org&gt;
+icon: icon.png
+desc: App store
+exec: store.py
+managed: yes
+uuid: 1186a9bf-fb06-4db9-ba67-a17df0d039fe
+version: 0.1
+firmware: 0.9

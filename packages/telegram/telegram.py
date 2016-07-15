@@ -44,37 +44,42 @@ def handle(msg):
     if killbot != '':
         bot.sendMessage(chat_id, 'Bot is shutting down!')
         return
-    #print('from function before ' + function)
     # FUNCTION WITH ///
     if command == '/sound':
         bot.sendMessage(chat_id, 'Now enter the sound ID')
         function = 'sound'
+        print('Calling sound feature')
     elif command == '/currentfx':
         if function != '':
             bot.sendMessage(chat_id, 'Current function is: ' + function)
         else:
             bot.sendMessage(chat_id, 'Currently no function is active!')
+        print('Calling Current fx feature')
     elif command == '/botstop':
         bot.sendMessage(chat_id, 'Stopping bot soon!')
         bot.sendMessage(chat_id, 'Good Bye!')
         killbot = chat_id
+        print('Stopping BOT')
     elif command == '/help':
         bot.sendMessage(chat_id, '-----This is the TXT-Bot help-----')
         bot.sendMessage(chat_id, '/help - See this help')
         bot.sendMessage(chat_id, '/sound - Use this to play Sounds on the TXT')
-        bot.sendMessage(
-            chat_id, '/screenshot - Use this to take a Screenshot of the TXTs Scrren')
+        bot.sendMessage(chat_id, '/screenshot - Use this to take a Screenshot of the TXTs Scrren')
         bot.sendMessage(chat_id, '/botstop - Use this to stop the bot')
         bot.sendMessage(chat_id, '-------End of TXT-Bot help--------')
+        print('Help print')
     elif command == '/screenshot':
+        print('Calling Screenshot feature')
         bot.sendMessage(chat_id, 'Taking Screenshot! Please Wait')
         bot.sendChatAction(chat_id, 'upload_photo')
-        os.system('rm /tmp/screenshot.png')
-        os.system('python3 /var/www/screenshot.py')
+        os.system('rm /tmp/screenshot.png >/dev/null 2>&1')
+        os.system('python3 /var/www/screenshot.py >/dev/null 2>&1')
         if os.path.exists('/tmp/screenshot.png'):
             bot.sendPhoto(chat_id, open('/tmp/screenshot.png', 'rb'))
+            print('Screenshot sent')
         else:
             bot.sendMessage(chat_id, 'Failure taking screenshot!')
+            print('Error taking screenshot')
         # FUNCTION WITHOUT ///
     # NONE
     # FUNCTION WITH FREE VALUE
@@ -100,4 +105,5 @@ while True:
     if killbot != '':
         time.sleep(5)
         bot.sendMessage(killbot, 'Killed sucessfully!')
+        print('KILLED')
         exit(1)

@@ -26,17 +26,17 @@ class FtcGuiApplication(TxtApplication):
 		w.centralWidget.setLayout(self.vbox)
 		w.show()
 		self.exec_()
-	def set_lang(self,lang):
+	def set_language(self,language):
 		Config = configparser.ConfigParser()
 		cfgfile = open(configpath,'w')
 		Config.add_section('general')
-		Config.set('general','language',lang)
+		Config.set('general','language',language)
 		Config.write(cfgfile)
 		cfgfile.close()
 	def on_button_clicked_DE(self):
-		self.set_lang('DE')
+		self.set_language('DE')
 	def on_button_clicked_EN(self):
-		self.set_lang('EN')
+		self.set_language('EN')
 
 if __name__ == "__main__":
 	FtcGuiApplication(sys.argv)

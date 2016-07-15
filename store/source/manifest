@@ -1,7 +1,7 @@
 [app]
 name: JR Store
 category: System
-author: Till Harbaum &lt;till@harbaum.org&gt;
+author: Till Harbaum &lt;till@harbaum.org&gt; and Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
 icon: icon.png
 desc: App store
 exec: store.py

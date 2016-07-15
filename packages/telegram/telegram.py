@@ -53,6 +53,14 @@ def handle(msg):
 		bot.sendMessage(chat_id, '/sound - Use this to play Sounds on the TXT')
 		bot.sendMessage(chat_id, '/botstop - Use this to stop the bot')
 		bot.sendMessage(chat_id, '-------End of TXT-Bot help--------')
+	elif command == '/screenshot':
+		bot.sendMessage(chat_id,'Taking Screenshot! Please Wait')
+		os.system('rm /tmp/screenshot.png')
+		os.system('python3 /var/www/screenshot.py')
+		if os.path.exists('/tmp/screenshot.png'):
+			bot.sendPhoto(chat_id, open('/tmp/screenshot.png', 'rb'))
+		else:
+			bot.sendMessage(chat_id, 'Failure taking screenshot!')
 		###FUNCTION WITHOUT ///
 	###NONE
 	###FUNCTION WITH FREE VALUE

@@ -39,15 +39,18 @@ class Bot(_BotBase):
         return await api.request((self._token, method, params, files), **kwargs)
 
     async def getMe(self):
+        """ See: https://core.telegram.org/bots/api#getme """
         return await self._api_request('getMe')
 
     async def sendMessage(self, chat_id, text,
                           parse_mode=None, disable_web_page_preview=None,
                           disable_notification=None, reply_to_message_id=None, reply_markup=None):
+        """ See: https://core.telegram.org/bots/api#sendmessage """
         p = _strip(locals())
         return await self._api_request('sendMessage', _rectify(p))
 
     async def forwardMessage(self, chat_id, from_chat_id, message_id, disable_notification=None):
+        """ See: https://core.telegram.org/bots/api#forwardmessage """
         p = _strip(locals())
         return await self._api_request('forwardMessage', _rectify(p))
 
@@ -69,111 +72,182 @@ class Bot(_BotBase):
     async def sendPhoto(self, chat_id, photo,
                         caption=None,
                         disable_notification=None, reply_to_message_id=None, reply_markup=None):
+        """
+        See: https://core.telegram.org/bots/api#sendphoto
+
+        :param photo:
+            a string indicating a ``file_id`` on server,
+            a file-like object as obtained by ``open()`` or ``urlopen()``,
+            or a (filename, file-like object) tuple.
+            If the file-like object is obtained by ``urlopen()``, you most likely
+            have to supply a filename because Telegram servers require to know
+            the file extension.
+            If the filename contains non-ASCII characters and you are using Python 2.7,
+            make sure the filename is a unicode string.
+        """
         p = _strip(locals(), more=['photo'])
         return await self._sendfile(photo, 'photo', p)
 
     async def sendAudio(self, chat_id, audio,
                         duration=None, performer=None, title=None,
                         disable_notification=None, reply_to_message_id=None, reply_markup=None):
+        """
+        See: https://core.telegram.org/bots/api#sendaudio
+
+        :param audio: Same as ``photo`` in :meth:`telepot.aio.Bot.sendPhoto`
+        """
         p = _strip(locals(), more=['audio'])
         return await self._sendfile(audio, 'audio', p)
 
     async def sendDocument(self, chat_id, document,
                            caption=None,
                            disable_notification=None, reply_to_message_id=None, reply_markup=None):
+        """
+        See: https://core.telegram.org/bots/api#senddocument
+
+        :param document: Same as ``photo`` in :meth:`telepot.aio.Bot.sendPhoto`
+        """
         p = _strip(locals(), more=['document'])
         return await self._sendfile(document, 'document', p)
 
     async def sendSticker(self, chat_id, sticker,
                           disable_notification=None, reply_to_message_id=None, reply_markup=None):
+        """
+        See: https://core.telegram.org/bots/api#sendsticker
+
+        :param sticker: Same as ``photo`` in :meth:`telepot.aio.Bot.sendPhoto`
+        """
         p = _strip(locals(), more=['sticker'])
         return await self._sendfile(sticker, 'sticker', p)
 
     async def sendVideo(self, chat_id, video,
                         duration=None, width=None, height=None, caption=None,
                         disable_notification=None, reply_to_message_id=None, reply_markup=None):
+        """
+        See: https://core.telegram.org/bots/api#sendvideo
+
+        :param video: Same as ``photo`` in :meth:`telepot.aio.Bot.sendPhoto`
+        """
         p = _strip(locals(), more=['video'])
         return await self._sendfile(video, 'video', p)
 
     async def sendVoice(self, chat_id, voice,
                         duration=None,
                         disable_notification=None, reply_to_message_id=None, reply_markup=None):
+        """
+        See: https://core.telegram.org/bots/api#sendvoice
+
+        :param voice: Same as ``photo`` in :meth:`telepot.aio.Bot.sendPhoto`
+        """
         p = _strip(locals(), more=['voice'])
         return await self._sendfile(voice, 'voice', p)
 
     async def sendLocation(self, chat_id, latitude, longitude,
                            disable_notification=None, reply_to_message_id=None, reply_markup=None):
+        """ See: https://core.telegram.org/bots/api#sendlocation """
         p = _strip(locals())
         return await self._api_request('sendLocation', _rectify(p))
 
     async def sendVenue(self, chat_id, latitude, longitude, title, address,
                         foursquare_id=None,
                         disable_notification=None, reply_to_message_id=None, reply_markup=None):
+        """ See: https://core.telegram.org/bots/api#sendvenue """
         p = _strip(locals())
         return await self._api_request('sendVenue', _rectify(p))
 
     async def sendContact(self, chat_id, phone_number, first_name,
                           last_name=None,
                           disable_notification=None, reply_to_message_id=None, reply_markup=None):
+        """ See: https://core.telegram.org/bots/api#sendcontact """
         p = _strip(locals())
         return await self._api_request('sendContact', _rectify(p))
 
     async def sendChatAction(self, chat_id, action):
+        """ See: https://core.telegram.org/bots/api#sendchataction """
         p = _strip(locals())
         return await self._api_request('sendChatAction', _rectify(p))
 
     async def getUserProfilePhotos(self, user_id, offset=None, limit=None):
+        """ See: https://core.telegram.org/bots/api#getuserprofilephotos """
         p = _strip(locals())
         return await self._api_request('getUserProfilePhotos', _rectify(p))
 
     async def getFile(self, file_id):
+        """ See: https://core.telegram.org/bots/api#getfile """
         p = _strip(locals())
         return await self._api_request('getFile', _rectify(p))
 
     async def kickChatMember(self, chat_id, user_id):
+        """ See: https://core.telegram.org/bots/api#kickchatmember """
         p = _strip(locals())
         return await self._api_request('kickChatMember', _rectify(p))
 
     async def leaveChat(self, chat_id):
+        """ See: https://core.telegram.org/bots/api#leavechat """
         p = _strip(locals())
         return await self._api_request('leaveChat', _rectify(p))
 
     async def unbanChatMember(self, chat_id, user_id):
+        """ See: https://core.telegram.org/bots/api#unbanchatmember """
         p = _strip(locals())
         return await self._api_request('unbanChatMember', _rectify(p))
 
     async def getChat(self, chat_id):
+        """ See: https://core.telegram.org/bots/api#getchat """
         p = _strip(locals())
         return await self._api_request('getChat', _rectify(p))
 
     async def getChatAdministrators(self, chat_id):
+        """ See: https://core.telegram.org/bots/api#getchatadministrators """
         p = _strip(locals())
         return await self._api_request('getChatAdministrators', _rectify(p))
 
     async def getChatMembersCount(self, chat_id):
+        """ See: https://core.telegram.org/bots/api#getchatmemberscount """
         p = _strip(locals())
         return await self._api_request('getChatMembersCount', _rectify(p))
 
     async def getChatMember(self, chat_id, user_id):
+        """ See: https://core.telegram.org/bots/api#getchatmember """
         p = _strip(locals())
         return await self._api_request('getChatMember', _rectify(p))
 
     async def answerCallbackQuery(self, callback_query_id, text=None, show_alert=None):
+        """ See: https://core.telegram.org/bots/api#answercallbackquery """
         p = _strip(locals())
         return await self._api_request('answerCallbackQuery', _rectify(p))
 
     async def editMessageText(self, msg_identifier, text,
                               parse_mode=None, disable_web_page_preview=None, reply_markup=None):
+        """
+        See: https://core.telegram.org/bots/api#editmessagetext
+
+        :param msg_identifier:
+            a 2-tuple (``chat_id``, ``message_id``),
+            a 1-tuple (``inline_message_id``),
+            or simply ``inline_message_id``.
+            You may extract this value easily with :meth:`telepot.message_identifier`
+        """
         p = _strip(locals(), more=['msg_identifier'])
         p.update(_dismantle_message_identifier(msg_identifier))
         return await self._api_request('editMessageText', _rectify(p))
 
     async def editMessageCaption(self, msg_identifier, caption=None, reply_markup=None):
+        """
+        See: https://core.telegram.org/bots/api#editmessagecaption
+
+        :param msg_identifier: Same as ``msg_identifier`` in :meth:`telepot.aio.Bot.editMessageText`
+        """
         p = _strip(locals(), more=['msg_identifier'])
         p.update(_dismantle_message_identifier(msg_identifier))
         return await self._api_request('editMessageCaption', _rectify(p))
 
     async def editMessageReplyMarkup(self, msg_identifier, reply_markup=None):
+        """
+        See: https://core.telegram.org/bots/api#editmessagereplymarkup
+
+        :param msg_identifier: Same as ``msg_identifier`` in :meth:`telepot.aio.Bot.editMessageText`
+        """
         p = _strip(locals(), more=['msg_identifier'])
         p.update(_dismantle_message_identifier(msg_identifier))
         return await self._api_request('editMessageReplyMarkup', _rectify(p))
@@ -181,14 +255,17 @@ class Bot(_BotBase):
     async def answerInlineQuery(self, inline_query_id, results,
                                 cache_time=None, is_personal=None, next_offset=None,
                                 switch_pm_text=None, switch_pm_parameter=None):
+        """ See: https://core.telegram.org/bots/api#answerinlinequery """
         p = _strip(locals())
         return await self._api_request('answerInlineQuery', _rectify(p))
 
     async def getUpdates(self, offset=None, limit=None, timeout=None):
+        """ See: https://core.telegram.org/bots/api#getupdates """
         p = _strip(locals())
         return await self._api_request('getUpdates', _rectify(p))
 
     async def setWebhook(self, url=None, certificate=None):
+        """ See: https://core.telegram.org/bots/api#setwebhook """
         p = _strip(locals(), more=['certificate'])
 
         if certificate:
@@ -198,6 +275,11 @@ class Bot(_BotBase):
             return await self._api_request('setWebhook', _rectify(p))
 
     async def download_file(self, file_id, dest):
+        """
+        Download a file to local disk.
+
+        :param dest: a path or a ``file`` object
+        """
         f = await self.getFile(file_id)
 
         try:
@@ -214,7 +296,57 @@ class Bot(_BotBase):
             if not isinstance(dest, io.IOBase) and 'd' in locals():
                 d.close()
 
-    async def message_loop(self, handler=None, source=None, ordered=True, maxhold=3):
+    async def message_loop(self, handler=None, source=None, ordered=True, maxhold=3, timeout=20):
+        """
+        Return a task to constantly ``getUpdates`` or pull updates from a queue.
+        Apply ``handler`` to every message received.
+
+        :param handler:
+            a function that takes one argument (the message), or a routing table.
+            If ``None``, the bot's ``handle`` method is used.
+
+        A *routing table* is a dictionary of ``{flavor: function}``, mapping messages to appropriate
+        handler functions according to their flavors. It allows you to define functions specifically
+        to handle one flavor of messages. It usually looks like this: ``{'chat': fn1,
+        'callback_query': fn2, 'inline_query': fn3, ...}``. Each handler function should take
+        one argument (the message).
+
+        :param source:
+            Source of updates.
+            If ``None``, ``getUpdates`` is used to obtain new messages from Telegram servers.
+            If it is a ``asyncio.Queue``, new messages are pulled from the queue.
+            A web application implementing a webhook can dump updates into the queue,
+            while the bot pulls from it. This is how telepot can be integrated with webhooks.
+
+        Acceptable contents in queue:
+
+        - ``str`` or ``bytes`` (decoded using UTF-8)
+          representing a JSON-serialized `Update <https://core.telegram.org/bots/api#update>`_ object.
+        - a ``dict`` representing an Update object.
+
+        When ``source`` is a queue, these parameters are meaningful:
+
+        :type ordered: bool
+        :param ordered:
+            If ``True``, ensure in-order delivery of messages to ``handler``
+            (i.e. updates with a smaller ``update_id`` always come before those with
+            a larger ``update_id``).
+            If ``False``, no re-ordering is done. ``handler`` is applied to messages
+            as soon as they are pulled from queue.
+
+        :type maxhold: float
+        :param maxhold:
+            Applied only when ``ordered`` is ``True``. The maximum number of seconds
+            an update is held waiting for a not-yet-arrived smaller ``update_id``.
+            When this number of seconds is up, the update is delivered to ``handler``
+            even if some smaller ``update_id``\s have not yet arrived. If those smaller
+            ``update_id``\s arrive at some later time, they are discarded.
+
+        :type timeout: int
+        :param timeout:
+            ``timeout`` parameter supplied to :meth:`telepot.aio.Bot.getUpdates`,
+            controlling how long to poll in seconds.
+        """
         if handler is None:
             handler = self.handle
         elif isinstance(handler, dict):
@@ -247,7 +379,7 @@ class Bot(_BotBase):
             offset = None  # running offset
             while 1:
                 try:
-                    result = await self.getUpdates(offset=offset, timeout=20)
+                    result = await self.getUpdates(offset=offset, timeout=timeout)
 
                     if len(result) > 0:
                         # No sort. Trust server to give messages in correct order.
@@ -391,6 +523,9 @@ class SpeakerBot(Bot):
 
 class DelegatorBot(SpeakerBot):
     def __init__(self, token, delegation_patterns, loop=None):
+        """
+        :param delegation_patterns: a list of (seeder, delegator) tuples.
+        """
         super(DelegatorBot, self).__init__(token, loop)
         self._delegate_records = [p+({},) for p in delegation_patterns]
 

@@ -56,6 +56,7 @@ def handle(msg):
 		bot.sendMessage(chat_id, '-------End of TXT-Bot help--------')
 	elif command == '/screenshot':
 		bot.sendMessage(chat_id,'Taking Screenshot! Please Wait')
+		bot.sendChatAction(chat_id, 'upload_photo')
 		os.system('rm /tmp/screenshot.png')
 		os.system('python3 /var/www/screenshot.py')
 		if os.path.exists('/tmp/screenshot.png'):

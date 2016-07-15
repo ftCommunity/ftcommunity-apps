@@ -156,7 +156,7 @@ desc: Simple App to control the TXT via the instant Messenger Telegram
 exec: telegram.py
 managed: text
 uuid: 6026c098-cb9b-45da-9c8c-9d05eb44a4fd
-version: 0.1.3
+version: 0.1.3.dev.1
 firmware: 0.9
 
 [thermometer]

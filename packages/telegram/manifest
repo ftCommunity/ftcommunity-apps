@@ -1,7 +1,7 @@
 [app]
 name: Telegram
 category: Tests
-author: Raphael Jacob
+author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
 html: config.py
 icon: icon.png
 desc: Simple App to control the TXT via the instant Messenger Telegram

@@ -77,7 +77,7 @@ firmware: 0.9
 [ftrobosnap]
 name: Snap
 category: Tests
-author: Raphael Jacob
+author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
 html: web.py
 icon: icon.png
 desc: ft-robo-snap demo for TXT snap
@@ -134,10 +134,22 @@ uuid: 3682679c-9438-4516-a528-83de5e27e5e5
 version: 1.0.1
 firmware: 0.9
 
+[settings]
+name: Settings
+category: System
+author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
+icon: icon.png
+desc: Simple Settings app
+exec: settings.py
+managed: yes
+uuid: ec9e12f2-e958-449c-93c8-ff90a73fd27d
+version: 1.0
+firmware: 0.9
+
 [telegram]
 name: Telegram
 category: Tests
-author: Raphael Jacob
+author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
 html: config.py
 icon: icon.png
 desc: Simple App to control the TXT via the instant Messenger Telegram
@@ -162,7 +174,7 @@ firmware: 0.9
 [update]
 name: Update
 category: System
-author: Raphael Jacob
+author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
 icon: icon.png
 desc: Simple App to update the TXT OS
 exec: update.py

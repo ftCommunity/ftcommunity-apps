@@ -1,7 +1,7 @@
 [app]
 name: Update
 category: System
-author: Raphael Jacob
+author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
 icon: icon.png
 desc: Simple App to update the TXT OS
 exec: update.py

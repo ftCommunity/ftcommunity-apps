@@ -8,15 +8,36 @@ configpath = '/media/sdcard/data/config.conf'
 class FtcGuiApplication(TxtApplication):
 	def __init__(self, args):
 		TxtApplication.__init__(self, args)
-
+		global_config = '/media/sdcard/data/config.conf'
+		language = ''
+		default_language = ''
+		language_list = ['EN','DE']
+		try:
+			config = configparser.SafeConfigParser()
+			config.read(global_config)
+			language = config.get('general','language')
+		except: pass
 		w = TxtWindow("Settings")
 		self.vbox = QVBoxLayout()
 		self.vbox.addStretch()
-		self.lbl = QLabel("Select your language:")
-		self.lbl.setObjectName("smalllabel")
-		self.lbl.setWordWrap(True)
-		self.lbl.setAlignment(Qt.AlignCenter)
-		self.vbox.addWidget(self.lbl)
+		if language == '' or language not in language_list:
+			language = default_language
+		if language == 'EN':
+			str_lbl1 = 'Select your language:'
+			str_lbl2 = 'Current language: EN'
+		elif language == 'DE':
+			str_lbl1 = 'Waehle deine Sprache:'
+			str_lbl2 = 'Aktuelle Sprache: DE'
+		self.lbl1 = QLabel(str_lbl1)
+		self.lbl1.setObjectName("smalllabel")
+		self.lbl1.setWordWrap(True)
+		self.lbl1.setAlignment(Qt.AlignCenter)
+		self.vbox.addWidget(self.lbl1)
+		self.lbl2 = QLabel(str_lbl2)
+		self.lbl2.setObjectName("smalllabel")
+		self.lbl2.setWordWrap(True)
+		self.lbl2.setAlignment(Qt.AlignCenter)
+		self.vbox.addWidget(self.lbl2)
 		btn_lang_EN = QPushButton('Language: EN')
 		btn_lang_EN.clicked.connect(self.on_button_clicked_EN)
 		self.vbox.addWidget(btn_lang_EN)

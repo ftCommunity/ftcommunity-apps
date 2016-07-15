@@ -7,5 +7,5 @@ desc: Simple Settings app
 exec: settings.py
 managed: yes
 uuid: ec9e12f2-e958-449c-93c8-ff90a73fd27d
-version: 1.0.dev.2
+version: 1.0.dev.3
 firmware: 0.9

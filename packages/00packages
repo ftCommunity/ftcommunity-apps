@@ -84,7 +84,7 @@ desc: ft-robo-snap demo for TXT snap
 exec: ftrobosnap.py
 managed: text
 uuid: 599047da-5f01-4a15-a94f-0fc14cc4a88b
-version: 1.0
+version: 1.0.dev.1
 firmware: 0.9
 
 [hello]
@@ -143,7 +143,7 @@ desc: Simple Settings app
 exec: settings.py
 managed: yes
 uuid: ec9e12f2-e958-449c-93c8-ff90a73fd27d
-version: 1.0.dev.2
+version: 1.0.dev.3
 firmware: 0.9
 
 [telegram]
@@ -156,7 +156,7 @@ desc: Simple App to control the TXT via the instant Messenger Telegram
 exec: telegram.py
 managed: text
 uuid: 6026c098-cb9b-45da-9c8c-9d05eb44a4fd
-version: 0.1.3.dev.1
+version: 0.1.3.dev.2
 firmware: 0.9
 
 [thermometer]
@@ -180,7 +180,7 @@ desc: Simple App to update the TXT OS
 exec: update.py
 managed: text
 uuid: 5fd5a2f4-2a0f-45e2-ae90-884e7664b06b
-version: 1.0
+version: 1.0.dev.1
 firmware: 0.9
 
 [websockets]

@@ -51,6 +51,7 @@ def handle(msg):
 		bot.sendMessage(chat_id, '-----This is the TXT-Bot help-----')
 		bot.sendMessage(chat_id, '/help - See this help')
 		bot.sendMessage(chat_id, '/sound - Use this to play Sounds on the TXT')
+		bot.sendMessage(chat_id, '/screenshot - Use this to take a Screenshot of the TXTs Scrren')
 		bot.sendMessage(chat_id, '/botstop - Use this to stop the bot')
 		bot.sendMessage(chat_id, '-------End of TXT-Bot help--------')
 	elif command == '/screenshot':

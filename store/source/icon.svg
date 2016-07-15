@@ -17,7 +17,7 @@
    version="1.1"
    inkscape:version="0.91 r13725"
    sodipodi:docname="icon.svg"
-   inkscape:export-filename="D:\cloud\Dropbox\Fischertechnik\ftc_fw\store\icon.png"
+   inkscape:export-filename="D:\ft-c\ftcommunity-apps\store\source\icon.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <defs
@@ -154,9 +154,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="11.2"
-     inkscape:cx="19.197526"
-     inkscape:cy="34.560042"
+     inkscape:zoom="15.839192"
+     inkscape:cx="15.744279"
+     inkscape:cy="27.876755"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -169,7 +169,8 @@
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
-     fit-margin-bottom="0">
+     fit-margin-bottom="0"
+     showguides="false">
     <inkscape:grid
        type="xygrid"
        id="grid3336"
@@ -264,15 +265,24 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:18.41784286px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
-       x="20.793877"
-       y="1107.1299"
-       id="text3377"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.81416988px;line-height:125%;font-family:Roboto;-inkscape-font-specification:'Roboto, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#c8beb7;fill-opacity:1;stroke:none;stroke-width:0.175;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;"
+       x="36.150394"
+       y="630.01172"
+       id="text3462"
        sodipodi:linespacing="125%"
-       transform="scale(1.0762748,0.92913072)"><tspan
+       transform="scale(0.61189871,1.6342574)"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90"><tspan
          sodipodi:role="line"
-         id="tspan3379"
-         x="20.793877"
-         y="1107.1299">JR</tspan></text>
+         id="tspan3464"
+         x="36.150394"
+         y="630.01172"
+         style="stroke:#ffffff;stroke-opacity:1;stroke-width:0.175;stroke-miterlimit:4;stroke-dasharray:none;stroke-linecap:round;"><tspan
+           style="fill:#ff0000;fill-opacity:1;stroke:#ffffff;stroke-opacity:1;stroke-linejoin:round;stroke-width:0.175;stroke-miterlimit:4;stroke-dasharray:none;stroke-linecap:round;"
+           id="tspan4266">ski</tspan><tspan
+           style="fill:#046ab4;fill-opacity:1;stroke-width:0.175;stroke-miterlimit:4;stroke-dasharray:none;stroke:#ffffff;stroke-opacity:1;stroke-linecap:round;"
+           id="tspan4296">77</tspan><tspan
+           style="fill:#989898;fill-opacity:1;stroke-width:0.175;stroke-miterlimit:4;stroke-dasharray:none;stroke:#ffffff;stroke-opacity:1;stroke-linecap:round;"
+           id="tspan4298">77</tspan></tspan></text>
   </g>
 </svg>

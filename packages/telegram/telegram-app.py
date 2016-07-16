@@ -56,6 +56,7 @@ class FtcGuiApplication(TxtApplication):
 
     def on_button_clicked_start(self):
         print('start')
+
     def on_button_clicked_stop(self):
         print('stop')
 if __name__ == "__main__":

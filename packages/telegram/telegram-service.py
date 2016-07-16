@@ -107,7 +107,7 @@ def handle(msg):
         if is_number(command) == True:
             bot.sendMessage(chat_id, 'Playing sound ' + command)
             txt.play_sound(int(command), 60)
-            print('Playing Sond Number ' + command)
+            print('Playing Sound Number ' + command)
         else:
             bot.sendMessage(
                 chat_id, 'This is not a value! Leaving Sound Menu!')

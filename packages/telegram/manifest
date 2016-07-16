@@ -6,7 +6,7 @@ html: config.py
 icon: icon.png
 desc: Simple App to control the TXT via the instant Messenger Telegram
 exec: telegram-app.py
-managed: text
+managed: yes
 uuid: 6026c098-cb9b-45da-9c8c-9d05eb44a4fd
-version: 0.1.3.dev.6
+version: 0.1.3.dev.7
 firmware: 0.9

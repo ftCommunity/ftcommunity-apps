@@ -23,17 +23,19 @@ class FtcGuiApplication(TxtApplication):
             language = config.get('general', 'language')
         except:
             pass
-        w = TxtWindow("Settings")
-        self.vbox = QVBoxLayout()
-        self.vbox.addStretch()
         if language == '' or language not in language_list:
             language = default_language
         if language == 'EN':
             str_lbl1 = 'Select your language:'
             str_lbl2 = 'Current language: EN'
+            str_w = 'Settings'
         elif language == 'DE':
             str_lbl1 = 'Waehle deine Sprache:'
             str_lbl2 = 'Aktuelle Sprache: DE'
+            str_w = 'Einstellungen'
+        w = TxtWindow(str_w)
+        self.vbox = QVBoxLayout()
+        self.vbox.addStretch()
         self.lbl1 = QLabel(str_lbl1)
         self.lbl1.setObjectName("smalllabel")
         self.lbl1.setWordWrap(True)

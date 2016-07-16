@@ -6,17 +6,37 @@ import time
 import ftrobopy
 import os
 import configparser
+global_config = '/media/sdcard/data/config.conf'
+language = ''
+default_language = ''
+language_list = ['EN', 'DE']
+try:
+    config = configparser.SafeConfigParser()
+    config.read(global_config)
+    language = config.get('general', 'language')
+except:
+    pass
+if language == '' or language not in language_list:
+    language = default_language
+if language == 'EN':
+    str_noapi = 'Configure your Telegram API key descriped on the TXT Website!'
+    str_printapi = 'Your API-Key: '
+    str_message_already_killed = 'Bot is shutting down!'
+elif language == 'DE':
+    str_noapi = 'Konfiguriere deinen Telegram API-Key, wie auf der Webseite des TXT beschrieben!'
+    str_printapi = 'Dein API-Key: '
+    str_message_already_killed = 'Bot wird gestoppt!'
 approot = (os.path.realpath(__file__).rpartition('/')
            [0] + os.path.realpath(__file__).rpartition('/')[1])
 configfile_path = approot + 'config'
 if os.path.exists(configfile_path) != True:
-    print('Configure your Telegram API key descriped on the TXT Website!')
+    print(str_noapi)
     exit(2)
 else:
     configfile = configparser.RawConfigParser()
     configfile.read(configfile_path)
     api_key = configfile.get('config', 'key')
-    print('Your API-Key: :' + api_key)
+    print(str_printapi + api_key)
 bot = telepot.Bot(api_key)
 bot.getMe()
 txt = ftrobopy.ftrobopy('127.0.0.1', 65000)
@@ -42,7 +62,7 @@ def handle(msg):
     global function
     global killbot
     if killbot != '':
-        bot.sendMessage(chat_id, 'Bot is shutting down!')
+        bot.sendMessage(chat_id, str_message_already_killed)
         return
     # FUNCTION WITH ///
     if command == '/sound':

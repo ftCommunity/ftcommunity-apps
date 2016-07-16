@@ -19,24 +19,28 @@ except:
 if language == '' or language not in language_list:
     language = default_language
 if language == 'EN':
-    str_noapi = 'Configure your Telegram API key descriped on the TXT Website!'
+    str_noapi = 'API KEY MISSING'
     str_printapi = 'Your API-Key: '
     str_message_already_killed = 'Bot is shutting down!'
 elif language == 'DE':
-    str_noapi = 'Konfiguriere deinen Telegram API-Key, wie auf der Webseite des TXT beschrieben!'
+    str_noapi = 'API KEY MISSING'
     str_printapi = 'Dein API-Key: '
     str_message_already_killed = 'Bot wird gestoppt!'
-approot = (os.path.realpath(__file__).rpartition('/')
-           [0] + os.path.realpath(__file__).rpartition('/')[1])
-configfile_path = approot + 'config'
+configfile_path = '/media/sdcard/apps/6026c098-cb9b-45da-9c8c-9d05eb44a4fd/config'
 if os.path.exists(configfile_path) != True:
     print(str_noapi)
+    os.system('rm /tmp/telegram.pid')
     exit(2)
 else:
-    configfile = configparser.RawConfigParser()
-    configfile.read(configfile_path)
-    api_key = configfile.get('config', 'key')
-    print(str_printapi + api_key)
+    try:
+        configfile = configparser.RawConfigParser()
+        configfile.read(configfile_path)
+        api_key = configfile.get('config', 'key')
+        print(str_printapi + api_key)
+    except:
+        print(str_noapi)
+        os.system('rm /tmp/telegram.pid')
+        exit(2)
 bot = telepot.Bot(api_key)
 bot.getMe()
 txt = ftrobopy.ftrobopy('127.0.0.1', 65000)

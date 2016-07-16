@@ -40,13 +40,31 @@ class FtcGuiApplication(TxtApplication):
             else:
                 str_lbl1 = 'Telegram ist bereit'
         w = TxtWindow('Telegram')
+        configfile_path = '/media/sdcard/apps/6026c098-cb9b-45da-9c8c-9d05eb44a4fd/config'
+        if os.path.exists(configfile_path) != True:
+            print('API KEY MISSING')
+            if language == 'EN':
+                str_lbl1 = 'Configure Telegram API-Key described on the TXT website! '
+            elif language == 'DE':
+                str_lbl1 = 'Konfiguriere den  Telegram API-Key, wie auf der Webseite des TXT beschrieben! '
+        else:
+            try:
+                configfile = configparser.RawConfigParser()
+                configfile.read(configfile_path)
+                api_key = configfile.get('config', 'key')
+            except:
+                print('API KEY MISSING')
+                if language == 'EN':
+                    str_lbl1 = 'Configure Telegram API-Key described on the TXT website!'
+                elif language == 'DE':
+                    str_lbl1 = 'Konfiguriere den  Telegram API-Key, wie auf der Webseite des TXT beschrieben!'
         self.vbox = QVBoxLayout()
         self.vbox.addStretch()
         self.lbl1 = QLabel(str_lbl1)
-        #self.lbl1.setObjectName("smalllabel")
         self.lbl1.setWordWrap(True)
         self.lbl1.setAlignment(Qt.AlignCenter)
         self.vbox.addWidget(self.lbl1)
+        #self.lbl1.setObjectName("smalllabel")
         btn_start = QPushButton('START')
         btn_start.clicked.connect(self.on_button_clicked_start)
         self.vbox.addWidget(btn_start)

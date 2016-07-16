@@ -124,6 +124,7 @@ while True:
     #print('from global ' + function)
     if killbot != '':
         time.sleep(5)
+        os.system('rm /tmp/telegram.pid')
         bot.sendMessage(killbot, 'Killed sucessfully!')
         print('KILLED')
         exit(1)

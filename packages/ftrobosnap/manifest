@@ -8,5 +8,5 @@ desc: ft-robo-snap demo for TXT snap
 exec: ftrobosnap.py
 managed: text
 uuid: 599047da-5f01-4a15-a94f-0fc14cc4a88b
-version: 1.0.dev.1
+version: 1.0.dev.2
 firmware: 0.9

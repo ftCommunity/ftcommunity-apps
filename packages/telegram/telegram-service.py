@@ -46,6 +46,8 @@ bot.getMe()
 txt = ftrobopy.ftrobopy('127.0.0.1', 65000)
 global function
 function = ''
+global tempdata
+tempdata = ''
 global killbot
 killbot = ''
 
@@ -63,8 +65,46 @@ def handle(msg):
     command = msg['text']
     chat_id = msg['chat']['id']
     print(command, chat_id)
+
+    def app_select_keyboard():
+        base = "/opt/ftc"
+
+        def scan_app_dirs():
+            app_base = os.path.join(base, "apps")
+            app_groups = os.listdir(app_base)
+            app_dirs = []
+            for i in app_groups:
+                try:
+                    app_group_dirs = os.listdir(os.path.join(app_base, i))
+                    for a in app_group_dirs:
+                        app_dir = os.path.join(app_base, i, a)
+                        manifestfile = os.path.join(app_dir, "manifest")
+                        if os.path.isfile(manifestfile):
+                            manifest = configparser.RawConfigParser()
+                            manifest.read(manifestfile)
+                            appname = manifest.get('app', 'name')
+                            app_dirs.append((appname, os.path.join(app_base, i, a)))
+                except:
+                    pass
+            app_dirs.sort(key=lambda tup: tup[0])
+            return ([x[1] for x in app_dirs])
+        appdir_list = scan_app_dirs()
+        print(appdir_list)
+        print(len(appdir_list))
+        app_dict = {}
+        for app_dir in appdir_list:
+            manifestfile = os.path.join(app_dir, "manifest")
+            manifest = configparser.RawConfigParser()
+            manifest.read(manifestfile)
+            appname = manifest.get('app', 'name')
+            executable = os.path.join(app_dir, manifest.get('app', 'exec'))
+            app_dict[appname] = executable
+        app_pseudo_dict = sorted(app_dict.items())
+        print(app_pseudo_dict)
+        return app_pseudo_dict, app_dict
     global function
     global killbot
+    global tempdata
     if killbot != '':
         bot.sendMessage(chat_id, str_message_already_killed)
         return
@@ -85,6 +125,7 @@ def handle(msg):
         killbot = chat_id
         print('Stopping BOT')
     elif command == '/help':
+        function = ''
         bot.sendMessage(chat_id, '-----This is the TXT-Bot help-----')
         bot.sendMessage(chat_id, '/help - See this help')
         bot.sendMessage(chat_id, '/sound - Use this to play Sounds on the TXT')
@@ -94,6 +135,7 @@ def handle(msg):
         print('Help print')
     elif command == '/screenshot':
         print('Calling Screenshot feature')
+        function = ''
         bot.sendMessage(chat_id, 'Taking Screenshot! Please Wait')
         bot.sendChatAction(chat_id, 'upload_photo')
         os.system('rm /tmp/screenshot.png >/dev/null 2>&1')
@@ -104,7 +146,23 @@ def handle(msg):
         else:
             bot.sendMessage(chat_id, 'Failure taking screenshot!')
             print('Error taking screenshot')
-        # FUNCTION WITHOUT ///
+    elif command == '/startapp':
+        print('Calling start APP feature')
+        function = 'startapp'
+        app_list, app_dict = app_select_keyboard()
+        tempdata = app_dict
+        keyboard = []
+        count = 0
+        while count <= (len(app_list) - 1):
+            local_keyboard = []
+            app = app_list[count]
+            appname = app[0]
+            local_keyboard.append(appname)
+            keyboard.append(local_keyboard)
+            count = count + 1
+        show_keyboard = {'keyboard': keyboard}
+        bot.sendMessage(chat_id, 'Select APP to start', reply_markup=show_keyboard)
+    # FUNCTION WITHOUT ///
     # NONE
     # FUNCTION WITH FREE VALUE
     elif function == 'sound':
@@ -115,6 +173,18 @@ def handle(msg):
         else:
             bot.sendMessage(
                 chat_id, 'This is not a value! Leaving Sound Menu!')
+        function = ''
+    elif function == 'startapp':
+        print(tempdata)
+        hide_keyboard = {'hide_keyboard': True}
+        if command in tempdata:
+            print('exists')
+            app_executable = tempdata[command]
+            print('Starting: ' + app_executable)
+            bot.sendMessage(chat_id, 'Starting ' + command, reply_markup=hide_keyboard)
+        else:
+            print('ERROR')
+        tempdata = ''
         function = ''
     else:
         bot.sendMessage(

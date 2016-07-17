@@ -126,6 +126,7 @@ def handle(msg):
         killbot = chat_id
         print('Stopping BOT')
     elif command == '/help':
+        print('Calling help feature')
         function = ''
         bot.sendMessage(chat_id, '-----This is the TXT-Bot help-----')
         bot.sendMessage(chat_id, '/help - See this help')
@@ -163,6 +164,16 @@ def handle(msg):
             count = count + 1
         show_keyboard = {'keyboard': keyboard}
         bot.sendMessage(chat_id, 'Select APP to start', reply_markup=show_keyboard)
+    elif command == '/stopapp':
+        print('Calling stop APP feature')
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.connect(("localhost", 9000))
+            sock.sendall(bytes("stop-app" + "\n", "UTF-8"))
+        except socket.error as msg:
+            bot.sendMessage(chat_id, 'Launcher is not responding! Try again after rebooting the TXT!')
+        finally:
+            sock.close()
     # FUNCTION WITHOUT ///
     # NONE
     # FUNCTION WITH FREE VALUE
@@ -188,7 +199,7 @@ def handle(msg):
             try:
                 sock.connect(("localhost", 9000))
                 sock.sendall(bytes("stop-app" + "\n", "UTF-8"))
-                time.sleep(5)
+                time.sleep(1)
                 sock.sendall(bytes("launch " + app_executable + "\n", "UTF-8"))
             except socket.error as msg:
                 bot.sendMessage(chat_id, 'Launcher is not responding! Try again after rebooting the TXT!')

@@ -6,6 +6,7 @@ import time
 import ftrobopy
 import os
 import configparser
+import socket
 global_config = '/media/sdcard/data/config.conf'
 language = ''
 default_language = ''
@@ -180,8 +181,19 @@ def handle(msg):
         if command in tempdata:
             print('exists')
             app_executable = tempdata[command]
+            app_executable = app_executable.replace('/opt/ftc/apps/', '')
             print('Starting: ' + app_executable)
             bot.sendMessage(chat_id, 'Starting ' + command, reply_markup=hide_keyboard)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                sock.connect(("localhost", 9000))
+                sock.sendall(bytes("stop-app" + "\n", "UTF-8"))
+                time.sleep(5)
+                sock.sendall(bytes("launch " + app_executable + "\n", "UTF-8"))
+            except socket.error as msg:
+                bot.sendMessage(chat_id, 'Launcher is not responding! Try again after rebooting the TXT!')
+            finally:
+                sock.close()
         else:
             print('ERROR')
         tempdata = ''

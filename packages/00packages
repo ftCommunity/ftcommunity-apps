@@ -171,18 +171,6 @@ uuid: d23829ea-326a-4f85-8627-169b0dc56669
 version: 1.0
 firmware: 0.9
 
-[update]
-name: Update
-category: System
-author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
-icon: icon.png
-desc: Simple App to update the TXT OS
-exec: update.py
-managed: text
-uuid: 5fd5a2f4-2a0f-45e2-ae90-884e7664b06b
-version: 1.0.dev.1
-firmware: 0.9
-
 [websockets]
 name: WSDemo
 category: Tests

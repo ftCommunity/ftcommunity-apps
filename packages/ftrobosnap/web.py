@@ -29,11 +29,17 @@ if running == True:
     print('</table>')
     print('<h2>Actions</h2>')
     print('<table align="center">')
-    print('<h3>Select which connection type you are using</h3>')
-    print('<tr><td><a href="http://' + ip_wlan0 +
-          ':65003/ide/snap.html" target="ft-robo-snap"><img src="wlan.png" alt="WLAN IMAGE" /></a></td></tr>')
-    print('<td><tr><a href="http://' + ip_usb0 +
-          ':65003/ide/snap.html" target="ft-robo-snap"><img src="usb.png" alt="USB IMAGE" /></a></tr></td>')
+    pid_path = '/tmp/ftrobosnap.pid'
+    pid = ''
+    if os.path.exists(pid_path) == True:
+        print('<h3>Select which connection type you are using</h3>')
+        print('<tr><td><a href="http://' + ip_wlan0 +
+              ':65003/ide/snap.html" target="ft-robo-snap"><img src="wlan.png" alt="WLAN IMAGE" /></a></td></tr>')
+        print('<td><tr><a href="http://' + ip_usb0 +
+              ':65003/ide/snap.html" target="ft-robo-snap"><img src="usb.png" alt="USB IMAGE" /></a></tr></td>')
+    else:
+        print('<h3>ftrobosnap is not running! Start it on the TXT and try again!</h3>')
+        print('<td><tr><img src="stop.png" alt="ERROR" /></tr></td>')
     print('<td><tr><br></tr></td>')
     print('<tr><td><a href=/>Home</a></td></tr>')
     print('</table>')

@@ -81,10 +81,10 @@ author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
 html: web.py
 icon: icon.png
 desc: ft-robo-snap demo for TXT snap
-exec: ftrobosnap.py
-managed: text
+exec: ftrobosnap-app.py
+managed: yes
 uuid: 599047da-5f01-4a15-a94f-0fc14cc4a88b
-version: 1.0.dev.2
+version: 1.1
 firmware: 0.9
 
 [hello]
@@ -156,7 +156,7 @@ desc: Simple App to control the TXT via the instant Messenger Telegram
 exec: telegram-app.py
 managed: yes
 uuid: 6026c098-cb9b-45da-9c8c-9d05eb44a4fd
-version: 0.1.7
+version: 1.0
 firmware: 0.9
 
 [thermometer]

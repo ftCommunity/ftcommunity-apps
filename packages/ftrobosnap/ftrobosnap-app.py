@@ -39,7 +39,7 @@ class FtcGuiApplication(TxtApplication):
                 str_lbl1 = 'ftrobosnap ist gestoppt'
             else:
                 str_lbl1 = 'ftrobosnap ist bereit'
-        w = TxtWindow('Telegram')
+        w = TxtWindow('Snap')
         self.vbox = QVBoxLayout()
         self.vbox.addStretch()
         self.lbl1 = QLabel(str_lbl1)

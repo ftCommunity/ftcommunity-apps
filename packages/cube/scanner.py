@@ -79,7 +79,7 @@ def get_weights(mask):
 
     return m
             
-def analyze(full_image, adjust = 0):    
+def analyze(full_image, adjust, calibration):
     # cut cube
     gimage = full_image[Y:Y+S,X:X+S]
     if interactive:
@@ -109,6 +109,9 @@ def analyze(full_image, adjust = 0):
     
     # ------------ step 3: loop over the color filters ----------
     weights = {}
+    if calibration:
+        detect_img = np.zeros((S,S,3), np.uint8)
+
     for (name, value, lower, upper) in RANGES:
         # apply color adjustment value
         mask = analyze_range(image,
@@ -119,11 +122,15 @@ def analyze(full_image, adjust = 0):
         weights[name] = get_weights(mask)
 
         # paint mask in color that was meant to be detected
-        if interactive:
+        if interactive or calibration:
             bg = np.zeros((S,S,3), np.uint8)
             c = int(value)
             bg[0:S,0:S] = ((c >> 0)& 0xff, (c >> 8)& 0xff, (c>>16) & 0xff)
-            images.append(cv2.bitwise_and(bg, bg, mask = mask))
+            col_bg = cv2.bitwise_and(bg, bg, mask = mask)
+            if interactive:
+                images.append(col_bg)
+            if calibration:
+                detect_img = cv2.bitwise_or(detect_img, col_bg)
 
     # ------------ step 4: analyse color weightings --------------
     if interactive:
@@ -159,13 +166,19 @@ def analyze(full_image, adjust = 0):
                 quality = result[y][x][2]
 
     if interactive:
+        if calibration: 
+            images.append(detect_img)
+
         images.append(image)
         # make a hstack of all images and display it
         cv2.imshow("images", np.hstack(images))
 
-    return quality, result
+    if calibration:
+        return quality, result, detect_img
 
-def scan(image):
+    return quality, result, None
+
+def scan(image, calibration):
     step = 0
     # adjust_steps = ( 0, 1,-1,2,-2,3,-3,4,-4,5,-5,6,-6 )
     adjust_steps = ( 0, 1,2,3,4,5,6 )
@@ -174,13 +187,13 @@ def scan(image):
     best = (0,0)
 
     while quality < 0.99 and step < len(adjust_steps):
-        (quality, result) = analyze(image, adjust_steps[step])
+        (quality, result, cal_img) = analyze(image, adjust_steps[step], calibration)
         if quality > best[0]: best = (quality, step)
         step += 1
 
     # if we didn't reach a 0.99 score check which step had the best quality
     if quality < 0.99:
-        (quality, result) = analyze(image, adjust_steps[best[1]])
+        (quality, result, cal_img) = analyze(image, adjust_steps[best[1]], calibration)
         step = best[1]+1
 
     #print("Accepted quality is", quality, "in step", step, "with adjust", adjust_steps[step-1])
@@ -191,9 +204,9 @@ def scan(image):
         for x in range(3):
             colors[y][x] = result[y][x][0]
                 
-    return quality, colors
+    return quality, colors, cal_img
 
-def do(video_device):
+def do(video_device, calibration = False):
     # drop a few frames to get "fresh" images and to
     # let white balance etc kick in
     for i in range(FRAME_SKIP):
@@ -202,7 +215,7 @@ def do(video_device):
     results = []
     for i in range(SCAN_ITERATIONS):
         image = video_device.read()[1]
-        (quality, colors) = scan(image)
+        (quality, colors, det_img) = scan(image, calibration)
 
         # check if such a result already exists in the list
         if not colors in (item[1] for item in results):
@@ -216,7 +229,16 @@ def do(video_device):
 
     # now sort the results by quality
     # print("Number of different results: ", len(results))
+
+    # if a calibration image was generated return that
+    if det_img != None: 
+        return det_img
+
     return sorted(results, key=lambda x: x[0], reverse=True)
+
+def get_calibration_image(video_device):
+    img = do(video_device, True)
+    return img
 
 def init():
     CAM_DEV = os.environ.get('FTC_CAM')
@@ -247,10 +269,10 @@ if __name__ == "__main__":
     if video_device:
         time.sleep(1)   # wait 5 seconds for camera auto adjust
         while True:
-            results = do(video_device)
+            results = do(video_device, False)
             print("Number of results: ", len(results))
             for i in results:
                 print("{:5.2f}".format(i[0]), i[1])
 
-            if cv2.waitKey(100) == 27:
+            if cv2.waitKey(10) == 27:
                 exit(0)

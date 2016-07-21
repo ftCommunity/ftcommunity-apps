@@ -8,6 +8,7 @@ import pycuber as pc
 import subprocess, errno
 import ftrobopy
 import copy
+import cv2
 
 import scanner
 
@@ -43,6 +44,69 @@ def txt_init():
         return txt
     except:
         return None
+
+class LiveWidget(QWidget):
+    def __init__(self, parent=None):
+        super(LiveWidget, self).__init__(parent)
+
+        # initialize camera
+        self.video_device = scanner.init()
+
+        qsp = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        qsp.setHeightForWidth(True)
+        self.setSizePolicy(qsp)
+
+        timer = QTimer(self)
+        timer.timeout.connect(self.update)
+        timer.start(1000)
+
+    def sizeHint(self):
+        return QSize(220,220)
+
+    def heightForWidth(self,w):
+        return w
+
+    def close(self):
+        if self.video_device:
+            scanner.close(self.video_device)
+
+    def paintEvent(self, QPaintEvent):
+        painter = QPainter()
+        painter.begin(self)
+
+        if not self.video_device:
+            painter.drawText(QRect(QPoint(0,0), self.size()),
+                             Qt.AlignCenter, "No camera");
+        else:
+            img = scanner.get_calibration_image(self.video_device)
+            img = cv2.resize(img,None,fx=2, fy=2) 
+
+            # center on widget
+            height, width, byteValue = img.shape
+            bytes_per_line = byteValue * width
+            xoff = (self.width() - width)/2
+            yoff = (self.height() - height)/2
+
+            # hsv to rgb
+            cv2.cvtColor(img, cv2.COLOR_BGR2RGB, img)
+            mQImage = QImage(img, int(width), int(height),
+                             bytes_per_line, QImage.Format_RGB888)
+
+            painter.drawImage(xoff,yoff,mQImage)
+            
+        painter.end()
+
+
+class CalibDialog(TxtDialog):
+    def __init__(self,parent):
+
+        TxtDialog.__init__(self, "Calib.", parent)
+        self.lw = LiveWidget()
+        self.setCentralWidget(self.lw)
+
+    def closeEvent(self, evnt):
+        self.lw.close()
+        super(CalibDialog, self).closeEvent(evnt)
 
 class AboutDialog(TxtDialog):
     def __init__(self,parent):
@@ -135,6 +199,8 @@ class FtcGuiApplication(TxtApplication):
         menu = self.w.addMenu()
         menu_about = menu.addAction("About")
         menu_about.triggered.connect(self.show_about)
+        menu_calib = menu.addAction("Calibration")
+        menu_calib.triggered.connect(self.show_calib)
 
         self.vbox = QVBoxLayout()
         self.vbox.addStretch()
@@ -702,6 +768,10 @@ class FtcGuiApplication(TxtApplication):
         
     def show_about(self):
         dialog = AboutDialog(self.w)
+        dialog.exec_()
+
+    def show_calib(self):
+        dialog = CalibDialog(self.w)
         dialog.exec_()
         
 if __name__ == "__main__":

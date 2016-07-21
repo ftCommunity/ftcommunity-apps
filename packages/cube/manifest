@@ -7,5 +7,5 @@ desc: Rubiks Cube solver
 exec: cube.py
 managed: yes
 uuid: be743ea4-187b-43d8-8f7b-1779fa589bec
-version: 1.0
+version: 1.1
 firmware: 0.9

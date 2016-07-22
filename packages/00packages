@@ -1,63 +1,16 @@
 ; list of packages
 ; this file contains all manifests
 
-[widgetgallery]
-name: Gallery
-category: Tests
-icon: icon.png
-desc: QT Widgets gallery
-exec: widgetgallery.py
-managed: yes
-uuid: 94cac4ea-14ef-49a2-a000-20ca5720fb78
-version: 1.0
-firmware: 0.9
-
-[hello]
-name: Hello
+[app_tutorial_1]
+name: Test
 category: Tests
 author: Till Harbaum
-desc: Simple text mode test
-exec: hello.py
-managed: text
-uuid: ea2d824d-e643-4190-a97e-31655a4179de
-version: 1.0
-firmware: 0.9
-
-[websockets]
-name: WSDemo
-category: Tests
-author: Till Harbaum &lt;till@harbaum.org&gt;
-html: index.html
 icon: icon.png
-desc: Websockets demo for TXT remote control
-exec: server.py
+desc: TXT app tutorial #1
+url: https://github.com/ftCommunity/ftcommunity-TXT/wiki/FTC-FW-App-Tutorial-1
+exec: test.py
 managed: yes
-set: 524328 ROBOTICS TXT Discovery Set
-model: Pedestrian Light
-uuid: 934ece63-892d-49d8-ad66-143844da0c11
-version: 1.0
-firmware: 0.9
-
-[calc]
-name: Calc
-category: Tools
-icon: icon.png
-desc: A simple calculator
-exec: calc.py
-managed: yes
-uuid: 2093ec3e-e85f-47cb-aebc-3809b482d145
-version: 1.0
-firmware: 0.9
-
-[color_range]
-name: ColoRange
-category: Tools
-author: Till Harbaum &lt;till@harbaum.org&gt;
-icon: icon.png
-desc: Tool to pick color ranges for object detection
-exec: color_range.py
-managed: yes
-uuid: eb075835-cb00-4686-9332-ec902a1ed0c0
+uuid: 191fe5a6-313b-4083-af65-d1ad7fd6d281
 version: 1.0
 firmware: 0.9
 
@@ -75,6 +28,17 @@ uuid: 55238f32-e0f3-4e55-9a02-5f901a19d3e0
 version: 1.0
 firmware: 0.9
 
+[calc]
+name: Calc
+category: Tools
+icon: icon.png
+desc: A simple calculator
+exec: calc.py
+managed: yes
+uuid: 2093ec3e-e85f-47cb-aebc-3809b482d145
+version: 1.0
+firmware: 0.9
+
 [clock]
 name: Clock
 category: Tools
@@ -86,50 +50,15 @@ uuid: 4fdef96d-4a27-4209-85c6-7786110d9f2f
 version: 1.0
 firmware: 0.9
 
-[zbartest]
-name: ZBar
-category: Tests
-icon: icon.png
-desc: Demo of ZBAR QR code decoder
-exec: zbartest.py
-managed: yes
-uuid: c2258ee6-b86b-4c52-90b4-0d57d4244aaf
-version: 1.0
-firmware: 0.9
-
-[app_tutorial_1]
-name: Test
-category: Tests
-author: Till Harbaum
-icon: icon.png
-desc: TXT app tutorial #1
-url: https://github.com/ftCommunity/ftcommunity-TXT/wiki/FTC-FW-App-Tutorial-1
-exec: test.py
-managed: yes
-uuid: 191fe5a6-313b-4083-af65-d1ad7fd6d281
-version: 1.0
-firmware: 0.9
-
-[robolttest]
-name: RoboLT
-category: Tests
-icon: icon.png
-desc: Robo LT test application
-exec: robolttest.py
-managed: yes
-uuid: 3682679c-9438-4516-a528-83de5e27e5e5
-version: 1.0.1
-firmware: 0.9
-
-[thermometer]
-name: Thermo
+[color_range]
+name: ColoRange
 category: Tools
 author: Till Harbaum &lt;till@harbaum.org&gt;
 icon: icon.png
-desc: A simple thermometer app using the TXTs temperature sensor on I1
-exec: thermometer.py
+desc: Tool to pick color ranges for object detection
+exec: color_range.py
 managed: yes
-uuid: d23829ea-326a-4f85-8627-169b0dc56669
+uuid: eb075835-cb00-4686-9332-ec902a1ed0c0
 version: 1.0
 firmware: 0.9
 
@@ -143,6 +72,30 @@ exec: cube.py
 managed: yes
 uuid: be743ea4-187b-43d8-8f7b-1779fa589bec
 version: 1.1
+firmware: 0.9
+
+[ftrobosnap]
+name: Snap
+category: Tests
+author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
+html: web.py
+icon: icon.png
+desc: ft-robo-snap demo for TXT snap
+exec: ftrobosnap-app.py
+managed: yes
+uuid: 599047da-5f01-4a15-a94f-0fc14cc4a88b
+version: 1.1
+firmware: 0.9
+
+[hello]
+name: Hello
+category: Tests
+author: Till Harbaum
+desc: Simple text mode test
+exec: hello.py
+managed: text
+uuid: ea2d824d-e643-4190-a97e-31655a4179de
+version: 1.0
 firmware: 0.9
 
 [idas_ampel]
@@ -170,6 +123,69 @@ uuid: 28dd2ddd-76b1-431a-9669-8abca2af313f
 version: 0.2
 firmware: 0.9
 
+[robolttest]
+name: RoboLT
+category: Tests
+icon: icon.png
+desc: Robo LT test application
+exec: robolttest.py
+managed: yes
+uuid: 3682679c-9438-4516-a528-83de5e27e5e5
+version: 1.0.1
+firmware: 0.9
+
+[settings]
+name: Settings
+category: System
+author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
+icon: icon.png
+desc: Simple Settings app
+exec: settings.py
+managed: yes
+uuid: ec9e12f2-e958-449c-93c8-ff90a73fd27d
+version: 1.0.dev.3
+firmware: 0.9
+
+[telegram]
+name: Telegram
+category: Tests
+author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
+html: config.py
+icon: icon.png
+desc: Simple App to control the TXT via the instant Messenger Telegram
+exec: telegram-app.py
+managed: yes
+uuid: 6026c098-cb9b-45da-9c8c-9d05eb44a4fd
+version: 1.0.3
+firmware: 0.9
+
+[thermometer]
+name: Thermo
+category: Tools
+author: Till Harbaum &lt;till@harbaum.org&gt;
+icon: icon.png
+desc: A simple thermometer app using the TXTs temperature sensor on I1
+exec: thermometer.py
+managed: yes
+uuid: d23829ea-326a-4f85-8627-169b0dc56669
+version: 1.0
+firmware: 0.9
+
+[websockets]
+name: WSDemo
+category: Tests
+author: Till Harbaum &lt;till@harbaum.org&gt;
+html: index.html
+icon: icon.png
+desc: Websockets demo for TXT remote control
+exec: server.py
+managed: yes
+set: 524328 ROBOTICS TXT Discovery Set
+model: Pedestrian Light
+uuid: 934ece63-892d-49d8-ad66-143844da0c11
+version: 1.0
+firmware: 0.9
+
 [wedotest]
 name: WeDo
 category: Tests
@@ -179,4 +195,26 @@ exec: wedotest.py
 managed: yes
 uuid: 91dceedd-9292-417d-a12f-8ac7eda34267
 version: 1.0.1
+firmware: 0.9
+
+[widgetgallery]
+name: Gallery
+category: Tests
+icon: icon.png
+desc: QT Widgets gallery
+exec: widgetgallery.py
+managed: yes
+uuid: 94cac4ea-14ef-49a2-a000-20ca5720fb78
+version: 1.0
+firmware: 0.9
+
+[zbartest]
+name: ZBar
+category: Tests
+icon: icon.png
+desc: Demo of ZBAR QR code decoder
+exec: zbartest.py
+managed: yes
+uuid: c2258ee6-b86b-4c52-90b4-0d57d4244aaf
+version: 1.0
 firmware: 0.9

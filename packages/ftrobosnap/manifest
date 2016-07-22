@@ -1,0 +1,12 @@
+[app]
+name: Snap
+category: Tests
+author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
+html: web.py
+icon: icon.png
+desc: ft-robo-snap demo for TXT snap
+exec: ftrobosnap-app.py
+managed: yes
+uuid: 599047da-5f01-4a15-a94f-0fc14cc4a88b
+version: 1.1
+firmware: 0.9

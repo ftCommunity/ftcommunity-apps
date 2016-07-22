@@ -114,7 +114,7 @@ class FtcGuiApplication(TxtApplication):
             print('START')
             print(str_lbl1_start)
             os.system('sh /media/sdcard/apps/6026c098-cb9b-45da-9c8c-9d05eb44a4fd/telegram-start.sh')
-            self.lbl1 = StateWidget("Status", "str_lbl1_start")
+            self.lbl1.set(str_lbl1_start)
         else:
             print('ALREADY STARTED')
 
@@ -130,7 +130,7 @@ class FtcGuiApplication(TxtApplication):
             print('KILLED')
             os.system('kill ' + pid)
             os.system('rm /tmp/telegram.pid')
-            self.lbl1 = StateWidget("Status", str_lbl1_stop)
+            self.lbl1.set(str_lbl1_stop)
         else:
             print('ALREDY KILLED')
 if __name__ == "__main__":

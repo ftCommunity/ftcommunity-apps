@@ -15,7 +15,7 @@ class FtcGuiApplication(TxtApplication):
         TxtApplication.__init__(self, args)
         global_config = '/media/sdcard/data/config.conf'
         language = ''
-        default_language = ''
+        default_language = 'EN'
         language_list = ['EN', 'DE']
         pid_path = '/tmp/ftrobosnap.pid'
         pid = ''

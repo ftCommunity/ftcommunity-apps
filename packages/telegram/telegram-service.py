@@ -9,7 +9,7 @@ import configparser
 import socket
 global_config = '/media/sdcard/data/config.conf'
 language = ''
-default_language = ''
+default_language = 'EN'
 language_list = ['EN', 'DE']
 try:
     config = configparser.SafeConfigParser()
@@ -62,7 +62,7 @@ def is_number(s):
 
 
 def handle(msg):
-    # pprint.pprint(msg)
+    pprint.pprint(msg)
     command = msg['text']
     chat_id = msg['chat']['id']
     print(command, chat_id)

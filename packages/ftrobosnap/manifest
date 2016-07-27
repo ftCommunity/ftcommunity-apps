@@ -1,6 +1,6 @@
 [app]
 name: Snap
-category: Tests
+category: Programming
 author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
 html: web.py
 icon: icon.png

@@ -8,5 +8,5 @@ desc: Simple App to control the TXT via the instant Messenger Telegram
 exec: telegram-app.py
 managed: yes
 uuid: 6026c098-cb9b-45da-9c8c-9d05eb44a4fd
-version: 1.0.3
+version: 1.0.4
 firmware: 0.9

@@ -89,7 +89,7 @@ firmware: 0.9
 
 [ftrobosnap]
 name: Snap
-category: Tests
+category: Programming
 author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
 html: web.py
 icon: icon.png
@@ -161,7 +161,7 @@ firmware: 0.9
 
 [telegram]
 name: Telegram
-category: Tests
+category: Remote Control
 author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
 html: config.py
 icon: icon.png
@@ -169,7 +169,7 @@ desc: Simple App to control the TXT via the instant Messenger Telegram
 exec: telegram-app.py
 managed: yes
 uuid: 6026c098-cb9b-45da-9c8c-9d05eb44a4fd
-version: 1.0.4
+version: 1.0.5
 firmware: 0.9
 
 [thermometer]

@@ -74,18 +74,6 @@ uuid: 443dd03b-d671-4103-b035-924c175e4e1c
 version: 1
 firmware: 0.9
 
-[settings]
-name: Settings
-category: System
-author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
-icon: icon.png
-desc: Simple Settings app
-exec: settings.py
-managed: yes
-uuid: ec9e12f2-e958-449c-93c8-ff90a73fd27d
-version: 1.1
-firmware: 0.9
-
 [websockets]
 name: WSDemo
 category: Tests

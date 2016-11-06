@@ -79,11 +79,12 @@ class FtcGuiApplication(TouchApplication):
 
         n = 1
         self.outputListObject = []
+        self.outputNames = {'1': ['O1', 'O2'], '2': ['O3', 'O4'], '3': ['O5', 'O6'], '4': ['O7', 'O8']}
         while n <= 4:
             #Create a sub-box for each motor
             hbox = QHBoxLayout()
             #Button for "turn left"
-            left = QPushButton("left")
+            left = QPushButton("left / " + self.outputNames[str(n)][0])
             left.setStyleSheet(BUTTON_STYLE)
             left.pressed.connect(self.__switchMotorOn)
             left.released.connect(self.__switchMotorOff)
@@ -93,7 +94,7 @@ class FtcGuiApplication(TouchApplication):
             label.setStyleSheet(BIG_LABEL)
             hbox.addWidget(label)
             #Botton for "turn right"
-            right = QPushButton("right")
+            right = QPushButton("right / " + self.outputNames[str(n)][1])
             right.setStyleSheet(BUTTON_STYLE)
             right.pressed.connect(self.__switchMotorOn)
             right.released.connect(self.__switchMotorOff)

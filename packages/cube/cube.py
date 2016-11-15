@@ -45,6 +45,121 @@ def txt_init():
     except:
         return None
 
+class AdjustWidget(QWidget):
+    def __init__(self, parent=None):
+        super(AdjustWidget, self).__init__(parent)
+        # boundary values from scanner.py
+        self.boundaries = scanner.boundaries()
+        # same colors as in scanner.py
+        self.colors = [ "#00FF00", "#FFFF00", "#FF8000", "#FF0000", "#0000FF" ]
+        self.selected = 2
+
+    def paintEvent(self, QPaintEvent):
+        self.arr_w = 2*int(self.height()/3)
+        tri_w = int(self.height()/3)
+        painter = QPainter()
+        painter.begin(self)
+
+        # draw color range
+        for x in range(self.width()-2*self.arr_w):
+            # make xh range from 0 ...359
+            xh = 359 * x / (self.width()-2*self.arr_w)
+            color = QColor()
+            color.setHsv(xh,255,255)
+
+            # swap B and R since we use it that way
+            # in the scanner to avoid having the critical 
+            # orange/red boundaries in the ranges border
+            tmp = color.red()
+            color.setRed(color.blue())
+            color.setBlue(tmp)
+
+            painter.setPen(color)
+            painter.drawLine(x+self.arr_w, 0, x+self.arr_w, (self.height()-tri_w)/2-1)
+
+            color = QColor("#0000FF")
+            for i in range(len(self.boundaries)):
+                if xh/2 > self.boundaries[i]:
+                    color = QColor(self.colors[i])
+
+            painter.setPen(color)
+            painter.drawLine(x+self.arr_w, (self.height()-tri_w)/2, x+self.arr_w, self.height()-tri_w)
+
+        # draw triangles below
+        for i in range(len(self.boundaries)):
+            x = (self.width()-2*self.arr_w) * self.boundaries[i] / 179
+
+            path = QPainterPath()
+            path.moveTo(x + self.arr_w,                  self.height()-int(1*tri_w))
+            path.lineTo(x + self.arr_w + int(tri_w/2),   self.height()-1)
+            path.lineTo(x + self.arr_w - int(tri_w/2),   self.height()-1)
+            path.lineTo(x + self.arr_w,                  self.height()-int(1*tri_w))
+
+            # fill selected triangle in white, other in black
+            fill = QColor("black")
+            if i == self.selected:
+                fill = QColor("white")
+
+            painter.fillPath(path, QBrush(fill))
+
+        # paint the left arrow
+        path = QPainterPath()
+        path.moveTo(0, int((self.height()-1)/3))
+        path.lineTo(3*int(self.arr_w/4), 0)
+        path.lineTo(3*int(self.arr_w/4), 2*int((self.height()-1)/3))
+        path.lineTo(0, int((self.height()-1)/3))
+        painter.fillPath(path, QBrush(QColor("black")))
+
+        # paint the right arrow
+        path = QPainterPath()
+        path.moveTo(self.width()-1, int((self.height()-1)/3))
+        path.lineTo(self.width()-1-3*int(self.arr_w/4), 0)
+        path.lineTo(self.width()-1-3*int(self.arr_w/4), 2*int((self.height()-1)/3))
+        path.lineTo(self.width()-1, int((self.height()-1)/3))
+        painter.fillPath(path, QBrush(QColor("black")))
+
+        painter.end()
+
+    def mousePressEvent(self, event):
+        x = event.pos().x()
+        old_sel = self.selected
+
+        # click in the color bar range?
+        if x > self.arr_w and x < self.width() - self.arr_w:
+            # search for closest boudnary
+            xh = int(179 * (x-self.arr_w) / (self.width()-2*self.arr_w))
+            dist = 1000
+            for i in range(len(self.boundaries)):
+                d = abs(self.boundaries[i] - xh)
+                if d < dist:
+                    dist = d
+                    self.selected = i
+            
+            if old_sel != self.selected:
+                self.update()
+        
+        # left arrow
+        if x < self.arr_w:
+            # only reduce value if it's not zero and if it's still bigger than the
+            # previous value to the left
+            if ((self.boundaries[self.selected] > 0) and
+                ((self.selected == 0) or
+                 (self.boundaries[self.selected]-1 > self.boundaries[self.selected-1]))):
+                self.boundaries[self.selected] -= 1
+                scanner.setBoundaries(self.boundaries)
+                self.update()
+
+        # right arrow
+        if x > self.width() - self.arr_w:
+            # only increase value if it's not 180 and if it's still smaller then
+            # next value to the right
+            if ((self.boundaries[self.selected] < 180) and
+                ((self.selected == 4) or
+                 (self.boundaries[self.selected]+1 < self.boundaries[self.selected+1]))):
+                self.boundaries[self.selected] += 1
+                scanner.setBoundaries(self.boundaries)
+                self.update()
+
 class LiveWidget(QWidget):
     def __init__(self, parent=None):
         super(LiveWidget, self).__init__(parent)
@@ -101,8 +216,16 @@ class CalibDialog(TxtDialog):
     def __init__(self,parent):
 
         TxtDialog.__init__(self, "Calib.", parent)
+
+        vbox = QVBoxLayout()
+
+        self.aw = AdjustWidget()
+        vbox.addWidget(self.aw)
+
         self.lw = LiveWidget()
-        self.setCentralWidget(self.lw)
+        vbox.addWidget(self.lw)
+
+        self.centralWidget.setLayout(vbox)
 
     def closeEvent(self, evnt):
         self.lw.close()

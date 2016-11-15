@@ -44,6 +44,23 @@ RANGES = [
     ("white",  0xFFFFFF, [   0,    0,   10],  [180, SMIN, VMAX]) 
 ]
 
+# used by the calibration view
+def boundaries():
+    retval = []
+    for i in RANGES:
+        if i[0] != "white":
+            retval.append(i[3][0])
+
+    return retval
+
+def setBoundaries(b):
+    for i in range(len(RANGES)-1):
+        RANGES[i][3][0] = b[i]
+        if i != 4:
+            RANGES[i+1][2][0] = b[i]+1
+        else:
+            RANGES[0][2][0] = b[i]+1
+
 image_files = None
 video_device = None
 
@@ -180,11 +197,17 @@ def analyze(full_image, adjust, calibration):
 
 def scan(image, calibration):
     step = 0
-    # adjust_steps = ( 0, 1,-1,2,-2,3,-3,4,-4,5,-5,6,-6 )
-    adjust_steps = ( 0, 1,2,3,4,5,6 )
+    # color hue offsets used to increase precision of color detection.
+    # This is basically some kind of auto "balance"
+    adjust_steps = [ 0, 1,2,3,4,5,6 ]
 
     quality = 0
     best = (0,0)
+
+    # no attempt for auto color adjustment in calibration mode as this
+    # would interfere with the visual feedback and would confuse the user
+    if calibration:
+        adjust_steps = [ 0 ]
 
     while quality < 0.99 and step < len(adjust_steps):
         (quality, result, cal_img) = analyze(image, adjust_steps[step], calibration)
@@ -213,7 +236,13 @@ def do(video_device, calibration = False):
         video_device.read()
 
     results = []
-    for i in range(SCAN_ITERATIONS):
+
+    # increase refresh rate during calibration
+    iterations = SCAN_ITERATIONS
+    if calibration:
+        iterations = 1
+
+    for i in range(iterations):
         image = video_device.read()[1]
         (quality, colors, det_img) = scan(image, calibration)
 

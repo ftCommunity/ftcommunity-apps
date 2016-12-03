@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Brickly</title>
+  <link rel="stylesheet" href="/txt.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="./blockly/blockly_compressed.js"></script>
+  <script src="./blockly/blocks_compressed.js"></script>
+  <script src="./blockly/python_compressed.js"></script>
+  <script src="./blockly/en.js"></script>
+  <script src="./custom_blocks.js"></script>
+</head>
+<body>
+  <h1><div class="outline"><font color="red">fischer</font><font color="#046ab4">technik</font>&nbsp;<font color="#fcce04">TXT</font></div></h1>
+
+  <table><tr>
+      <td><button id="button">xxx</button></td>
+      <td>&nbsp;</td>
+      <td>State:</td>
+      <td><div id="stateDiv">Disconnected</div></td>
+  </tr></table>
+
+  <table><tr>
+    <td><div id="blocklyDiv" style="height: 480px; width: 600px;"></div></td>
+    <td><div id="textDiv" style="height: 480px; width: 300px; background-color: #046ab4"></div></td>
+  </tr></table>
+
+  <xml id="toolbox" style="display: none" colour="100">
+    <category name="Custom" colour="290">
+      <block type="wait"></block>
+      <block type="input"></block>
+      <block type="output"></block>
+      <block type="on_off"></block>
+    </category>
+    <category name="Logic" colour="210">
+      <block type="controls_if"></block>
+      <block type="logic_compare"></block>
+      <block type="logic_operation"></block>
+      <block type="logic_negate"></block>
+      <block type="logic_boolean"></block>
+    </category>
+    <category name="Loops" colour="120">
+      <block type="controls_repeat_ext">
+        <value name="TIMES">
+          <block type="math_number">
+            <field name="NUM">10</field>
+          </block>
+        </value>
+      </block>
+      <block type="controls_whileUntil"></block>
+    </category>
+    <category name="Math" colour="230">
+      <block type="math_number"></block>
+      <block type="math_arithmetic"></block>
+      <block type="math_single"></block>
+    </category>
+    <category name="Text" colour="160">
+      <block type="text"></block>
+      <block type="text_length"></block>
+      <block type="text_print"></block>
+    </category>
+  </xml>
+
+  <script src="./code.js"></script>
+</body>
+</html>

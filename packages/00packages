@@ -187,6 +187,20 @@ uuid: c2258ee6-b86b-4c52-90b4-0d57d4244aaf
 version: 1.0
 firmware: 0.9
 
+[brickly]
+name: Brickly
+category: Brickly
+author: Till Harbaum
+icon: icon.png
+desc: Blockly demo
+url: https://developers.google.com/blockly/
+html: index.html
+exec: brickly_app.py
+managed: yes
+uuid: 1f2d90a3-11e9-4a92-955a-73ffaec0fe71
+version: 1.0
+firmware: 0.9
+
 [app_tutorial_1]
 name: Test
 category: Tests

@@ -121,7 +121,7 @@ class RunThread(QThread):
             fname = os.path.join(path, "default.py")
         
         # load and execute locally stored blockly code
-        with open(fname) as f:
+        with open(fname, encoding="UTF-8") as f:
             try:
                 # replace global highlight calls by calls into the local class
                 # this could be done on javascript side but this would make

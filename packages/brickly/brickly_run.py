@@ -57,14 +57,14 @@ if current_executable != None and current_executable != "":
 # save xml if present
 if "text" in form:
     # write code to file
-    with open("brickly.xml", 'w') as f:
+    with open("brickly.xml", 'w', encoding="utf-8") as f:
         f.write(form["text"].value)
         f.close()
 
 # save and run python code if present
 if "code" in form:
     # write code to file
-    with open("brickly.py", 'w') as f:
+    with open("brickly.py", 'w', encoding="utf-8") as f:
         f.write(form["code"].value)
         f.close()
 

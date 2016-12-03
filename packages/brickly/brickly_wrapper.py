@@ -13,7 +13,7 @@ import time, sys, threading, asyncio, websockets, queue, pty, json
 import os
 
 # debug to file since stdout doesn't exist
-dbg = open('/tmp/brickly.log', 'w')
+dbg = open('/tmp/brickly.log', 'w', encoding="UTF-8")
 
 # the websocket server is a seperate tread for handling the websocket
 class websocket_server(threading.Thread): 
@@ -140,7 +140,7 @@ def getInput(port):
         return not txt.getCurrentInput(port)
 
 # load and execute blockly code
-with open("brickly.py") as f:
+with open("brickly.py", encoding="UTF-8") as f:
     try:
         code_txt = f.read()
         code_txt = code_txt.replace("# highlightBlock(", "highlightBlock(");

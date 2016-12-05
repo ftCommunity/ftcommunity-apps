@@ -1,6 +1,8 @@
 var workspace = Blockly.inject('blocklyDiv',
 			       {media: 'media/',
 				toolbox: document.getElementById('toolbox')});
+var blocklyDiv = document.getElementById('blocklyDiv');
+var blocklyArea = document.getElementById('blocklyArea');
 
 custom_blocks_init();
 button_set_state(true, true);
@@ -42,7 +44,9 @@ function html_escape(str) {
 
 // display some text output by the code
 function display_text(str) {
-    document.getElementById("textDiv").innerHTML += str.replace(/\n/g,'<br />');
+    var objDiv = document.getElementById("textDiv");
+    objDiv.innerHTML += str.replace(/\n/g,'<br />');
+    objDiv.scrollTop = objDiv.scrollHeight;
 }
 
 // display some system text output by the runtime on server side
@@ -83,6 +87,7 @@ function ws_start(initial) {
     };
     
     ws.onopen = function(evt) {
+	workspace.spinner.stop();
         ws.connected = true;
         display_text_sys("<font color='green'>Connected!</font>\n");
         display_state("Connected");
@@ -109,11 +114,16 @@ function ws_start(initial) {
 };
 
 function stopCode() {
+    var objDiv = document.getElementById("textArea");
+    workspace.spinner = new Spinner({top:"0%", position:"relative", color: '#fff'}).spin(objDiv)
+
     var http = new XMLHttpRequest();
     http.open("GET", "./brickly_stop.py?pid="+pid);
     http.setRequestHeader("Content-type", "text/html");
     http.onreadystatechange = function() {
         if (http.readyState == XMLHttpRequest.DONE) {
+	    workspace.spinner.stop();
+	    
             if (http.status != 200) {
 		alert("Error " + http.status + "\n" + http.statusText);
             } else {
@@ -152,10 +162,14 @@ function runCode() {
     Blockly.Python.addReservedWords('highlightBlock');
     var code = Blockly.Python.workspaceToCode(workspace);
 
-    // there may be no code at all, this is still valid
+    // there may be no code at all, this is still valid. Mabe we can do something more
+    // useful in this case
     if(code == "")
 	alert("No code to be run!")
     else {
+	var objDiv = document.getElementById("textArea");
+	workspace.spinner = new Spinner({top:"0%", position:"relative", color: '#fff'}).spin(objDiv)
+
 	// prepare gui for running program
 	display_text_clr();
 	button_set_state(false, true);
@@ -189,3 +203,31 @@ function runCode() {
 	http.send('code='+encodeURIComponent(code)+'&text='+encodeURIComponent(text));
 	}
 }
+
+function resizeTo(element, target) {
+    // Compute the absolute coordinates and dimensions of source
+    var r_element = element;
+    var x = 0;
+    var y = 0;
+    do {
+        x += element.offsetLeft;
+        y += element.offsetTop;
+        element = element.offsetParent;
+    } while (element);
+
+    // Position blocklyDiv over blocklyArea.
+    target.style.left = x + 'px';
+    target.style.top = y + 'px';
+    target.style.width = r_element.offsetWidth + 'px';
+    target.style.height = r_element.offsetHeight + 'px';
+}
+
+var onresize = function(e) {
+    resizeTo(blocklyArea, blocklyDiv);
+    resizeTo(textArea, textDiv);
+};
+
+// window.addEventListener('resize', onresize, false);
+window.addEventListener('resize', onresize, false);
+onresize();
+Blockly.svgResize(workspace);

@@ -198,7 +198,7 @@ html: index.html
 exec: brickly_app.py
 managed: yes
 uuid: 1f2d90a3-11e9-4a92-955a-73ffaec0fe71
-version: 1.0
+version: 1.01
 firmware: 0.9
 
 [app_tutorial_1]

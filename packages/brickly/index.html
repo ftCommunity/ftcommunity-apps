@@ -10,21 +10,36 @@
   <script src="./blockly/python_compressed.js"></script>
   <script src="./blockly/en.js"></script>
   <script src="./custom_blocks.js"></script>
+  <script src="./spin.js"></script>
 </head>
+
 <body>
-  <h1><div class="outline"><font color="red">fischer</font><font color="#046ab4">technik</font>&nbsp;<font color="#fcce04">TXT</font></div></h1>
+  <table id="global" width="100%" border="0" height="99%">
+    <tr><td colspan="2">
+      <h1><div class="outline"><font color="red">fischer</font><font color="#046ab4">technik</font>&nbsp;<font color="#fcce04">TXT</font></div></h1>
+    </td></tr>
+    
+    <tr>
+      <td width="66%" id="blocklyArea"></td>
 
-  <table><tr>
-      <td><button id="button">xxx</button></td>
-      <td>&nbsp;</td>
-      <td>State:</td>
-      <td><div id="stateDiv">Disconnected</div></td>
-  </tr></table>
+      <td>
+	<table width="100%" height="100%">
+	  <tr><td>
+	      <table width="100%"><tr>
+		  <td><button id="button">xxx</button></td>
+		  <td align="right">
+		    <div id="stateDiv">Disconnected</div>
+		  </td>
+	      </tr></table>
+	  </td></tr>
+	  <tr><td height="100%" id="textArea"></td></tr>
+	</table>
+      </td>
+    </tr>
+  </table>
 
-  <table><tr>
-    <td><div id="blocklyDiv" style="height: 480px; width: 600px;"></div></td>
-    <td><div id="textDiv" style="height: 480px; width: 300px; background-color: #046ab4"></div></td>
-  </tr></table>
+  <div id="blocklyDiv" style="position: absolute"></div>
+  <div id="textDiv" style="position: absolute; background-color: #046ab4; overflow-y: auto;"></div>
 
   <xml id="toolbox" style="display: none" colour="100">
     <category name="Custom" colour="290">

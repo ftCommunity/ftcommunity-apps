@@ -4,31 +4,31 @@
 // json definition of custom blocks
 var block_wait = {
   "type": "wait",
-  "message0": "wait %1 seconds",
+  "message0": MSG['blockWaitMessage'],
   "args0": [ { "type": "input_value", "name": "seconds", "check": "Number" } ],
   "inputsInline": true,
   "previousStatement": null,
   "nextStatement": null,
   "colour": 290,
-  "tooltip": "Pause program execution a given time"
+  "tooltip": MSG['blockWaitToolTip'],
 };
 
 var block_on_off = {
   "type": "on_off",
-  "message0": "%1",
+  "message0": MSG['blockOnOffMessage'],
   "args0": [ {
       "type": "field_dropdown",
       "name": "state",
-      "options": [ [ "on", "1" ], [ "off", "0" ] ]
+      "options": [ [ MSG['blockOn'], "1" ], [ MSG['blockOff'], "0" ] ]
     } ],
   "output": "Boolean",
   "colour": 290,
-  "tooltip": "Set and output state"
+  "tooltip": MSG['blockOnOffToolTip'],
 };
 
 var block_output = {
   "type": "output",
-  "message0": "set output %1 %2",
+  "message0": MSG['blockOutputMessage'],
   "args0": [ {
       "type": "field_dropdown",
       "name": "port",
@@ -45,12 +45,12 @@ var block_output = {
   "previousStatement": null,
   "nextStatement": null,
   "colour": 290,
-  "tooltip": "Set output state on or off"
+  "tooltip": MSG['blockOutputToolTip'],
 }
 
 var block_input = {
   "type": "input",
-  "message0": "get %1",
+  "message0": MSG['blockInputMessage'],
   "args0": [
     {
       "type": "field_dropdown",
@@ -63,7 +63,7 @@ var block_input = {
   ],
   "output": "Boolean",
   "colour": 290,
-  "tooltip": "Get input state"
+  "tooltip": MSG['blockInputToolTip']
 }
 
 // generate python code for custom blocks

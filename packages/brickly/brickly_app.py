@@ -3,7 +3,6 @@
 #
 
 from TouchStyle import *
-import ftrobopy
 
 # Wrapper for brickly.py python code. The main purpose of
 # this wrapper is to catch the output of brickly.py and send
@@ -89,6 +88,7 @@ class RunThread(QThread):
         if txt_ip == None: txt_ip = "localhost"
         self.txt = None
         try:
+            import ftrobopy
             self.txt = ftrobopy.ftrobopy(txt_ip, 65000)
             # all outputs normal mode
             M = [ self.txt.C_OUTPUT, self.txt.C_OUTPUT, self.txt.C_OUTPUT, self.txt.C_OUTPUT ]
@@ -115,11 +115,34 @@ class RunThread(QThread):
             print("TXT init failed", file=sys.stderr)
 
     def run(self):
+        self.online = False
         path = os.path.dirname(os.path.realpath(__file__))
         fname = os.path.join(path, "brickly.py")
+        stamp_fname = os.path.join(path, "brickly.stamp")
         if not os.path.isfile(fname):
             fname = os.path.join(path, "default.py")
-        
+        else:
+            # A brickly.py was found. Now check if there's a stamp
+            # that's older than brickly.py. If it is then the
+            # brickly.py has never been run before which in turn
+            # means that brickly_app has been launched from the
+            # web interface
+            
+            # if no stamp exists at all then we are also running
+            # online
+            if not os.path.isfile(stamp_fname):
+                self.online = True
+            else:
+                brickly_time = os.stat(fname).st_mtime
+                stamp_time = os.stat(stamp_fname).st_mtime
+                if brickly_time > stamp_time:
+                    self.online = True
+
+            print("Online: ", self.online)
+                
+        stamp = open(stamp_fname, 'w')
+        stamp.close()
+
         # load and execute locally stored blockly code
         with open(fname, encoding="UTF-8") as f:
             try:
@@ -171,16 +194,11 @@ class RunThread(QThread):
 class Application(TouchApplication):
     def __init__(self, args):
         TouchApplication.__init__(self, args)
-        self.ui_queue = queue.Queue()
 
         # start the websocket server listening for web clients to connect
         self.ws = WebsocketServerThread()
         self.ws.start() 
 
-        # start the run thread executing the blockly code
-        self.thread = RunThread(self.ws.queue, self.ui_queue)
-        self.thread.start()
-  
         # create the empty main window
         w = TouchWindow("Brickly")
 
@@ -190,10 +208,15 @@ class Application(TouchApplication):
 
         # a timer to read the ui output queue and to update
         # the screen
+        self.ui_queue = queue.Queue()
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.on_timer)
         self.timer.start(100)
         
+        # start the run thread executing the blockly code
+        self.thread = RunThread(self.ws.queue, self.ui_queue)
+        self.thread.start()
+  
         w.show()
         self.exec_()        
 

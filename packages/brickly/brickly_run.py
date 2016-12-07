@@ -3,15 +3,12 @@
 #
 
 import cgi
-import cgitb
 import sys
 import os
 import subprocess
 import json
 import socket
 import time
-
-cgitb.enable(format='text')
 
 form = cgi.FieldStorage()
 
@@ -61,6 +58,13 @@ if "text" in form:
         f.write(form["text"].value)
         f.close()
 
+# save language setting if present
+if "lang" in form:
+    # write code to file
+    with open("lang.js", 'w') as f:
+        f.write("var lang = '" + form["lang"].value + "';\n")
+        f.close()
+
 # save and run python code if present
 if "code" in form:
     # write code to file
@@ -72,7 +76,7 @@ if "code" in form:
     print("Content-Type: application/json")
     print("")
 
-    # Finally there'll be two modes of operation: 
+    # There are two modes of operation: 
     # 1) with a launcher process which can be told to
     #    run a certain program
     # 2) without any helper process. Thus this script forks the

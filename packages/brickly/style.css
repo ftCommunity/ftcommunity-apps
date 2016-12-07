@@ -11,12 +11,8 @@ html, body {
 body {
     background-color: #fff;
     font-family: sans-serif;
+    font-weight: bold;
     overflow: hidden;
-}
-
-/* this is an ugly hack. Sometimes when scaling the injectionDiv "shines through" for unknown reason */
-.injectionDiv {
-    background-color: #fff;
 }
 
 .blocklyToolboxDiv {
@@ -25,7 +21,6 @@ body {
 
 .blocklyTreeLabel {
     font-size: 18px;
-    font-style: bold;
 }
 
 #blocklyArea {
@@ -42,13 +37,29 @@ button {
     color: white;
     border: 2px solid lightgrey;
     float: left;
-    font-size: 20px;
+    font-size: 18px;
+    font-weight: bold;
     border-radius: 6px;
     box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+button[disabled=disabled], button:disabled {
+    color: lightgrey;
 }
 
 #blocklyDiv {
     height: 99%;
     background: #fc9;
     text-align: center;
+}
+
+#lang {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+#lang img {
+    border: 2px solid lightgrey;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
 }

@@ -1,15 +1,44 @@
-var workspace = Blockly.inject('blocklyDiv',
-			       {media: 'media/',
-				toolbox: document.getElementById('toolbox')});
-var blocklyDiv = document.getElementById('blocklyDiv');
-var blocklyArea = document.getElementById('blocklyArea');
+var Code = {};
+Code.workspace = null;
+Code.Msg = {};
 
-custom_blocks_init();
-button_set_state(true, true);
-loadCode("./brickly.xml");
+function init() {
+    // Interpolate translated messages into toolbox.
+    var toolboxText = document.getElementById('toolbox').outerHTML;
+    toolboxText = toolboxText.replace(/{(\w+)}/g,
+				      function(m, p1) {return MSG[p1]});
+    var toolboxXml = Blockly.Xml.textToDom(toolboxText);
+    
+    Code.workspace = Blockly.inject('blocklyDiv',
+				    {media: 'media/', 
+				     toolbox: toolboxXml } );
+    
+    custom_blocks_init();
+    button_set_state(true, true);
+    display_state(MSG['stateDisconnected']);
+    loadCode("./brickly.xml");
 
-function set_lang(code) {
-    alert("Set lang to " + code);
+    window.addEventListener('resize', onresize, false);
+    onresize();
+}
+
+function get_lang(current) {
+  var val = location.search.match(new RegExp('[?&]lang=([^&]+)'));
+  return val ? decodeURIComponent(val[1].replace(/\+/g, '%20')) : current;
+};
+
+function set_lang(newLang) {
+    var search = window.location.search;
+    if (search.length <= 1) {
+	search = '?lang=' + newLang;
+    } else if (search.match(/[?&]lang=[^&]*/)) {
+	search = search.replace(/([?&]lang=)[^&]*/, '$1' + newLang);
+    } else {
+	search = search.replace(/\?/, '?lang=' + newLang + '&');
+    }
+    
+    window.location = window.location.protocol + '//' +
+	window.location.host + window.location.pathname + search;
 }
 
 function display_state(str) {
@@ -22,10 +51,10 @@ function button_set_state(enable, run) {
     but.disabled = !enable;
     if(enable) {
         if(run) {
-            but.innerHTML = "Run...";
+            but.innerHTML = MSG['buttonRun'];
             but.onclick = runCode;
         } else {
-            but.innerHTML = "Stop!";
+            but.innerHTML = MSG['buttonStop'];
             but.onclick = stopCode;
         }
     }
@@ -49,11 +78,6 @@ function display_text(str) {
     objDiv.scrollTop = objDiv.scrollHeight;
 }
 
-// display some system text output by the runtime on server side
-function display_text_sys(str) {
-//    display_text("<span style='background-color: #e8e8e8'>"+str+"</span>");
-} 
-
 // clear the text area
 function display_text_clr() {
     document.getElementById("textDiv").innerHTML = "";
@@ -62,7 +86,6 @@ function display_text_clr() {
 // start the websocket server
 function ws_start(initial) {
     url = "ws://"+document.location.hostname+":9002/";
-    // if(initial) display_text_sys("Connecting to " + url + " ...\n");
     
     var ws = new WebSocket(url);
     ws.connected = false;
@@ -71,26 +94,24 @@ function ws_start(initial) {
 	// ignore empty messages (which we use to force waiting for client)
 	if(evt.data.length) {
             // the message is json encoded
-	    console.log("RX:" + evt.data);
             obj = JSON.parse(evt.data);
             if(obj.stdout) display_text("<tt><b>"+html_escape(obj.stdout)+"</b></tt>");
             if(obj.stderr) display_text("<font color='red'><tt><b>"+
 					    html_escape(obj.stderr)+"</b></tt></font>");
 	    if(obj.highlight) {
 		if(obj.highlight == "none") {
-		    display_state("Program ended");
-		    workspace.highlightBlock();
+		    display_state(MSG['stateProgramEnded']);
+		    Code.workspace.highlightBlock();
 		} else
-		    workspace.highlightBlock(obj.highlight);
+		    Code.workspace.highlightBlock(obj.highlight);
 	    }
 	}
     };
     
     ws.onopen = function(evt) {
-	workspace.spinner.stop();
+	Code.spinner.stop();
         ws.connected = true;
-        display_text_sys("<font color='green'>Connected!</font>\n");
-        display_state("Connected");
+        display_state(MSG['stateConnected']);
         button_set_state(true, false);
     };
     
@@ -100,34 +121,32 @@ function ws_start(initial) {
     ws.onclose = function(evt) {
         // retry if we never were successfully connected
         if(!ws.connected) {
-            display_text_sys("<font color='orange'>.</font>");
-            //try to reconnect in 100ms
-           setTimeout(function(){ws_start(false)}, 100);
+            //try to reconnect in 10ms
+           setTimeout(function(){ws_start(false)}, 10);
         } else {
-            display_text_sys("<font color='red'>Disconnected</font>\n");
-            display_state("Disconnected");
+            display_state(MSG['stateDisconnected']);
             ws.connected = false;
             button_set_state(true, true);
-	    workspace.highlightBlock();
+	    Code.workspace.highlightBlock();
         }
     };
 };
 
 function stopCode() {
     var objDiv = document.getElementById("textArea");
-    workspace.spinner = new Spinner({top:"0%", position:"relative", color: '#fff'}).spin(objDiv)
+    Code.spinner = new Spinner({top:"0%", position:"relative", color: '#fff'}).spin(objDiv)
 
     var http = new XMLHttpRequest();
     http.open("GET", "./brickly_stop.py?pid="+pid);
     http.setRequestHeader("Content-type", "text/html");
     http.onreadystatechange = function() {
         if (http.readyState == XMLHttpRequest.DONE) {
-	    workspace.spinner.stop();
+	    Code.spinner.stop();
 	    
             if (http.status != 200) {
 		alert("Error " + http.status + "\n" + http.statusText);
             } else {
-		// display_text_sys(http.responseText + "\n");
+
             }
         }
     }
@@ -142,12 +161,11 @@ function loadCode(name) {
         if (http.readyState == XMLHttpRequest.DONE) {
             if (http.status != 200) {
 		if (name != "default.xml") {
-		    display_text_sys("Loading default ...\n");
 		    loadCode("./default.xml");
 		}
             } else {
 		var xml = Blockly.Xml.textToDom(http.responseText);
-		Blockly.Xml.domToWorkspace(xml, workspace);
+		Blockly.Xml.domToWorkspace(xml, Code.workspace);
             }
         }
     }
@@ -160,7 +178,7 @@ function runCode() {
     // need to be uncommented on server side
     Blockly.Python.STATEMENT_PREFIX = '# highlightBlock(%1);\n';
     Blockly.Python.addReservedWords('highlightBlock');
-    var code = Blockly.Python.workspaceToCode(workspace);
+    var code = Blockly.Python.workspaceToCode(Code.workspace);
 
     // there may be no code at all, this is still valid. Mabe we can do something more
     // useful in this case
@@ -168,15 +186,15 @@ function runCode() {
 	alert("No code to be run!")
     else {
 	var objDiv = document.getElementById("textArea");
-	workspace.spinner = new Spinner({top:"0%", position:"relative", color: '#fff'}).spin(objDiv)
+	Code.spinner = new Spinner({top:"0%", position:"relative", color: '#fff'}).spin(objDiv)
 
 	// prepare gui for running program
 	display_text_clr();
 	button_set_state(false, true);
-	display_state("Connecting ...");
+        display_state(MSG['stateConnecting']);
 
 	// Generate Python code and POST it
-	var xml = Blockly.Xml.workspaceToDom(workspace);
+	var xml = Blockly.Xml.workspaceToDom(Code.workspace);
 	var text = Blockly.Xml.domToText(xml);
     
 	var http = new XMLHttpRequest();
@@ -187,11 +205,8 @@ function runCode() {
 		if (http.status != 200) {
 		    alert("Error " + http.status + "\n" + http.statusText);
 		} else {
-		    console.log("RX:" + http.responseText);
-
 		    // try to find PID ...
 		    pid = JSON.parse(http.responseText).pid;
-		    // display_text_sys("PID: " + pid + "\n");
 		    
 		    // finally connect to the server
 		    setTimeout(function(){ws_start(true)}, 500);
@@ -200,11 +215,16 @@ function runCode() {
 	}
 	
 	// POST python as well as xml
-	http.send('code='+encodeURIComponent(code)+'&text='+encodeURIComponent(text));
+	http.send('code='+encodeURIComponent(code)+
+		  '&text='+encodeURIComponent(text)+
+		  '&lang='+lang);
 	}
 }
 
-function resizeTo(element, target) {
+function resizeTo(element_name, target_name) {
+    var element = document.getElementById(element_name);
+    var target = document.getElementById(target_name);
+
     // Compute the absolute coordinates and dimensions of source
     var r_element = element;
     var x = 0;
@@ -222,12 +242,37 @@ function resizeTo(element, target) {
     target.style.height = r_element.offsetHeight + 'px';
 }
 
-var onresize = function(e) {
-    resizeTo(blocklyArea, blocklyDiv);
-    resizeTo(textArea, textDiv);
+// Returns a function, that, as long as it continues to be invoked, will not
+// be triggered. The function will be called after it stops being called for
+// N milliseconds. If `immediate` is passed, trigger the function on the
+// leading edge, instead of the trailing.
+function debounce(func, wait, immediate) {
+    var timeout;
+    return function() {
+	var context = this, args = arguments;
+	var later = function() {
+	    timeout = null;
+	    if (!immediate) func.apply(context, args);
+	};
+	var callNow = immediate && !timeout;
+	clearTimeout(timeout);
+	timeout = setTimeout(later, wait);
+	if (callNow) func.apply(context, args);
+    };
 };
 
-// window.addEventListener('resize', onresize, false);
-window.addEventListener('resize', onresize, false);
-onresize();
-Blockly.svgResize(workspace);
+var onresize = debounce(function() {
+    resizeTo('blocklyArea', 'blocklyDiv');
+    resizeTo('textArea', 'textDiv');
+    Blockly.svgResize(Code.workspace);
+}, 100);
+
+// language may not be set by now. Use english as default then
+if (typeof lang === 'undefined') { lang = 'en'; }
+// try to override from url
+lang = get_lang(lang);
+
+document.head.parentElement.setAttribute('lang', lang);
+document.write('<script src="blockly/' + lang + '.js"></script>\n');
+document.write('<script src="' + lang + '.js"></script>\n');
+window.addEventListener('load', init);

@@ -66,6 +66,64 @@ var block_input = {
   "tooltip": MSG['blockInputToolTip']
 }
 
+var block_play_snd = {
+  "type": "play_snd",
+  "message0": MSG['blockPlaySndMessage'],
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "sound_index"
+    }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 290,
+  "tooltip": MSG['blockPlaySndToolTip']
+}
+    
+var block_sound = {
+  "type": "sound",
+  "message0": MSG['blockSoundMessage'],
+  "args0": [ {
+      "type": "field_dropdown",
+      "name": "index",
+      "options": [
+	  [ MSG['blockSoundAirplane'], "1" ],
+	  [ MSG['blockSoundAlarm'], "2" ],
+	  [ MSG['blockSoundBell'], "3" ],
+	  [ MSG['blockSoundBraking'], "4" ],
+	  [ MSG['blockSoundCar_horn_long'], "5" ],
+	  [ MSG['blockSoundCar_horn_short'], "6" ],
+	  [ MSG['blockSoundCrackling_wood'], "7" ],
+	  [ MSG['blockSoundExcavator'], "8" ],
+	  [ MSG['blockSoundFantasy_1'], "9" ],
+	  [ MSG['blockSoundFantasy_2'], "10" ],
+	  [ MSG['blockSoundFantasy_3'], "11" ],
+	  [ MSG['blockSoundFantasy_4'], "12" ],
+	  [ MSG['blockSoundFarm'], "13" ],
+	  [ MSG['blockSoundFire_department'], "14" ],
+	  [ MSG['blockSoundFire_noises'], "15" ],
+	  [ MSG['blockSoundFormula1'], "16" ],
+	  [ MSG['blockSoundHelicopter'], "17" ],
+	  [ MSG['blockSoundHydraulic'], "18" ],
+	  [ MSG['blockSoundMotor_sound'], "19" ],
+	  [ MSG['blockSoundMotor_starting'], "20" ],
+	  [ MSG['blockSoundPropeller_airplane'], "21" ],
+	  [ MSG['blockSoundRoller_coaster'], "22" ],
+	  [ MSG['blockSoundShips_horn'], "23" ],
+	  [ MSG['blockSoundTractor'], "24" ],
+	  [ MSG['blockSoundTruck'], "25" ],
+	  [ MSG['blockSoundRobby_1'], "26" ],
+	  [ MSG['blockSoundRobby_2'], "27" ],
+	  [ MSG['blockSoundRobby_3'], "28" ],
+	  [ MSG['blockSoundRobby_4'], "29" ]
+      ]
+    } ],
+  "output": "Number",
+  "colour": 290,
+  "tooltip": MSG['blockSoundToolTip'],
+};
+
 // generate python code for custom blocks
 Blockly.Python['wait'] = function(block) {
     var value_seconds = Blockly.Python.valueToCode(block, 'seconds', Blockly.Python.ORDER_ATOMIC);
@@ -87,13 +145,20 @@ Blockly.Python['output'] = function(block) {
     return 'setOutput(%1, %2)\n'.replace('%1', port).replace('%2', value);
 }
 
-// generate python code for custom blocks
 Blockly.Python['input'] = function(block) {
     var port = block.getFieldValue('port');
-    // the command itself is commented out and will be replaced by the server with
-    // and appropriate call
     code = 'getInput(%1)'.replace('%1', port);
     return [code, Blockly.Python.ORDER_NONE];
+}
+
+Blockly.Python['play_snd'] = function(block) {
+    var value = Blockly.Python.valueToCode(block, 'sound_index', Blockly.Python.ORDER_ATOMIC);
+    return 'playSound(%1)\n'.replace('%1', value);
+}
+
+Blockly.Python['sound'] = function(block) {
+    var index = block.getFieldValue('index');
+    return [index, Blockly.Python.ORDER_NONE];
 }
 
 function custom_blocks_init() {
@@ -106,5 +171,9 @@ function custom_blocks_init() {
 	init: function() { this.jsonInit(block_input); } };
     Blockly.Blocks['on_off'] = {
 	init: function() { this.jsonInit(block_on_off); } };
+    Blockly.Blocks['play_snd'] = {
+	init: function() { this.jsonInit(block_play_snd); } };
+    Blockly.Blocks['sound'] = {
+	init: function() { this.jsonInit(block_sound); } };
 }
 

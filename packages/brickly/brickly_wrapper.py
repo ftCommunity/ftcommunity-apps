@@ -122,7 +122,7 @@ except:
 def setOutput(port, val):
     if not txt:
         # if no TXT could be connected just write to stderr
-        print("FAKE O" + str(port+1) + "=" + str(val), file=sys.stderr)
+        print("O" + str(port+1) + "=" + str(val), file=sys.stderr)
     else:
         if val:
             pwm_val = 512
@@ -134,10 +134,18 @@ def setOutput(port, val):
 def getInput(port):
     if not txt:
         # if no TXT could be connected just write to stderr
-        print("FAKE I" + str(port+1) + "=" + str(True), file=sys.stderr)
+        print("I" + str(port+1) + "=" + str(True), file=sys.stderr)
         return True
     else:
         return not txt.getCurrentInput(port)
+
+def playSound(snd):
+    if not txt:
+        # if no TXT could be connected just write to stderr
+        print("SND " + str(snd), file=sys.stderr)
+    else:
+        txt.setSoundIndex(snd)
+        txt.incrSoundCmdId()
 
 # load and execute blockly code
 with open("brickly.py", encoding="UTF-8") as f:

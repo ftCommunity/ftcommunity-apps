@@ -138,7 +138,7 @@ class RunThread(QThread):
                 if brickly_time > stamp_time:
                     self.online = True
 
-            print("Online: ", self.online)
+            # print("Online: ", self.online)
                 
         stamp = open(stamp_fname, 'w')
         stamp.close()
@@ -146,13 +146,14 @@ class RunThread(QThread):
         # load and execute locally stored blockly code
         with open(fname, encoding="UTF-8") as f:
             try:
-                # replace global highlight calls by calls into the local class
+                # replace global calls by calls into the local class
                 # this could be done on javascript side but this would make
-                # the generated python code harder to read
+                # the bare generated python code harder to read
                 code_txt = f.read()
                 code_txt = code_txt.replace("# highlightBlock(", "self.highlightBlock(");
                 code_txt = code_txt.replace("setOutput(", "self.setOutput(");
                 code_txt = code_txt.replace("getInput(", "self.getInput(");
+                code_txt = code_txt.replace("playSound(", "self.playSound(");
                 code = compile(code_txt, "brickly.py", 'exec')
                 exec(code)
             except SyntaxError as e:
@@ -166,7 +167,7 @@ class RunThread(QThread):
     def setOutput(self,port,val):
         if not self.txt:
             # if no TXT could be connected just write to stderr
-            print("FAKE O" + str(port+1) + "=" + str(val), file=sys.stderr)
+            print("O" + str(port+1) + "=" + str(val), file=sys.stderr)
         else:
             if val:
                 pwm_val = 512
@@ -178,10 +179,18 @@ class RunThread(QThread):
     def getInput(self,port):
         if not self.txt:
             # if no TXT could be connected just write to stderr
-            print("FAKE I" + str(port+1) + "=" + str(True), file=sys.stderr)
+            print("I" + str(port+1) + "=" + str(True), file=sys.stderr)
             return True
         else:
             return not self.txt.getCurrentInput(port)
+
+    def playSound(self,snd):
+        if not self.txt:
+            # if no TXT could be connected just write to stderr
+            print("SND " + str(snd), file=sys.stderr)
+        else:
+            self.txt.setSoundIndex(snd)
+            self.txt.incrSoundCmdId()
         
     # this function is called from the blockly code itself. This feature has
     # to be enabled on javascript side in the code generation. The delay 

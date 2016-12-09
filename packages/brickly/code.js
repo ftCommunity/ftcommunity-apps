@@ -3,6 +3,19 @@ Code.workspace = null;
 Code.Msg = {};
 
 function init() {
+    Blockly.Blocks.logic.HUE = 43;      // TXT orange
+    Blockly.Blocks.texts.HUE = 0;       // red
+    //Blockly.Blocks.colour.HUE = 20;
+    //Blockly.Blocks.lists.HUE = 260;
+    //Blockly.Blocks.logic.HUE = 210;
+    //Blockly.Blocks.loops.HUE = 120;
+    //Blockly.Blocks.math.HUE = 230;
+    //Blockly.Blocks.procedures.HUE = 290;
+    //Blockly.Blocks.variables.HUE = 330;
+
+    Blockly.HSV_SATURATION = 0.7;  // global saturation
+    Blockly.HSV_VALUE = 0.6;        // global brightness
+
     // Interpolate translated messages into toolbox.
     var toolboxText = document.getElementById('toolbox').outerHTML;
     toolboxText = toolboxText.replace(/{(\w+)}/g,
@@ -12,6 +25,8 @@ function init() {
     Code.workspace = Blockly.inject('blocklyDiv',
 				    {media: 'media/', 
 				     toolbox: toolboxXml } );
+
+    console.log(Blockly.Blocks['controls_if'].thisBlock); // .setColour(99);
     
     custom_blocks_init();
     button_set_state(true, true);
@@ -155,7 +170,7 @@ function stopCode() {
 
 function loadCode(name) {
     var http = new XMLHttpRequest();
-    http.open("GET", name);
+    http.open("GET", name + "?random="+new Date().getTime());
     http.setRequestHeader("Content-type", "application/xml");
     http.onreadystatechange = function() {
         if (http.readyState == XMLHttpRequest.DONE) {
@@ -182,9 +197,10 @@ function runCode() {
 
     // there may be no code at all, this is still valid. Mabe we can do something more
     // useful in this case
-    if(code == "")
-	alert("No code to be run!")
-    else {
+    if(code == "") {
+	// simply do nothing by now. In the future perhaps ask to reload
+	// the default code
+    } else {
 	var objDiv = document.getElementById("textArea");
 	Code.spinner = new Spinner({top:"0%", position:"relative", color: '#fff'}).spin(objDiv)
 

@@ -15,18 +15,40 @@ body {
     overflow: hidden;
 }
 
-.blocklyToolboxDiv {
-    background-color: #448acc;
+.blocklySvg {
+  background-color: #DBE2FF !important;
 }
 
-.blocklyTreeLabel {
-    font-size: 18px;
+.blocklyToolboxDiv {
+    background-color: #448acc;
+    color: white;
+}
+
+.blocklyScrollbarHandle {
+    fill: #448acc;
+}
+
+.blocklyScrollbarBackground:hover+.blocklyScrollbarHandle,
+.blocklyScrollbarHandle:hover {
+    fill: #046ab4;
 }
 
 #blocklyArea {
     height: 99%;
 }
 
+.blocklyTreeLabel {
+    font-size: 18px;
+}
+
+.blocklyTreeRow {
+    background-color: #046ab4;
+    height: 28px;
+    line-height: 28px;
+    border: 1px solid lightgrey;    
+    box-shadow: 8px 8px 8px 0 rgba(0,0,0,0.2), 6px 6px 6px 0 rgba(0,0,0,0.19);
+}
+    
 .blocklyTreeRow:hover {
     background-color: black;
     color: black;
@@ -47,10 +69,13 @@ button[disabled=disabled], button:disabled {
     color: lightgrey;
 }
 
+#textDiv {
+    background-color: #046ab4;
+    border: 2px solid lightgrey;
+}
+
 #blocklyDiv {
     height: 99%;
-    background: #fc9;
-    text-align: center;
 }
 
 #lang {

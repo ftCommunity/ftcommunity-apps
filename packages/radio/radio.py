@@ -105,7 +105,7 @@ class StationListWidget(QListWidget):
             stations.append(tags)
 
         # sort by title
-        return sorted(stations, key=lambda k: k['name']) 
+        return sorted(stations, key=lambda k: k['name'])
 
     def scan_dir(self, dir):
         mp3_files = []

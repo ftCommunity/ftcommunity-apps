@@ -207,6 +207,7 @@ category: Tests
 author: Raphael Jacob
 icon: icon.png
 desc: Webradio-Player
+html: web.py
 exec: radio.py
 managed: yes
 uuid: ad5e0ea4-4606-4254-add6-60c452c3db36

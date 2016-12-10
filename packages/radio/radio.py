@@ -42,7 +42,7 @@ class StationListWidget(QListWidget):
         self.proc_mpg123 = None
         self.proc_txt_snd_cat = None
 
-        for station, url in self.stations.items():
+        for station, url in sorted(self.stations.items()):
             item = QListWidgetItem(station)
             item.setData(Qt.UserRole, (station, url))
             self.addItem(item)

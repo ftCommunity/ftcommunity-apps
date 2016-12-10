@@ -8,6 +8,7 @@
 import sys
 import subprocess
 import stat
+import json
 from TouchStyle import *
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -36,13 +37,14 @@ class StationListWidget(QListWidget):
 
     def __init__(self, parent=None):
         super(StationListWidget, self).__init__(parent)
-        self.stations = [['SR1', 'http://sr1m.akacast.akamaistream.net/7/725/142685/v1/gnl.akacast.akamaistream.net/sr1m']]
+        self.file = open('stations.json')
+        self.stations = json.load(self.file)
         self.proc_mpg123 = None
         self.proc_txt_snd_cat = None
 
-        for i in self.stations:
-            item = QListWidgetItem(i[0])
-            item.setData(Qt.UserRole, i)
+        for station, url in self.stations.items():
+            item = QListWidgetItem(station)
+            item.setData(Qt.UserRole, (station, url))
             self.addItem(item)
 
         self.itemClicked.connect(self.onItemClicked)
@@ -79,8 +81,8 @@ class StationListWidget(QListWidget):
         # stop whatever is currently playing
         self.stop_player()
 
-        tags = item.data(Qt.UserRole)
-        mpg123_cmd = MPG123.split() + [tags[1]]
+        station, url = item.data(Qt.UserRole)
+        mpg123_cmd = MPG123.split() + [url]
         # make sure the local mpg123/lib directory is being searched
         # for libraries
         env = os.environ.copy()
@@ -89,7 +91,7 @@ class StationListWidget(QListWidget):
         self.proc_txt_snd_cat = subprocess.Popen(TXT_PLAY.split(), stdin=self.proc_mpg123.stdout, stdout=subprocess.PIPE)
         self.proc_mpg123.stdout.close()  # Allow mpg123 to receive a SIGPIPE if txt_play exits.
 
-        self.play.emit(tags[0])
+        self.play.emit(station)
 
     def scan(self):
         stations = []

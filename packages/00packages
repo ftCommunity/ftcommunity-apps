@@ -202,9 +202,9 @@ version: 0.2
 firmware: 0.9
 
 [radio]
-name: MP3-Player
+name: Radio
 category: Tests
-author: Raphael JAcob
+author: Raphael Jacob
 icon: icon.png
 desc: Webradio-Player
 exec: radio.py

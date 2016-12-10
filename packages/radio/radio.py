@@ -93,44 +93,6 @@ class StationListWidget(QListWidget):
 
         self.play.emit(station)
 
-    def scan(self):
-        stations = []
-        mp3_files = []
-        for i in DIRS:
-            mp3_files += self.scan_dir(i)
-
-        # try to fetch id3 tags for all files
-        for i in mp3_files:
-            tags = self.get_id3(i)
-            tags["file"] = i
-            # if there was no title in the id3
-            # tags then use the filename
-            if not "title" in tags:
-                tags["title"] = i
-            stations.append(tags)
-
-        # sort by title
-        return sorted(stations, key=lambda k: k['name'])
-
-    def scan_dir(self, dir):
-        mp3_files = []
-        dir = os.path.expanduser(dir)  # path may start with ~
-
-        try:
-            files = os.listdir(dir)
-            for i in files:
-                fullpath = os.path.join(dir, i)
-                if os.path.isfile(fullpath):
-                    if fullpath.lower().endswith(('.mp3', '.mpeg3')):
-                        mp3_files.append(fullpath)
-                elif os.path.isdir(fullpath):
-                    mp3_files += self.scan_dir(fullpath)
-        except FileNotFoundError:
-            pass
-
-        return mp3_files
-
-
 class FtcGuiApplication(TouchApplication):
 
     def __init__(self, args):

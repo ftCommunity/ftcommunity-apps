@@ -5,7 +5,9 @@
 # TODO: Add kinetic scrolling
 # http://blog.codeimproved.net/posts/kinetic-scrolling.html
 
-import sys, subprocess, stat
+import sys
+import subprocess
+import stat
 from TouchStyle import *
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -17,7 +19,7 @@ if platform.machine() == "armv7l":
     # check if the executables really are executable
     # as the file came from a zip during installation it
     # may not have the executable flag set
-    EXECS = [ MPG123.split()[0], TXT_PLAY ]
+    EXECS = [MPG123.split()[0], TXT_PLAY]
     for e in EXECS:
         st = os.stat(e)
         if not (st.st_mode & stat.S_IEXEC):
@@ -28,12 +30,13 @@ else:
     MPG123 = "mpg123 --stdout --encoding u8 --rate 22050 --mono"
     TXT_PLAY = "play -q -t raw -b 8 -e unsigned -r 22050 -c 1 -"
 
+
 class StationListWidget(QListWidget):
     play = pyqtSignal(bool)
 
     def __init__(self, parent=None):
         super(StationListWidget, self).__init__(parent)
-        self.stations = [] #currently nothing
+        self.stations = []  # currently nothing
         self.proc_mpg123 = None
         self.proc_txt_snd_cat = None
 
@@ -77,7 +80,7 @@ class StationListWidget(QListWidget):
         self.stop_player()
 
         tags = item.data(Qt.UserRole)
-        mpg123_cmd = MPG123.split() + [ tags["file"] ]
+        mpg123_cmd = MPG123.split() + [tags["file"]]
         # make sure the local mpg123/lib directory is being searched
         # for libraries
         env = os.environ.copy()
@@ -116,7 +119,7 @@ class StationListWidget(QListWidget):
             for i in files:
                 fullpath = os.path.join(dir, i)
                 if os.path.isfile(fullpath):
-                    if fullpath.lower().endswith(('.mp3','.mpeg3')):
+                    if fullpath.lower().endswith(('.mp3', '.mpeg3')):
                         mp3_files.append(fullpath)
                 elif os.path.isdir(fullpath):
                     mp3_files += self.scan_dir(fullpath)
@@ -125,7 +128,9 @@ class StationListWidget(QListWidget):
 
         return mp3_files
 
+
 class FtcGuiApplication(TouchApplication):
+
     def __init__(self, args):
         TouchApplication.__init__(self, args)
 

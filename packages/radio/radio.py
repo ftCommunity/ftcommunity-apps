@@ -32,16 +32,16 @@ else:
 
 
 class StationListWidget(QListWidget):
-    play = pyqtSignal(bool)
+    play = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super(StationListWidget, self).__init__(parent)
-        self.stations = []  # currently nothing
+        self.stations = [['SR1', 'http://sr1m.akacast.akamaistream.net/7/725/142685/v1/gnl.akacast.akamaistream.net/sr1m']]
         self.proc_mpg123 = None
         self.proc_txt_snd_cat = None
 
         for i in self.stations:
-            item = QListWidgetItem(i["name"])
+            item = QListWidgetItem(i[0])
             item.setData(Qt.UserRole, i)
             self.addItem(item)
 
@@ -73,14 +73,14 @@ class StationListWidget(QListWidget):
     def stop(self):
         self.stop_player()
         self.clearSelection()
-        self.play.emit(False)
+        self.play.emit(None)
 
     def onItemClicked(self, item):
         # stop whatever is currently playing
         self.stop_player()
 
         tags = item.data(Qt.UserRole)
-        mpg123_cmd = MPG123.split() + [tags["file"]]
+        mpg123_cmd = MPG123.split() + [tags[1]]
         # make sure the local mpg123/lib directory is being searched
         # for libraries
         env = os.environ.copy()
@@ -89,7 +89,7 @@ class StationListWidget(QListWidget):
         self.proc_txt_snd_cat = subprocess.Popen(TXT_PLAY.split(), stdin=self.proc_mpg123.stdout, stdout=subprocess.PIPE)
         self.proc_mpg123.stdout.close()  # Allow mpg123 to receive a SIGPIPE if txt_play exits.
 
-        self.play.emit(True)
+        self.play.emit(tags[0])
 
     def scan(self):
         stations = []
@@ -140,9 +140,14 @@ class FtcGuiApplication(TouchApplication):
         self.vbox = QVBoxLayout()
 
         self.songlist = StationListWidget(self.w)
-        self.songlist.play[bool].connect(self.play)
+        self.songlist.play[str].connect(self.play)
         self.vbox.addWidget(self.songlist)
 
+        self.playing = QLabel()
+        self.playing.setText('No Stream')
+        self.playing.setStyleSheet('color: yellow')
+        self.playing.setAlignment(Qt.AlignCenter)
+        self.vbox.addWidget(self.playing)
         self.stop_but = QPushButton("Stop")
         self.stop_but.setDisabled(True)
         self.stop_but.clicked.connect(self.songlist.stop)
@@ -154,8 +159,15 @@ class FtcGuiApplication(TouchApplication):
 
         self.exec_()
 
-    def play(self, on):
-        self.stop_but.setEnabled(on)
+    def play(self, data):
+        if data == None:
+            self.stop_but.setEnabled(False)
+            self.playing.setText('No Stream')
+            self.playing.self.playing.setStyleSheet('color: yellow')
+        else:
+            self.stop_but.setEnabled(True)
+            self.playing.setText(data)
+            self.playing.setStyleSheet('color: #00ff00')
 
 if __name__ == "__main__":
     FtcGuiApplication(sys.argv)

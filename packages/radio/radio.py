@@ -99,7 +99,7 @@ class FtcGuiApplication(TouchApplication):
         TouchApplication.__init__(self, args)
 
         # create the empty main window
-        self.w = TouchWindow("Radio")
+        self.w = TouchWindow("MP3")
 
         self.vbox = QVBoxLayout()
 

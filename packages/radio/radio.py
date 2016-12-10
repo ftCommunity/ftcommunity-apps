@@ -12,7 +12,7 @@ import json
 from TouchStyle import *
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
-
+JSON_PATH = os.path.join(LOCAL_PATH, 'stations.json')
 # currently on TXT the mpg123 tools are stored below the app directory
 if platform.machine() == "armv7l":
     MPG123 = os.path.join(LOCAL_PATH, "mpg123", "mpg123") + " -q --stdout --encoding u8 --rate 22050 --mono"
@@ -37,7 +37,7 @@ class StationListWidget(QListWidget):
 
     def __init__(self, parent=None):
         super(StationListWidget, self).__init__(parent)
-        self.file = open('stations.json')
+        self.file = open(JSON_PATH)
         self.stations = json.load(self.file)
         self.proc_mpg123 = None
         self.proc_txt_snd_cat = None

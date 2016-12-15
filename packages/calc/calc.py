@@ -13,6 +13,11 @@ operator = ""
 opVar = False
 sumIt = 0
 
+class ExpandingButton(QPushButton):
+    def __init__(self, str):
+        QPushButton.__init__(self, str)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+    
 class CalcWidget(QWidget):
             
     def __init__(self):
@@ -23,65 +28,66 @@ class CalcWidget(QWidget):
         self.grid.setContentsMargins(0,0,0,0)
         
         self.line = QLineEdit("0")
+        self.line.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.line.setReadOnly(True)
         self.line.setAlignment(Qt.AlignRight)
         self.grid.addWidget(self.line,0,0,1,4);
 
-        zero = QPushButton("0")
+        zero = ExpandingButton("0")
         self.grid.addWidget(zero,5,0)
 
-        one = QPushButton("1")
+        one = ExpandingButton("1")
         self.grid.addWidget(one,4,0)
 
-        two = QPushButton("2")
+        two = ExpandingButton("2")
         self.grid.addWidget(two,4,1)
 
-        three = QPushButton("3")
+        three = ExpandingButton("3")
         self.grid.addWidget(three,4,2)
 
-        four = QPushButton("4")
+        four = ExpandingButton("4")
         self.grid.addWidget(four,3,0)
 
-        five = QPushButton("5")
+        five = ExpandingButton("5")
         self.grid.addWidget(five,3,1)
 
-        six = QPushButton("6")
+        six = ExpandingButton("6")
         self.grid.addWidget(six,3,2)
 
-        seven = QPushButton("7")
+        seven = ExpandingButton("7")
         self.grid.addWidget(seven,2,0)
 
-        eight = QPushButton("8")
+        eight = ExpandingButton("8")
         self.grid.addWidget(eight,2,1)
 
-        nine = QPushButton("9")
+        nine = ExpandingButton("9")
         self.grid.addWidget(nine,2,2)
 
-        point = QPushButton(".")
+        point = ExpandingButton(".")
         self.grid.addWidget(point,5,1)
         point.clicked.connect(self.Point)
 
-        sign = QPushButton("+/-")
+        sign = ExpandingButton("+/-")
         self.grid.addWidget(sign,5,2)
         sign.clicked.connect(self.Neg)
 
-        c = QPushButton("C")
+        c = ExpandingButton("C")
         self.grid.addWidget(c,1,2,1,2)
         c.clicked.connect(self.C)
 
-        div = QPushButton("/")
+        div = ExpandingButton("/")
         self.grid.addWidget(div,1,0)
 
-        mult = QPushButton("*")
+        mult = ExpandingButton("*")
         self.grid.addWidget(mult,1,1)
 
-        plus = QPushButton("+")
+        plus = ExpandingButton("+")
         self.grid.addWidget(plus,2,3)
 
-        minus = QPushButton("-")
+        minus = ExpandingButton("-")
         self.grid.addWidget(minus,3,3)
 
-        equal = QPushButton("=")
+        equal = ExpandingButton("=")
         self.grid.addWidget(equal,4,3,2,1)
         equal.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding);
         equal.clicked.connect(self.Equal)
@@ -203,8 +209,13 @@ class FtcGuiApplication(TxtApplication):
     def __init__(self, args):
         TxtApplication.__init__(self, args)
 
+        translator = QTranslator()
+        path = os.path.dirname(os.path.realpath(__file__))
+        translator.load(QLocale.system(), os.path.join(path, "calc_"))
+        self.installTranslator(translator)
+
         # create the empty main window
-        self.w = TxtWindow("Calc")
+        self.w = TxtWindow(QCoreApplication.translate("Main", "Calc"))
         self.w.setCentralWidget(CalcWidget())
 
         self.w.show() 

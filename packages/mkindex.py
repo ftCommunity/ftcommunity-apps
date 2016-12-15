@@ -26,12 +26,29 @@ for l in os.listdir("."):
             print("Adding", l, "...")
             pkgfile.write("\n")
             pkgfile.write("["+l+"]\n")
+            lang = ""
 
             # copy manifest contents. Skip [app] entry
             f = open(m)
             for line in f:
-                if not "[app]" in line:
-                    pkgfile.write(line)
+                line = line.strip()
+                # ignore empty lines
+                if line != "":
+                    # check if there's a section header in the line
+                    if line[0] == '[':
+                        # check if it's no the app section
+                        if not "[app]" in line:
+                            lang = line[line.find("[")+1:line.find("]")]
+                    else:
+                        if lang == "":
+                            # print lines not from a language specific section
+                            # just as they are
+                            print(line, file=pkgfile)
+                        else:
+                            # otherwise append language code to identifier
+                            # split at first ':'
+                            parts = line.split(':', 1)
+                            print(parts[0].strip()+"_"+lang+": "+parts[1].strip(), file=pkgfile)
             f.close()
 
 pkgfile.close()

@@ -67,6 +67,20 @@ uuid: 599047da-5f01-4a15-a94f-0fc14cc4a88b
 version: 1.1.1
 firmware: 0.9
 
+[camera]
+name: Camera
+category: System
+icon: icon.png
+desc: Camera test application
+exec: camera.py
+managed: yes
+set: 524328 ROBOTICS TXT Discovery Set
+uuid: e07d1f56-811d-4101-b6f9-9143319b14e2
+version: 1.0
+formware: 0.9
+name_de: Kamera
+desc_de: Kamera Test-Applikation
+
 [wedotest]
 name: WeDo
 category: Tests

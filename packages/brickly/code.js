@@ -1,8 +1,12 @@
 var Code = {};
 Code.workspace = null;
 Code.Msg = {};
+Code.speed = 90;        // 90% default speed
+Code.Level = 2;         // GUI level: 1 = beginner, 10 = expert
 
 function init() {
+    // do various global initialization
+    
     Blockly.Blocks.logic.HUE = 43;      // TXT orange
     Blockly.Blocks.texts.HUE = 0;       // red
     //Blockly.Blocks.colour.HUE = 20;
@@ -13,8 +17,15 @@ function init() {
     //Blockly.Blocks.procedures.HUE = 290;
     //Blockly.Blocks.variables.HUE = 330;
 
-    Blockly.HSV_SATURATION = 0.7;  // global saturation
+    Blockly.HSV_SATURATION = 0.7;   // global saturation
     Blockly.HSV_VALUE = 0.6;        // global brightness
+
+    // enable/disable the speed control
+    if(Code.Level > 1) {
+	document.getElementById("speed_range").value = Code.speed;
+    } else {
+	document.getElementById("speed").style.display = "none";
+    }
 
     // Interpolate translated messages into toolbox.
     var toolboxText = document.getElementById('toolbox').outerHTML;
@@ -23,10 +34,8 @@ function init() {
     var toolboxXml = Blockly.Xml.textToDom(toolboxText);
     
     Code.workspace = Blockly.inject('blocklyDiv',
-				    {media: 'media/', 
-				     toolbox: toolboxXml } );
-
-    console.log(Blockly.Blocks['controls_if'].thisBlock); // .setColour(99);
+				    { media: 'media/', 
+				      toolbox: toolboxXml } );
     
     custom_blocks_init();
     button_set_state(true, true);
@@ -35,6 +44,14 @@ function init() {
 
     window.addEventListener('resize', onresize, false);
     onresize();
+}
+
+function speed_change(value) {
+    Code.speed = value;
+    if (typeof Code.ws !== 'undefined') {
+	console.log("TX", JSON.stringify( { speed: Code.speed } ));
+	Code.ws.send(JSON.stringify( { speed: Code.speed } ));
+    }
 }
 
 function get_lang(current) {
@@ -102,10 +119,10 @@ function display_text_clr() {
 function ws_start(initial) {
     url = "ws://"+document.location.hostname+":9002/";
     
-    var ws = new WebSocket(url);
-    ws.connected = false;
+    Code.ws = new WebSocket(url);
+    Code.connected = false;
     
-    ws.onmessage = function(evt) {
+    Code.ws.onmessage = function(evt) {
 	// ignore empty messages (which we use to force waiting for client)
 	if(evt.data.length) {
             // the message is json encoded
@@ -123,26 +140,30 @@ function ws_start(initial) {
 	}
     };
     
-    ws.onopen = function(evt) {
+    Code.ws.onopen = function(evt) {
 	Code.spinner.stop();
-        ws.connected = true;
+        Code.connected = true;
         display_state(MSG['stateConnected']);
         button_set_state(true, false);
+
+	// send initial speed
+	Code.ws.send(JSON.stringify( { speed: Code.speed } ));
     };
     
-    ws.onerror = function(evt) {
+    Code.ws.onerror = function(evt) {
     };
     
-    ws.onclose = function(evt) {
+    Code.ws.onclose = function(evt) {
         // retry if we never were successfully connected
-        if(!ws.connected) {
+        if(!Code.connected) {
             //try to reconnect in 10ms
            setTimeout(function(){ws_start(false)}, 10);
         } else {
             display_state(MSG['stateDisconnected']);
-            ws.connected = false;
+            Code.connected = false;
             button_set_state(true, true);
 	    Code.workspace.highlightBlock();
+	    delete Code.ws;
         }
     };
 };

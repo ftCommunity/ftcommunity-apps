@@ -10,6 +10,8 @@ import json
 import socket
 import time
 
+debug = False
+
 form = cgi.FieldStorage()
 
 # send a command to the launcher and if a reply is expected return
@@ -83,11 +85,14 @@ if "code" in form:
     #    process into the background itself
 
     if current_executable == None:
-        # execute python program in external process
-        wrapper = os.path.join(os.path.dirname(os.path.realpath(__file__)), "brickly_wrapper.py")
-        proc = subprocess.Popen([wrapper], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if not debug:
+            # execute python program in external process
+            wrapper = os.path.join(os.path.dirname(os.path.realpath(__file__)), "brickly_wrapper.py")
+            proc = subprocess.Popen([wrapper], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        print(json.dumps( { "pid": proc.pid } ))
+            print(json.dumps( { "pid": proc.pid } ))
+        else:
+            print(json.dumps( { "pid": 123 } ))
     else:
         path = os.path.join("user", os.path.basename(os.path.dirname(os.path.realpath(__file__))))
         launcher_cmd("launch " + os.path.join(path, "brickly_app.py"))

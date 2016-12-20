@@ -9,15 +9,12 @@
 PORT = 9002
 CLIENT = ""    # any client
 OUTPUT_DELAY = 0.01
-MAX_HIGHTLIGHTS_PER_SEC = 25
+MAX_HIGHLIGHTS_PER_SEC = 25
 
 import time, sys, threading, asyncio, websockets, queue, pty, json
 import os
 
 speed = 100  # range 0 .. 100
-
-# debug to file since stdout doesn't exist
-dbg = open('/tmp/brickly.log', 'w', encoding="UTF-8")
 
 # the websocket server is a seperate thread for handling the websocket
 class websocket_server(threading.Thread): 
@@ -45,8 +42,6 @@ class websocket_server(threading.Thread):
 
     @asyncio.coroutine
     def handler(self, websocket, path):
-        print("WS Client connect ...", file=dbg)
-        dbg.flush()
         self.websocket = websocket
         self.clients.append(websocket)
 
@@ -72,9 +67,6 @@ class websocket_server(threading.Thread):
             finally:
                 pass
 
-        print("WS client disconnect!", file=dbg)
-        dbg.flush()
-
         # the websocket is no more ....
         self.websocket = None
 
@@ -96,17 +88,12 @@ class websocket_server(threading.Thread):
         
 # this object will be receiving everything from stdout
 class io_sink(object):
-    def __init__(self, name, allow_queueing, thread, fd):
+    def __init__(self, name, allow_queueing, thread):
         self.name = name
         self.allow_queueing = allow_queueing
-        self.file = fd
         self.thread = thread
 
     def write(self, message):
-        if(self.file):
-            self.file.write(message)
-            self.file.flush()
-            
         # slow down everything that allows queuing
         # to keep the system usable
         if self.allow_queueing:
@@ -138,9 +125,9 @@ thread = websocket_server()
 thread.start() 
 
 # redirect stdout and sterr to websocket server as well as into file
-sys.stdout = io_sink("stdout", True, thread, dbg)
-sys.stderr = io_sink("stderr", True, thread, dbg)
-highlight  = io_sink("highlight", False, thread, None)
+sys.stdout = io_sink("stdout", True, thread)
+sys.stderr = io_sink("stderr", True, thread)
+highlight  = io_sink("highlight", False, thread)
 
 # connect to TXT
 txt_ip = os.environ.get('TXT_IP')

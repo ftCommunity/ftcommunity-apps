@@ -1,6 +1,8 @@
 // custom block definitions for brickly incl. python code generation
 // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html
 
+CustomBlocksHUE = 200
+
 // json definition of custom blocks
 var block_wait = {
   "type": "wait",
@@ -9,7 +11,7 @@ var block_wait = {
   "inputsInline": true,
   "previousStatement": null,
   "nextStatement": null,
-  "colour": 290,
+  "colour": CustomBlocksHUE,
   "tooltip": MSG['blockWaitToolTip'],
 };
 
@@ -22,7 +24,7 @@ var block_on_off = {
       "options": [ [ MSG['blockOn'], "1" ], [ MSG['blockOff'], "0" ] ]
     } ],
   "output": "Boolean",
-  "colour": 290,
+  "colour": CustomBlocksHUE,
   "tooltip": MSG['blockOnOffToolTip'],
 };
 
@@ -44,7 +46,7 @@ var block_output = {
   ],
   "previousStatement": null,
   "nextStatement": null,
-  "colour": 290,
+  "colour": CustomBlocksHUE,
   "tooltip": MSG['blockOutputToolTip'],
 }
 
@@ -62,7 +64,7 @@ var block_input = {
     }
   ],
   "output": "Boolean",
-  "colour": 290,
+  "colour": CustomBlocksHUE,
   "tooltip": MSG['blockInputToolTip']
 }
 
@@ -77,7 +79,7 @@ var block_play_snd = {
   ],
   "previousStatement": null,
   "nextStatement": null,
-  "colour": 290,
+  "colour": CustomBlocksHUE,
   "tooltip": MSG['blockPlaySndToolTip']
 }
     
@@ -120,7 +122,7 @@ var block_sound = {
       ]
     } ],
   "output": "Number",
-  "colour": 290,
+  "colour": CustomBlocksHUE,
   "tooltip": MSG['blockSoundToolTip'],
 };
 

@@ -57,5 +57,7 @@ var MSG = {
     catLogic: "Logic",
     catLoops: "Loops",
     catMath: "Math",
-    catText: "Text"
+    catText: "Text",
+    catVariables: "Variables",
+    catFunctions: "Functions"
 }

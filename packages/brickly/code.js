@@ -6,9 +6,8 @@ Code.Level = 2;         // GUI level: 1 = beginner, 10 = expert
 
 function init() {
     // do various global initialization
-    
     Blockly.Blocks.logic.HUE = 43;      // TXT orange
-    Blockly.Blocks.texts.HUE = 0;       // red
+    Blockly.Blocks.texts.HUE = 350;       // red
     //Blockly.Blocks.colour.HUE = 20;
     //Blockly.Blocks.lists.HUE = 260;
     //Blockly.Blocks.logic.HUE = 210;

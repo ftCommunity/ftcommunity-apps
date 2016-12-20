@@ -28,7 +28,7 @@ class WebsocketServerThread(QThread):
         self.websocket = None
 
         # initial speed must not be > 90 to prevent rate limit from dropping
-        # hightlights before the browser has sent the actual speed value
+        # highlights before the browser has sent the actual speed value
         self.speed = 90  # range 0 .. 100
 
     def speed(self):
@@ -151,7 +151,7 @@ class RunThread(QThread):
         except:
             self.txt = None   
 
-        # redirect stdout, sterr and hightlight info to websocket server.
+        # redirect stdout, sterr and highlight info to websocket server.
         # redirect stdout also to the local screen
         sys.stdout = io_sink("stdout", False, self.ws_thread, self.ui_queue)
         sys.stderr = io_sink("stderr", False, self.ws_thread, None)
@@ -194,10 +194,13 @@ class RunThread(QThread):
                 # this could be done on javascript side but this would make
                 # the bare generated python code harder to read
                 code_txt = f.read()
-                code_txt = code_txt.replace("# highlightBlock(", "self.highlightBlock(");
-                code_txt = code_txt.replace("setOutput(", "self.setOutput(");
-                code_txt = code_txt.replace("getInput(", "self.getInput(");
-                code_txt = code_txt.replace("playSound(", "self.playSound(");
+                code_txt = "global self_\nself_ = self\n" + code_txt
+                code_txt = code_txt.replace("# highlightBlock(", "self_.highlightBlock(");
+                code_txt = code_txt.replace("setOutput(", "self_.setOutput(");
+                code_txt = code_txt.replace("getInput(", "self_.getInput(");
+                code_txt = code_txt.replace("playSound(", "self_.playSound(");
+
+                # convert global functions to methods
                 code = compile(code_txt, "brickly.py", 'exec')
 
                 # if running in online mode wait for the client to

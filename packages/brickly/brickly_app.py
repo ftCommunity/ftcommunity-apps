@@ -94,7 +94,7 @@ class WebsocketServerThread(QThread):
 
     def connected(self):
         return self.websocket != None
-            
+
 # this object will be receiving everything from stdout
 class io_sink(object):
     def __init__(self, name, allow_queueing, thread, ui_queue):
@@ -193,15 +193,14 @@ class RunThread(QThread):
                 # replace global calls by calls into the local class
                 # this could be done on javascript side but this would make
                 # the bare generated python code harder to read
+                global wrapper
+                wrapper = self    # make self accessible to all functions of blockly code
+                
                 code_txt = f.read()
-                code_txt = "global self_\nself_ = self\n" + code_txt
-                code_txt = code_txt.replace("# highlightBlock(", "self_.highlightBlock(");
-                code_txt = code_txt.replace("setOutput(", "self_.setOutput(");
-                code_txt = code_txt.replace("getInput(", "self_.getInput(");
-                code_txt = code_txt.replace("playSound(", "self_.playSound(");
-
-                # convert global functions to methods
-                code = compile(code_txt, "brickly.py", 'exec')
+                code_txt = code_txt.replace("# highlightBlock(", "wrapper.highlightBlock(");
+                code_txt = code_txt.replace("setOutput(", "wrapper.setOutput(");
+                code_txt = code_txt.replace("getInput(", "wrapper.getInput(");
+                code_txt = code_txt.replace("playSound(", "wrapper.playSound(");
 
                 # if running in online mode wait for the client to
                 # connect
@@ -210,7 +209,11 @@ class RunThread(QThread):
                     while not self.ws_thread.connected():
                         time.sleep(0.01)
 
-                exec(code)
+                # code = compile(code_txt, "brickly.py", 'exec')
+                # exec(code, globals())
+
+                exec(code_txt, globals())
+                
             except SyntaxError as e:
                 print("Syntax error: " + str(e), file=sys.stderr)
             except:
@@ -218,17 +221,15 @@ class RunThread(QThread):
 
             self.highlight.write("none")
 
-    #
     def setOutput(self,port,val):
+        # make sure val is in 0..1 range
+        val = max(0, min(1, val))            
+        pwm_val = int(512 * val)
+            
         if not self.txt:
             # if no TXT could be connected just write to stderr
-            print("O" + str(port+1) + "=" + str(val), file=sys.stderr)
+            print("O" + str(port+1) + "=" + str(pwm_val), file=sys.stderr)
         else:
-            if val:
-                pwm_val = 512
-            else:   
-                pwm_val = 0
-
             self.txt.setPwm(port,pwm_val)
 
     def getInput(self,port):
@@ -237,7 +238,7 @@ class RunThread(QThread):
             print("I" + str(port+1) + "=" + str(True), file=sys.stderr)
             return True
         else:
-            return not self.txt.getCurrentInput(port)
+            return self.txt.getCurrentInput(port)
 
     def playSound(self,snd):
         if not self.txt:

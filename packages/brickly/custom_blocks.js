@@ -15,15 +15,32 @@ var block_wait = {
   "tooltip": MSG['blockWaitToolTip'],
 };
 
-var block_on_off = {
-  "type": "on_off",
-  "message0": MSG['blockOnOffMessage'],
+var block_pwm_value = {
+  "type": "pwm_value",
+  "message0": MSG['blockPwmValueMessage'],
   "args0": [ {
       "type": "field_dropdown",
       "name": "state",
+      "options": [ [ "100% ("+MSG['blockOn']+")",  "1"     ], [ "87.5%",           "0.875" ],
+		   [ "75%",     "0.75"  ], [ "62.5%",         "0.625" ],
+		   [ "50%",     "0.5"   ], [ "37.5%",         "0.375" ],
+		   [ "25%",     "0.25"  ], [ "12.5%",         "0.125" ],
+		   [ "0% ("+MSG['blockOff']+")", "0"     ] ]
+    } ],
+  "output": "Number",
+  "colour": CustomBlocksHUE,
+  "tooltip": MSG['blockPwmValueToolTip'],
+};
+
+var block_on_off = {
+  "type": "on_off",
+  "message0": MSG['blockOnOffMessage'],
+  "args0": [ { 
+      "type": "field_dropdown",
+      "name": "state", 
       "options": [ [ MSG['blockOn'], "1" ], [ MSG['blockOff'], "0" ] ]
     } ],
-  "output": "Boolean",
+  "output": "Number",
   "colour": CustomBlocksHUE,
   "tooltip": MSG['blockOnOffToolTip'],
 };
@@ -41,7 +58,7 @@ var block_output = {
     {
       "type": "input_value",
       "name": "value",
-      "check": "Boolean"
+      "check": "Number"
     }
   ],
   "previousStatement": null,
@@ -133,11 +150,14 @@ Blockly.Python['wait'] = function(block) {
     return 'time.sleep(%1)\n'.replace('%1', value_seconds);
 };
 
+Blockly.Python['pwm_value'] = function(block) {
+    var state = block.getFieldValue('state');
+    return [state, Blockly.Python.ORDER_NONE];
+};
+
 Blockly.Python['on_off'] = function(block) {
     var state = block.getFieldValue('state');
-    if(state == "1") code = "True";
-    else             code = "False";
-    return [code, Blockly.Python.ORDER_NONE];
+    return [state, Blockly.Python.ORDER_NONE];
 };
 
 // generate python code for custom blocks
@@ -171,6 +191,8 @@ function custom_blocks_init() {
 	init: function() { this.jsonInit(block_output); } };
     Blockly.Blocks['input'] = {
 	init: function() { this.jsonInit(block_input); } };
+    Blockly.Blocks['pwm_value'] = {
+	init: function() { this.jsonInit(block_pwm_value); } };
     Blockly.Blocks['on_off'] = {
 	init: function() { this.jsonInit(block_on_off); } };
     Blockly.Blocks['play_snd'] = {

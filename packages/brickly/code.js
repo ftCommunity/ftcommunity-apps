@@ -30,8 +30,12 @@ function init() {
     var toolboxText = document.getElementById('toolbox').outerHTML;
     toolboxText = toolboxText.replace(/{(\w+)}/g,
 				      function(m, p1) {return MSG[p1]});
+
+    // enable/disable parts of toolbox with respect to current
+    // level
+    // ToDo
+
     var toolboxXml = Blockly.Xml.textToDom(toolboxText);
-    
     Code.workspace = Blockly.inject('blocklyDiv',
 				    { media: 'media/', 
 				      toolbox: toolboxXml } );
@@ -211,7 +215,7 @@ function runCode() {
     // add highlight information to the code. Make it commented so the code
     // will run on any python setup. If highlighting is wanted these lines
     // need to be uncommented on server side
-    Blockly.Python.STATEMENT_PREFIX = '# highlightBlock(%1);\n';
+    Blockly.Python.STATEMENT_PREFIX = '# highlightBlock(%1)\n';
     Blockly.Python.addReservedWords('highlightBlock');
     var code = Blockly.Python.workspaceToCode(Code.workspace);
 

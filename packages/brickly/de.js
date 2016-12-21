@@ -11,10 +11,12 @@ var MSG = {
     // blocks
     blockWaitMessage: "warte %1 Sekunden",
     blockWaitToolTip: "Programm eine vorgegebene Zeit anhalten",
+    blockPwmValueMessage: "%1",
+    blockPwmValueToolTip: "Variabler Ausgangszustand",
     blockOnOffMessage: "%1",
+    blockOnOffToolTip: "An/aus Ausgangszustand",
     blockOn: "ein",
     blockOff: "aus",
-    blockOnOffToolTip: "Ein-/Ausgangszustand",
     blockOutputMessage: "schalte Ausgang %1 %2",
     blockOutputToolTip: "Schalte einen Ausgang ein oder aus",
     blockInputMessage: "Eingang %1 ist an",

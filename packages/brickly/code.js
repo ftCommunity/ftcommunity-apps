@@ -204,6 +204,19 @@ function loadCode(name) {
 		}
             } else {
 		var xml = Blockly.Xml.textToDom(http.responseText);
+
+		// try to find settings in dom
+		for (var i = 0; i < xml.childNodes.length; i++) {
+		    var xmlChild = xml.childNodes[i];
+		    var name = xmlChild.nodeName.toLowerCase();
+		    if (name == 'settings') {
+			var speed = parseInt(xmlChild.getAttribute('speed'), NaN);
+			if((speed >= 0) && (speed <= 100)) {
+			    Code.speed = speed
+			    document.getElementById("speed_range").value = Code.speed;
+			}
+		    }
+		}
 		Blockly.Xml.domToWorkspace(xml, Code.workspace);
             }
         }
@@ -217,6 +230,8 @@ function runCode() {
     // need to be uncommented on server side
     Blockly.Python.STATEMENT_PREFIX = '# highlightBlock(%1)\n';
     Blockly.Python.addReservedWords('highlightBlock');
+
+    // Generate Python code and POST it
     var code = Blockly.Python.workspaceToCode(Code.workspace);
 
     // there may be no code at all, this is still valid. Mabe we can do something more
@@ -225,6 +240,9 @@ function runCode() {
 	// simply do nothing by now. In the future perhaps ask to reload
 	// the default code
     } else {
+	// preprend current speed settings
+	code = "# speed = " + Code.speed.toString() + "\n" + code;
+
 	var objDiv = document.getElementById("textArea");
 	Code.spinner = new Spinner({top:"0%", position:"relative", color: '#fff'}).spin(objDiv)
 
@@ -233,10 +251,16 @@ function runCode() {
 	button_set_state(false, true);
         display_state(MSG['stateConnecting']);
 
-	// Generate Python code and POST it
+	// generate xml and post it with the python code
 	var xml = Blockly.Xml.workspaceToDom(Code.workspace);
+
+	// insert settings (speed) into xml
+	var settings = goog.dom.createDom('settings');
+	settings.setAttribute('speed', Code.speed);
+	xml.appendChild(settings)
+	
 	var text = Blockly.Xml.domToText(xml);
-    
+
 	var http = new XMLHttpRequest();
 	http.open("POST", "./brickly_run.py");
 	http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");

@@ -137,16 +137,17 @@ class RunThread(QThread):
             import ftrobopy
             self.txt = ftrobopy.ftrobopy(txt_ip, 65000)
             # all outputs normal mode
-            M = [ self.txt.C_OUTPUT, self.txt.C_OUTPUT, self.txt.C_OUTPUT, self.txt.C_OUTPUT ]
-            I = [ (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                  (self.txt.C_SWITCH, self.txt.C_DIGITAL ) ]
-            self.txt.setConfig(M, I)
+            self.M = [ self.txt.C_OUTPUT, self.txt.C_OUTPUT,
+                       self.txt.C_OUTPUT, self.txt.C_OUTPUT ]
+            self.I = [ (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ) ]
+            self.txt.setConfig(self.M, self.I)
             self.txt.updateConfig()
         except:
             self.txt = None   
@@ -197,6 +198,7 @@ class RunThread(QThread):
                 wrapper = self    # make self accessible to all functions of blockly code
                 
                 code_txt = f.read()
+                code_txt = code_txt.replace("# speed", "wrapper.ws_thread.speed");
                 code_txt = code_txt.replace("# highlightBlock(", "wrapper.highlightBlock(");
                 code_txt = code_txt.replace("setOutput(", "wrapper.setOutput(");
                 code_txt = code_txt.replace("getInput(", "wrapper.getInput(");
@@ -222,9 +224,10 @@ class RunThread(QThread):
             self.highlight.write("none")
 
     def setOutput(self,port,val):
-        # make sure val is in 0..1 range
-        val = max(0, min(1, val))            
-        pwm_val = int(512 * val)
+        # make sure val is in 0..100 range
+        val = max(0, min(100, val))
+        # and scale it to 0 ... 512 range
+        pwm_val = int(5.12 * val)
             
         if not self.txt:
             # if no TXT could be connected just write to stderr
@@ -232,14 +235,31 @@ class RunThread(QThread):
         else:
             self.txt.setPwm(port,pwm_val)
 
-    def getInput(self,port):
+    def getInput(self,type,port):
         if not self.txt:
             # if no TXT could be connected just write to stderr
-            print("I" + str(port+1) + "=" + str(True), file=sys.stderr)
-            return True
+            print("I" + str(port+1) + " " + type + " = 0", file=sys.stderr)
+            return 0
         else:
-            return self.txt.getCurrentInput(port)
+            input_type = {
+                "voltage":    ( self.txt.C_VOLTAGE,    self.txt.C_ANALOG  ),
+                "switch" :    ( self.txt.C_SWITCH,     self.txt.C_DIGITAL ),
+                "resistor":   ( self.txt.C_RESISTOR,   self.txt.C_ANALOG  ),
+                "resistor2":  ( self.txt.C_RESISTOR2,  self.txt.C_ANALOG  ),
+                "ultrasonic": ( self.txt.C_ULTRASONIC, self.txt.C_ANALOG  )
+            }
+        
+            # check if type of port has changed and update config
+            # in that case
+            if self.I[port] != input_type[type]:
+                self.I[port] = input_type[type]
+                self.txt.setConfig(self.M, self.I)
+                self.txt.updateConfig()
+                time.sleep(0.1)   # wait some time so the change can take effect
 
+            # get value
+            return self.txt.getCurrentInput(port)
+ 
     def playSound(self,snd):
         if not self.txt:
             # if no TXT could be connected just write to stderr

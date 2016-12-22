@@ -15,12 +15,29 @@ var MSG = {
     blockPwmValueToolTip: "Variabler Ausgangszustand",
     blockOnOffMessage: "%1",
     blockOnOffToolTip: "An/aus Ausgangszustand",
+
     blockOn: "ein",
     blockOff: "aus",
+
+    blockInputModeVoltage: "Spannung (mV)",
+    blockInputModeSwitch: "Schalterzustand",
+    blockInputModeResistor: "Widerstand",
+    blockInputModeResistor2: "Widerstand 2",
+    blockInputModeUltrasonic: "Distanz",
+    blockInputModeAnalog: "Analogwert",
+    blockInputModeDigital: "Digitalwert",
+    
+    blockInputMessage: "%1 an Eingang %2",
+    blockInputToolTip: "Lies den Wert eines Eingangs",
+
+    blockSimpleInputMessage: "Eingang %1 ist an",
+    blockSimpleInputToolTip: "Lies den Zustand eines Eingangs",
+    
+    blockOutputModeOutput: "Einzelausgänge",
+    blockOutputModeMotor: "Motorausgang",
+
     blockOutputMessage: "schalte Ausgang %1 %2",
     blockOutputToolTip: "Schalte einen Ausgang ein oder aus",
-    blockInputMessage: "Eingang %1 ist an",
-    blockInputToolTip: "Lies den Zustand eines Eingangs",
     blockPlaySndMessage: "spiele Geräusch %1",
     blockPlaySndToolTip: "Spiele ein Geräusch ab",
     blockSoundMessage: "%1",

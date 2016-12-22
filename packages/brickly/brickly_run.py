@@ -62,7 +62,6 @@ if "text" in form:
 
 # save language setting if present
 if "lang" in form:
-    # write code to file
     with open("lang.js", 'w') as f:
         f.write("var lang = '" + form["lang"].value + "';\n")
         f.close()

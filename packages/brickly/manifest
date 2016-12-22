@@ -5,11 +5,11 @@ author: Till Harbaum
 icon: icon.png
 desc: Blockly demo
 url: https://developers.google.com/blockly/
-html: index.html?lang=en
+html: index.html
 exec: brickly_app.py
 managed: yes
 uuid: 1f2d90a3-11e9-4a92-955a-73ffaec0fe71
-version: 1.08
+version: 1.09
 firmware: 0.9
 
 [de]

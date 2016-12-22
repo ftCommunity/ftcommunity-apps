@@ -19,7 +19,7 @@ pkgfile.write("; list of packages\n")
 pkgfile.write("; this file contains all manifests\n")
 
 # scan the directory for app directories
-for l in os.listdir("."):
+for l in sorted(os.listdir(".")):
     if os.path.isdir(l):
         m = os.path.join(l, "manifest")
         if os.path.isfile(m):

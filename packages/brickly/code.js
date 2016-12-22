@@ -1,10 +1,13 @@
 var Code = {};
 Code.workspace = null;
 Code.Msg = {};
+Code.speed = 90;        // 90% default speed
+Code.Level = 2;         // GUI level: 1 = beginner, 10 = expert
 
 function init() {
+    // do various global initialization
     Blockly.Blocks.logic.HUE = 43;      // TXT orange
-    Blockly.Blocks.texts.HUE = 0;       // red
+    Blockly.Blocks.texts.HUE = 350;       // red
     //Blockly.Blocks.colour.HUE = 20;
     //Blockly.Blocks.lists.HUE = 260;
     //Blockly.Blocks.logic.HUE = 210;
@@ -13,20 +16,29 @@ function init() {
     //Blockly.Blocks.procedures.HUE = 290;
     //Blockly.Blocks.variables.HUE = 330;
 
-    Blockly.HSV_SATURATION = 0.7;  // global saturation
+    Blockly.HSV_SATURATION = 0.7;   // global saturation
     Blockly.HSV_VALUE = 0.6;        // global brightness
+
+    // enable/disable the speed control
+    if(Code.Level > 1) {
+	document.getElementById("speed_range").value = Code.speed;
+    } else {
+	document.getElementById("speed").style.display = "none";
+    }
 
     // Interpolate translated messages into toolbox.
     var toolboxText = document.getElementById('toolbox').outerHTML;
     toolboxText = toolboxText.replace(/{(\w+)}/g,
 				      function(m, p1) {return MSG[p1]});
-    var toolboxXml = Blockly.Xml.textToDom(toolboxText);
-    
-    Code.workspace = Blockly.inject('blocklyDiv',
-				    {media: 'media/', 
-				     toolbox: toolboxXml } );
 
-    console.log(Blockly.Blocks['controls_if'].thisBlock); // .setColour(99);
+    // enable/disable parts of toolbox with respect to current
+    // level
+    // ToDo
+
+    var toolboxXml = Blockly.Xml.textToDom(toolboxText);
+    Code.workspace = Blockly.inject('blocklyDiv',
+				    { media: 'media/', 
+				      toolbox: toolboxXml } );
     
     custom_blocks_init();
     button_set_state(true, true);
@@ -35,6 +47,14 @@ function init() {
 
     window.addEventListener('resize', onresize, false);
     onresize();
+}
+
+function speed_change(value) {
+    Code.speed = value;
+    if (typeof Code.ws !== 'undefined') {
+	console.log("TX", JSON.stringify( { speed: Code.speed } ));
+	Code.ws.send(JSON.stringify( { speed: Code.speed } ));
+    }
 }
 
 function get_lang(current) {
@@ -102,10 +122,10 @@ function display_text_clr() {
 function ws_start(initial) {
     url = "ws://"+document.location.hostname+":9002/";
     
-    var ws = new WebSocket(url);
-    ws.connected = false;
+    Code.ws = new WebSocket(url);
+    Code.connected = false;
     
-    ws.onmessage = function(evt) {
+    Code.ws.onmessage = function(evt) {
 	// ignore empty messages (which we use to force waiting for client)
 	if(evt.data.length) {
             // the message is json encoded
@@ -123,26 +143,30 @@ function ws_start(initial) {
 	}
     };
     
-    ws.onopen = function(evt) {
+    Code.ws.onopen = function(evt) {
 	Code.spinner.stop();
-        ws.connected = true;
+        Code.connected = true;
         display_state(MSG['stateConnected']);
         button_set_state(true, false);
+
+	// send initial speed
+	Code.ws.send(JSON.stringify( { speed: Code.speed } ));
     };
     
-    ws.onerror = function(evt) {
+    Code.ws.onerror = function(evt) {
     };
     
-    ws.onclose = function(evt) {
+    Code.ws.onclose = function(evt) {
         // retry if we never were successfully connected
-        if(!ws.connected) {
+        if(!Code.connected) {
             //try to reconnect in 10ms
            setTimeout(function(){ws_start(false)}, 10);
         } else {
             display_state(MSG['stateDisconnected']);
-            ws.connected = false;
+            Code.connected = false;
             button_set_state(true, true);
 	    Code.workspace.highlightBlock();
+	    delete Code.ws;
         }
     };
 };
@@ -180,6 +204,19 @@ function loadCode(name) {
 		}
             } else {
 		var xml = Blockly.Xml.textToDom(http.responseText);
+
+		// try to find settings in dom
+		for (var i = 0; i < xml.childNodes.length; i++) {
+		    var xmlChild = xml.childNodes[i];
+		    var name = xmlChild.nodeName.toLowerCase();
+		    if (name == 'settings') {
+			var speed = parseInt(xmlChild.getAttribute('speed'), NaN);
+			if((speed >= 0) && (speed <= 100)) {
+			    Code.speed = speed
+			    document.getElementById("speed_range").value = Code.speed;
+			}
+		    }
+		}
 		Blockly.Xml.domToWorkspace(xml, Code.workspace);
             }
         }
@@ -191,8 +228,10 @@ function runCode() {
     // add highlight information to the code. Make it commented so the code
     // will run on any python setup. If highlighting is wanted these lines
     // need to be uncommented on server side
-    Blockly.Python.STATEMENT_PREFIX = '# highlightBlock(%1);\n';
+    Blockly.Python.STATEMENT_PREFIX = '# highlightBlock(%1)\n';
     Blockly.Python.addReservedWords('highlightBlock');
+
+    // Generate Python code and POST it
     var code = Blockly.Python.workspaceToCode(Code.workspace);
 
     // there may be no code at all, this is still valid. Mabe we can do something more
@@ -201,6 +240,9 @@ function runCode() {
 	// simply do nothing by now. In the future perhaps ask to reload
 	// the default code
     } else {
+	// preprend current speed settings
+	code = "# speed = " + Code.speed.toString() + "\n" + code;
+
 	var objDiv = document.getElementById("textArea");
 	Code.spinner = new Spinner({top:"0%", position:"relative", color: '#fff'}).spin(objDiv)
 
@@ -209,10 +251,16 @@ function runCode() {
 	button_set_state(false, true);
         display_state(MSG['stateConnecting']);
 
-	// Generate Python code and POST it
+	// generate xml and post it with the python code
 	var xml = Blockly.Xml.workspaceToDom(Code.workspace);
+
+	// insert settings (speed) into xml
+	var settings = goog.dom.createDom('settings');
+	settings.setAttribute('speed', Code.speed);
+	xml.appendChild(settings)
+	
 	var text = Blockly.Xml.domToText(xml);
-    
+
 	var http = new XMLHttpRequest();
 	http.open("POST", "./brickly_run.py");
 	http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");

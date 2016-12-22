@@ -146,6 +146,7 @@ class AdjustWidget(QWidget):
                 ((self.selected == 0) or
                  (self.boundaries[self.selected]-1 > self.boundaries[self.selected-1]))):
                 self.boundaries[self.selected] -= 1
+                self.boundaries_write_file(self.boundaries)
                 scanner.setBoundaries(self.boundaries)
                 self.update()
 
@@ -157,8 +158,22 @@ class AdjustWidget(QWidget):
                 ((self.selected == 4) or
                  (self.boundaries[self.selected]+1 < self.boundaries[self.selected+1]))):
                 self.boundaries[self.selected] += 1
+                self.boundaries_write_file(self.boundaries)
                 scanner.setBoundaries(self.boundaries)
                 self.update()
+
+    def boundaries_write_file(self, boundaries):
+        base = os.path.dirname(os.path.realpath(__file__))
+        colors_dat = os.path.join(base, "colors.dat")
+        try:
+            with open(colors_dat, 'w') as f:
+                print(str(boundaries[0])+","+
+                      str(boundaries[1])+","+
+                      str(boundaries[2])+","+
+                      str(boundaries[3])+","+
+                      str(boundaries[4]), file=f)
+        except:
+            pass
 
 class LiveWidget(QWidget):
     def __init__(self, parent=None):
@@ -319,6 +334,11 @@ class FtcGuiApplication(TxtApplication):
         # create the empty main window
         self.w = TxtWindow("Cube")
 
+        # load default boundary values from file
+        # if present
+        boundaries = self.boundaries_read_from_file()
+        if boundaries: scanner.setBoundaries(boundaries)
+
         menu = self.w.addMenu()
         menu_about = menu.addAction("About")
         menu_about.triggered.connect(self.show_about)
@@ -355,6 +375,24 @@ class FtcGuiApplication(TxtApplication):
         self.w.centralWidget.setLayout(self.vbox)
         self.w.show()
         self.exec_()        
+
+    def boundaries_read_from_file(self):
+        boundaries = None
+
+        base = os.path.dirname(os.path.realpath(__file__))
+        colors_dat = os.path.join(base, "colors.dat")
+        try:
+            with open(colors_dat, 'r') as f:
+                for l in f:
+                    if len(l.split(',')) == 5:
+                        vals = l.split(',')
+                        boundaries = [ ]
+                        for i in vals:
+                            boundaries.append(int(i))
+        except:
+            return None
+
+        return boundaries
 
     def cube_do(self, cmd):
         self.cube(cmd)

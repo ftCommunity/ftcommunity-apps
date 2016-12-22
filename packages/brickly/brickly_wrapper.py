@@ -8,70 +8,98 @@
 
 PORT = 9002
 CLIENT = ""    # any client
+OUTPUT_DELAY = 0.01
+MAX_HIGHLIGHTS_PER_SEC = 25
 
 import time, sys, threading, asyncio, websockets, queue, pty, json
 import os
 
-# debug to file since stdout doesn't exist
-dbg = open('/tmp/brickly.log', 'w', encoding="UTF-8")
+speed = 100  # range 0 .. 100
 
-# the websocket server is a seperate tread for handling the websocket
+# the websocket server is a seperate thread for handling the websocket
 class websocket_server(threading.Thread): 
     def __init__(self): 
         threading.Thread.__init__(self) 
         self.clients = []
         self.queue = queue.Queue()
+        self.websocket = None
 
     def run(self): 
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
-        server = websockets.serve(self.handler, CLIENT, PORT)
-        self.loop.run_until_complete(server)
+        start_server = websockets.serve(self.handler, CLIENT, PORT)
+        websocketServer = self.loop.run_until_complete(start_server)
 
         try:
             self.loop.run_forever()
         finally:
-            self.loop.close()
+            websocketServer.close()
+            self.loop.run_until_complete(websocketServer.wait_closed())
 
     def stop(self):
         self.loop.call_soon_threadsafe(self.loop.stop)
 
-    def queued(self):
-        return not self.queue.empty();
-        
     @asyncio.coroutine
     def handler(self, websocket, path):
-        print("WS Client connect ...", file=dbg)
-        dbg.flush()
+        self.websocket = websocket
         self.clients.append(websocket)
 
+        # Client has finally connected. First
+        # send all queued messages
+        while not self.queue.empty():
+            yield from self.websocket.send(self.queue.get())
+        
         # ToDo: keep list of clients, stop
         # when last client is gone
         while(websocket.open):
-            if not self.queue.empty():
-                yield from websocket.send(self.queue.get())
-            else:
-                yield from asyncio.sleep(0.1)
+            try:
+                msg_str = yield from websocket.recv()
+                msg = json.loads(msg_str)
 
-        print("WS client disconnect!", file=dbg)
-        dbg.flush()
-        asyncio.get_event_loop().stop()
+                if 'speed' in msg:
+                    global speed
+                    speed = int(msg['speed'])
 
+            except websockets.exceptions.ConnectionClosed:
+                pass
+
+            finally:
+                pass
+
+        # the websocket is no more ....
+        self.websocket = None
+
+    # send a message to all connected clients
+    @asyncio.coroutine
+    def send_async(self, str):
+        yield from self.websocket.send(str)
+
+    def send(self, allow_queueing, str):
+        # If there is no client then just queue the messages. These will
+        # then be sent once a client has connected
+        if self.websocket:
+            self.loop.call_soon_threadsafe(asyncio.async, self.send_async(str))
+        elif allow_queueing:
+            self.queue.put(str)
+
+    def connected(self):
+        return self.websocket != None
+        
 # this object will be receiving everything from stdout
 class io_sink(object):
-    def __init__(self, name, queue, fd):
+    def __init__(self, name, allow_queueing, thread):
         self.name = name
-        self.file = fd
-        self.queue = queue
+        self.allow_queueing = allow_queueing
+        self.thread = thread
 
     def write(self, message):
-        if(self.file):
-            self.file.write(message)
-            self.file.flush()
-            time.sleep(0.01)     # artificially slow down print to keep the system usable
-            
-        self.queue.put(json.dumps( { self.name: message } ))
+        # slow down everything that allows queuing
+        # to keep the system usable
+        if self.allow_queueing:
+            time.sleep(OUTPUT_DELAY)
+
+        self.thread.send(self.allow_queueing, json.dumps( { self.name: message } ))
 
     def flush(self):
         #this flush method is needed for python 3 compatibility.
@@ -80,43 +108,50 @@ class io_sink(object):
         pass    
 
 # this function is called from the blockly code itself. This feature has
-# to be enabled on javascript side in the code generation. The delay 
-# limits the load on the browser/client
+# to be enabled on javascript side in the code generation. A rate limit
+# makes sure the browser can cope with this
 def highlightBlock(str):
-    time.sleep(0.1)          # TODO: make speed adjustable
-    global highlight
-    highlight.write(str)
+    now = time.time()*1000.0
+    if now > highlightBlock.last + (1000/MAX_HIGHLIGHTS_PER_SEC):
+        highlightBlock.last = now
+
+        global speed, highlight
+        time.sleep((100-speed)/100)
+        highlight.write(str)
+
+highlightBlock.last = 0
 
 thread = websocket_server()
 thread.start() 
 
 # redirect stdout and sterr to websocket server as well as into file
-sys.stdout = io_sink("stdout", thread.queue, dbg)
-sys.stderr = io_sink("stderr", thread.queue, dbg)
-highlight  = io_sink("highlight", thread.queue, None)
+sys.stdout = io_sink("stdout", True, thread)
+sys.stderr = io_sink("stderr", True, thread)
+highlight  = io_sink("highlight", False, thread)
 
 # connect to TXT
 txt_ip = os.environ.get('TXT_IP')
-if txt_ip == None: txt_ip = "localhost"
 txt = None
-try:
-    import ftrobopy
-    txt = ftrobopy.ftrobopy(txt_ip, 65000)
-    # all outputs normal mode
-    M = [ txt.C_OUTPUT, txt.C_OUTPUT, txt.C_OUTPUT, txt.C_OUTPUT ]
-    I = [ (txt.C_SWITCH, txt.C_DIGITAL ),
-          (txt.C_SWITCH, txt.C_DIGITAL ),
-          (txt.C_SWITCH, txt.C_DIGITAL ),
-          (txt.C_SWITCH, txt.C_DIGITAL ),
-          (txt.C_SWITCH, txt.C_DIGITAL ),
-          (txt.C_SWITCH, txt.C_DIGITAL ),
-          (txt.C_SWITCH, txt.C_DIGITAL ),
-          (txt.C_SWITCH, txt.C_DIGITAL ) ]
-    txt.setConfig(M, I)
-    txt.updateConfig()
-except:
-    print("TXT init failed", file=sys.stderr)
-    txt = None   
+if txt_ip:
+    try:
+        import ftrobopy
+        txt = ftrobopy.ftrobopy(txt_ip, 65000)
+        # all outputs normal mode
+        M = [ txt.C_OUTPUT, txt.C_OUTPUT, txt.C_OUTPUT, txt.C_OUTPUT ]
+        I = [ (txt.C_SWITCH, txt.C_DIGITAL ),
+              (txt.C_SWITCH, txt.C_DIGITAL ),
+              (txt.C_SWITCH, txt.C_DIGITAL ),
+              (txt.C_SWITCH, txt.C_DIGITAL ),
+              (txt.C_SWITCH, txt.C_DIGITAL ),
+              (txt.C_SWITCH, txt.C_DIGITAL ),
+              (txt.C_SWITCH, txt.C_DIGITAL ),
+              (txt.C_SWITCH, txt.C_DIGITAL ) ]
+        txt.setConfig(M, I)
+        txt.updateConfig()
+    except:
+        print("TXT init failed", file=sys.stderr)
+else:
+    print("There is no TXT", file=sys.stderr)
 
 # TXT specific helper routines
 def setOutput(port, val):
@@ -147,8 +182,38 @@ def playSound(snd):
         txt.setSoundIndex(snd)
         txt.incrSoundCmdId()
 
+online = False
+path = os.path.dirname(os.path.realpath(__file__))
+fname = os.path.join(path, "brickly.py")
+stamp_fname = os.path.join(path, "brickly.stamp")
+if not os.path.isfile(fname):
+    fname = os.path.join(path, "default.py")
+else:
+    # A brickly.py was found. Now check if there's a stamp
+    # that's older than brickly.py. If it is then the
+    # brickly.py has never been run before which in turn
+    # means that brickly_app has been launched from the
+    # web interface
+            
+    # if no stamp exists at all then we are also running
+    # online
+    if not os.path.isfile(stamp_fname):
+        online = True
+    else:
+        brickly_time = os.stat(fname).st_mtime
+        stamp_time = os.stat(stamp_fname).st_mtime
+        if brickly_time > stamp_time:
+            online = True
+
+stamp = open(stamp_fname, 'w')
+stamp.close()
+
+# wait for client before executing code
+while not thread.connected():
+    time.sleep(0.01)
+
 # load and execute blockly code
-with open("brickly.py", encoding="UTF-8") as f:
+with open(fname, encoding="UTF-8") as f:
     try:
         code_txt = f.read()
         code_txt = code_txt.replace("# highlightBlock(", "highlightBlock(");
@@ -157,21 +222,14 @@ with open("brickly.py", encoding="UTF-8") as f:
     except SyntaxError as e:
         print("Syntax error: " + str(e), file=sys.stderr)
     except:
-        print("Unexpected error: " + sys.exc_info()[1], file=sys.stderr)
+        print("Unexpected error: " + str(sys.exc_info()), file=sys.stderr)
 
 # program stays alive for 5 seconds after download
 highlight.write("none")
 time.sleep(5)
 
-# wait for queue to become empty. This means that the client
-# has connected and has fetched all results. We could add a timeout
-# here to cope with the fact that the client may never connect
-#while thread.queued():
-#    time.sleep(0.1)
-
 # now we could the server thread as we don't need it anymore. But letting
 # it run makes the client side happy as it doesn't have to deal with a
 # lost websocket connection
-time.sleep(1)
 thread.stop()
 

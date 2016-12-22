@@ -11,14 +11,33 @@ var MSG = {
     // blocks
     blockWaitMessage: "wait %1 seconds",
     blockWaitToolTip: "Pause program execution a given time",
+    blockPwmValueMessage: "%1",
+    blockPwmValueToolTip: "Variable output state",
     blockOnOffMessage: "%1",
+    blockOnOffToolTip: "On/off output state",
+    
     blockOn: "on",
     blockOff: "off",
-    blockOnOffToolTip: "Input/output state",
+    
+    blockInputModeVoltage: "voltage (mV)",
+    blockInputModeSwitch: "switch state",
+    blockInputModeResistor: "resistance",
+    blockInputModeResistor2: "resistance 2",
+    blockInputModeUltrasonic: "distance",
+    blockInputModeAnalog: "analogue",
+    blockInputModeDigital: "digital",
+    
+    blockInputMessage: "%1 at input %2",
+    blockInputToolTip: "Get a value from an input",
+
+    blockSimpleInputMessage: "input %1 is on",
+    blockSimpleInputToolTip: "Read an input state",
+
+    blockOutputModeOutput: "single outputs",
+    blockOutputModeMotor: "motor output",
+    
     blockOutputMessage: "set output %1 %2",
     blockOutputToolTip: "Set output state on or off",
-    blockInputMessage: "input %1 is on",
-    blockInputToolTip: "Read an input state",
     blockPlaySndMessage: "play sound %1",
     blockPlaySndToolTip: "Play a sound",
     blockSoundMessage: "%1",
@@ -57,5 +76,7 @@ var MSG = {
     catLogic: "Logic",
     catLoops: "Loops",
     catMath: "Math",
-    catText: "Text"
+    catText: "Text",
+    catVariables: "Variables",
+    catFunctions: "Functions"
 }

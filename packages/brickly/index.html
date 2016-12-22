@@ -39,6 +39,16 @@
 	      </tr></table>
 	  </td></tr>
 	  <tr><td height="100%" id="textArea"></td></tr>
+
+	  <!-- the following is for advanced users only -->
+	  <tr id="speed"><td>
+	      <table border="0" width="100%"><tr>
+		  <td width="32"><img src="icon_turtle.png"/></td>
+		  <td><input type="range" id="speed_range" onchange="speed_change(this.value)" min="0" max="100" width="100%"/></td>
+		  <td width="32" align="right"><img src="icon_rabbit.png"/></td>
+	      </tr></table>
+	  </td></tr>
+	  
 	</table>
       </td>
     </tr>
@@ -48,10 +58,18 @@
   <div id="textDiv" style="position: absolute; overflow-y: auto;"></div>
 
   <xml id="toolbox" style="display: none">
-    <category name="{catCustom}" colour="290">
-      <block type="wait"></block>
+    <category name="{catCustom}" colour="200">
+      <block type="wait">
+        <value name="seconds">
+          <shadow type="math_number">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="simple_input"></block>
       <block type="input"></block>
       <block type="output"></block>
+      <block type="pwm_value"></block>
       <block type="on_off"></block>
       <block type="play_snd"></block>
       <block type="sound"></block>
@@ -66,23 +84,62 @@
     <category name="{catLoops}" colour="120">
       <block type="controls_repeat_ext">
         <value name="TIMES">
-          <block type="math_number">
+          <shadow type="math_number">
             <field name="NUM">10</field>
-          </block>
+          </shadow>
         </value>
       </block>
       <block type="controls_whileUntil"></block>
+      <block type="controls_for">
+        <value name="FROM">
+          <shadow type="math_number">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+        <value name="TO">
+          <shadow type="math_number">
+            <field name="NUM">10</field>
+          </shadow>
+        </value>
+        <value name="BY">
+          <shadow type="math_number">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+      </block>
+      <block type="controls_flow_statements"></block>
     </category>
     <category name="{catMath}" colour="230">
       <block type="math_number"></block>
       <block type="math_arithmetic"></block>
       <block type="math_single"></block>
+      <block type="math_random_float"></block>
     </category>
-    <category name="{catText}" colour="0">
+    <category name="{catText}" colour="350">
       <block type="text"></block>
-      <block type="text_length"></block>
-      <block type="text_print"></block>
+      <block type="text_join"></block>
+      <block type="text_append">
+        <value name="TEXT">
+          <shadow type="text"></shadow>
+        </value>
+      </block>
+      <block type="text_length">
+        <value name="VALUE">
+          <shadow type="text">
+            <field name="TEXT"></field>
+          </shadow>
+        </value>
+      </block>
+      <block type="text_print">
+	<value name="TEXT">
+          <shadow type="text">
+            <field name="TEXT"></field>
+          </shadow>
+        </value>
+      </block>
     </category>
+    <category name="{catVariables}" colour="330" custom="VARIABLE"></category>
+    <category name="{catFunctions}" colour="290" custom="PROCEDURE"></category>
   </xml>
 
 </body>

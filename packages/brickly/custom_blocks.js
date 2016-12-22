@@ -1,6 +1,8 @@
 // custom block definitions for brickly incl. python code generation
 // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html
 
+CustomBlocksHUE = 200
+
 // json definition of custom blocks
 var block_wait = {
   "type": "wait",
@@ -9,21 +11,42 @@ var block_wait = {
   "inputsInline": true,
   "previousStatement": null,
   "nextStatement": null,
-  "colour": 290,
-  "tooltip": MSG['blockWaitToolTip'],
+  "colour": CustomBlocksHUE,
+  "tooltip": MSG['blockWaitToolTip']
+};
+
+var block_pwm_value = {
+  "type": "pwm_value",
+  "message0": MSG['blockPwmValueMessage'],
+  "args0": [ {
+      "type": "field_dropdown",
+      "name": "state",
+      "options": [ [ "100% ("+MSG['blockOn']+")",  "100" ],
+		   [ "87.5%",   "87.5"],
+		   [ "75%",     "75"  ],
+		   [ "62.5%",   "62.5"],
+		   [ "50%",     "50"  ],
+		   [ "37.5%",   "37.5"],
+		   [ "25%",     "25"  ],
+		   [ "12.5%",   "12.5"],
+		   [ "0% ("+MSG['blockOff']+")", "0" ] ]
+    } ],
+  "output": "Number",
+  "colour": CustomBlocksHUE,
+  "tooltip": MSG['blockPwmValueToolTip']
 };
 
 var block_on_off = {
   "type": "on_off",
   "message0": MSG['blockOnOffMessage'],
-  "args0": [ {
+  "args0": [ { 
       "type": "field_dropdown",
-      "name": "state",
-      "options": [ [ MSG['blockOn'], "1" ], [ MSG['blockOff'], "0" ] ]
+      "name": "state", 
+      "options": [ [ MSG['blockOn'], "100" ], [ MSG['blockOff'], "0" ] ]
     } ],
-  "output": "Boolean",
-  "colour": 290,
-  "tooltip": MSG['blockOnOffToolTip'],
+  "output": "Number",
+  "colour": CustomBlocksHUE,
+  "tooltip": MSG['blockOnOffToolTip']
 };
 
 var block_output = {
@@ -39,13 +62,31 @@ var block_output = {
     {
       "type": "input_value",
       "name": "value",
-      "check": "Boolean"
+      "check": "Number"
     }
   ],
   "previousStatement": null,
   "nextStatement": null,
-  "colour": 290,
-  "tooltip": MSG['blockOutputToolTip'],
+  "colour": CustomBlocksHUE,
+  "tooltip": MSG['blockOutputToolTip']
+}
+
+var block_simple_input = {
+  "type": "simple_input",
+  "message0": MSG['blockSimpleInputMessage'],
+  "args0": [
+    {
+      "type": "field_dropdown",
+      "name": "input_port",
+      "options": [
+        [ "I1", "0" ], [ "I2", "1" ], [ "I3", "2" ], [ "I4", "3" ],
+        [ "I5", "4" ], [ "I6", "5" ], [ "I7", "6" ], [ "I8", "7" ]
+      ]
+    }
+  ],
+  "output": "Boolean",
+  "colour": CustomBlocksHUE,
+  "tooltip": MSG['blockSimpleInputToolTip']
 }
 
 var block_input = {
@@ -54,15 +95,26 @@ var block_input = {
   "args0": [
     {
       "type": "field_dropdown",
-      "name": "port",
+      "name": "type",
+      "options": [
+          [ MSG['blockInputModeVoltage'],    '"voltage"' ],
+          [ MSG['blockInputModeSwitch'],     '"switch"'  ],
+          [ MSG['blockInputModeResistor'],   '"resistor"' ],
+          // [ MSG['blockInputModeResistor2'],  '"resistor2"' ],
+          [ MSG['blockInputModeUltrasonic'], '"ultrasonic"' ]
+      ]
+    },
+    {
+      "type": "field_dropdown",
+      "name": "input_port",
       "options": [
         [ "I1", "0" ], [ "I2", "1" ], [ "I3", "2" ], [ "I4", "3" ],
         [ "I5", "4" ], [ "I6", "5" ], [ "I7", "6" ], [ "I8", "7" ]
       ]
     }
   ],
-  "output": "Boolean",
-  "colour": 290,
+  "output": "Number",
+  "colour": CustomBlocksHUE,
   "tooltip": MSG['blockInputToolTip']
 }
 
@@ -77,7 +129,7 @@ var block_play_snd = {
   ],
   "previousStatement": null,
   "nextStatement": null,
-  "colour": 290,
+  "colour": CustomBlocksHUE,
   "tooltip": MSG['blockPlaySndToolTip']
 }
     
@@ -120,8 +172,8 @@ var block_sound = {
       ]
     } ],
   "output": "Number",
-  "colour": 290,
-  "tooltip": MSG['blockSoundToolTip'],
+  "colour": CustomBlocksHUE,
+  "tooltip": MSG['blockSoundToolTip']
 };
 
 // generate python code for custom blocks
@@ -131,11 +183,14 @@ Blockly.Python['wait'] = function(block) {
     return 'time.sleep(%1)\n'.replace('%1', value_seconds);
 };
 
+Blockly.Python['pwm_value'] = function(block) {
+    var state = block.getFieldValue('state');
+    return [state, Blockly.Python.ORDER_NONE];
+};
+
 Blockly.Python['on_off'] = function(block) {
     var state = block.getFieldValue('state');
-    if(state == "1") code = "True";
-    else             code = "False";
-    return [code, Blockly.Python.ORDER_NONE];
+    return [state, Blockly.Python.ORDER_NONE];
 };
 
 // generate python code for custom blocks
@@ -145,11 +200,18 @@ Blockly.Python['output'] = function(block) {
     return 'setOutput(%1, %2)\n'.replace('%1', port).replace('%2', value);
 }
 
-Blockly.Python['input'] = function(block) {
-    var port = block.getFieldValue('port');
-    code = 'getInput(%1)'.replace('%1', port);
+Blockly.Python['simple_input'] = function(block) {
+    var port = block.getFieldValue('input_port');
+    code = 'getInput("switch", %1)'.replace('%1', port);
     return [code, Blockly.Python.ORDER_NONE];
 }
+
+Blockly.Python['input'] = function(block) {
+    var type = block.getFieldValue('type');
+    var port = block.getFieldValue('input_port');
+    code = 'getInput(%1, %2)'.replace("%1", type).replace('%2', port);
+    return [code, Blockly.Python.ORDER_NONE];
+};
 
 Blockly.Python['play_snd'] = function(block) {
     var value = Blockly.Python.valueToCode(block, 'sound_index', Blockly.Python.ORDER_ATOMIC);
@@ -167,8 +229,12 @@ function custom_blocks_init() {
 	init: function() { this.jsonInit(block_wait); } };
     Blockly.Blocks['output'] = {
 	init: function() { this.jsonInit(block_output); } };
+    Blockly.Blocks['simple_input'] = {
+	init: function() { this.jsonInit(block_simple_input); } };
     Blockly.Blocks['input'] = {
 	init: function() { this.jsonInit(block_input); } };
+    Blockly.Blocks['pwm_value'] = {
+	init: function() { this.jsonInit(block_pwm_value); } };
     Blockly.Blocks['on_off'] = {
 	init: function() { this.jsonInit(block_on_off); } };
     Blockly.Blocks['play_snd'] = {

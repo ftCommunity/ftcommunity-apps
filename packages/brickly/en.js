@@ -6,7 +6,7 @@ var MSG = {
     stateDisconnected: "disconnected",
     stateConnected: "connected",
     stateConnecting: "connecting...",
-    stateProgramEnded: "program ended",
+    stateProgramEnded: "ended",
 
     // blocks
     blockWaitMessage: "wait %1 seconds",
@@ -37,7 +37,15 @@ var MSG = {
     blockOutputModeMotor: "motor output",
     
     blockOutputMessage: "set output %1 %2",
-    blockOutputToolTip: "Set output state on or off",
+    blockOutputToolTip: "Set output state",
+    
+    blockMotorMessage: "set motor %1 turning %2 %3",
+    blockMotorToolTip: "Set a motor",
+    blockLeft: "left",
+    blockRight: "right",
+    blockMotorOffMessage: "stop motor %1",
+    blockMotorOffToolTip: "Stop a motor",
+
     blockPlaySndMessage: "play sound %1",
     blockPlaySndToolTip: "Play a sound",
     blockSoundMessage: "%1",

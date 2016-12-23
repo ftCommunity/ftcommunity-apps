@@ -22,13 +22,15 @@ var block_pwm_value = {
       "type": "field_dropdown",
       "name": "state",
       "options": [ [ "100% ("+MSG['blockOn']+")",  "100" ],
-		   [ "87.5%",   "87.5"],
-		   [ "75%",     "75"  ],
-		   [ "62.5%",   "62.5"],
-		   [ "50%",     "50"  ],
-		   [ "37.5%",   "37.5"],
-		   [ "25%",     "25"  ],
-		   [ "12.5%",   "12.5"],
+		   [ "90%",  "90"  ],
+		   [ "80%",  "80"  ],
+		   [ "70%",  "70"  ],
+		   [ "60%",  "60"  ],
+		   [ "50%",  "50"  ],
+		   [ "40%",  "40"  ],
+		   [ "30%",  "30"  ],
+		   [ "20%",  "20"  ],
+		   [ "10%",  "10"  ],
 		   [ "0% ("+MSG['blockOff']+")", "0" ] ]
     } ],
   "output": "Number",
@@ -69,6 +71,53 @@ var block_output = {
   "nextStatement": null,
   "colour": CustomBlocksHUE,
   "tooltip": MSG['blockOutputToolTip']
+}
+
+var block_motor = {
+  "type": "motor",
+  "message0": MSG['blockMotorMessage'],
+  "args0": [ {
+      "type": "field_dropdown",
+      "name": "port",
+      "options": [
+        [ "M1", "0" ], [ "M2", "1" ], [ "M3", "2" ], [ "M4", "3" ]
+      ] }, {
+      "type": "field_dropdown",
+      "name": "dir",
+      "options": [
+        [ MSG['blockLeft'], "-1" ], [ MSG['blockRight'], "1" ]
+      ] },	     
+    {
+      "type": "input_value",
+      "name": "value",
+      "check": "Number"
+    }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": CustomBlocksHUE,
+  "tooltip": MSG['blockMotorToolTip']
+}
+
+var block_motor_off = {
+  "type": "motor_off",
+  "message0": MSG['blockMotorOffMessage'],
+  "args0": [ {
+      "type": "field_dropdown",
+      "name": "port",
+      "options": [
+        [ "M1", "0" ], [ "M2", "1" ], [ "M3", "2" ], [ "M4", "3" ]
+      ] },
+    {
+      "type": "input_value",
+      "name": "value",
+      "check": "Number"
+    }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": CustomBlocksHUE,
+  "tooltip": MSG['blockMotorOffToolTip']
 }
 
 var block_simple_input = {
@@ -193,11 +242,22 @@ Blockly.Python['on_off'] = function(block) {
     return [state, Blockly.Python.ORDER_NONE];
 };
 
-// generate python code for custom blocks
 Blockly.Python['output'] = function(block) {
     var port = block.getFieldValue('port');
     var value = Blockly.Python.valueToCode(block, 'value', Blockly.Python.ORDER_ATOMIC);
     return 'setOutput(%1, %2)\n'.replace('%1', port).replace('%2', value);
+}
+
+Blockly.Python['motor'] = function(block) {
+    var port = block.getFieldValue('port');
+    var dir = block.getFieldValue('dir');
+    var value = Blockly.Python.valueToCode(block, 'value', Blockly.Python.ORDER_ATOMIC);
+    return 'setMotor(%1, %2, %3)\n'.replace('%1', port).replace('%2', dir).replace('%3', value);
+}
+
+Blockly.Python['motor_off'] = function(block) {
+    var port = block.getFieldValue('port');
+    return 'setMotorOff(%1)\n'.replace('%1', port);
 }
 
 Blockly.Python['simple_input'] = function(block) {
@@ -229,6 +289,10 @@ function custom_blocks_init() {
 	init: function() { this.jsonInit(block_wait); } };
     Blockly.Blocks['output'] = {
 	init: function() { this.jsonInit(block_output); } };
+    Blockly.Blocks['motor'] = {
+	init: function() { this.jsonInit(block_motor); } };
+    Blockly.Blocks['motor_off'] = {
+	init: function() { this.jsonInit(block_motor_off); } };
     Blockly.Blocks['simple_input'] = {
 	init: function() { this.jsonInit(block_simple_input); } };
     Blockly.Blocks['input'] = {

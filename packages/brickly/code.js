@@ -12,7 +12,7 @@ function init() {
     //Blockly.Blocks.lists.HUE = 260;
     //Blockly.Blocks.logic.HUE = 210;
     //Blockly.Blocks.loops.HUE = 120;
-    //Blockly.Blocks.math.HUE = 230;
+    Blockly.Blocks.math.HUE = 240;
     //Blockly.Blocks.procedures.HUE = 290;
     //Blockly.Blocks.variables.HUE = 330;
 

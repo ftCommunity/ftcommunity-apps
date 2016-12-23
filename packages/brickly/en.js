@@ -30,6 +30,9 @@ var MSG = {
     blockInputMessage: "%1 at input %2",
     blockInputToolTip: "Get a value from an input",
 
+    blockInputConvTempMessage: "temperature %1 %2",
+    blockInputConvTempToolTip: "Convert resistance into temperature",
+
     blockSimpleInputMessage: "input %1 is on",
     blockSimpleInputToolTip: "Read an input state",
 
@@ -39,10 +42,17 @@ var MSG = {
     blockOutputMessage: "set output %1 %2",
     blockOutputToolTip: "Set output state",
     
-    blockMotorMessage: "set motor %1 turning %2 %3",
-    blockMotorToolTip: "Set a motor",
+    blockMotorMessage: "start motor %1 turning %2 at %3",
+    blockMotorToolTip: "Start a motor",
     blockLeft: "left",
     blockRight: "right",
+    
+    blockMotorStepsMessage: "start motor %1 turning %2 at %3 for %4 turns",
+    blockMotorStepsToolTip: "Start a motor for a given number of turns",
+
+    blockMotorHasStoppedMessage: "motor %1 has stopped",
+    blockMotorHasStoppedToolTip: "Test if a motor has stopped",
+
     blockMotorOffMessage: "stop motor %1",
     blockMotorOffToolTip: "Stop a motor",
 
@@ -81,6 +91,8 @@ var MSG = {
     blockSoundRobby_4: "Robby 4",
 
     catCustom: "Custom",
+    catInputs: "Inputs",
+    catOutputs: "Outputs",
     catLogic: "Logic",
     catLoops: "Loops",
     catMath: "Math",

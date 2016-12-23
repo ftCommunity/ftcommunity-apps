@@ -58,7 +58,7 @@
   <div id="textDiv" style="position: absolute; overflow-y: auto;"></div>
 
   <xml id="toolbox" style="display: none">
-    <category name="{catCustom}" colour="200">
+    <category name="{catCustom}" colour="180">
       <block type="wait">
         <value name="seconds">
           <shadow type="math_number">
@@ -66,15 +66,22 @@
           </shadow>
         </value>
       </block>
+      <block type="play_snd"></block>
+      <block type="sound"></block>
+    </category>
+    <category name="{catInputs}" colour="200">
       <block type="simple_input"></block>
       <block type="input"></block>
+      <block type="input_converter_r2t"></block>
+    </category>
+    <category name="{catOutputs}" colour="220">
       <block type="output"></block>
       <block type="motor"></block>
       <block type="motor_off"></block>
+      <block type="motor_steps"></block>
+      <block type="motor_has_stopped"></block>
       <block type="pwm_value"></block>
       <block type="on_off"></block>
-      <block type="play_snd"></block>
-      <block type="sound"></block>
     </category>
     <category name="{catLogic}" colour="43">
       <block type="controls_if"></block>
@@ -111,7 +118,7 @@
       </block>
       <block type="controls_flow_statements"></block>
     </category>
-    <category name="{catMath}" colour="230">
+    <category name="{catMath}" colour="240">
       <block type="math_number"></block>
       <block type="math_arithmetic"></block>
       <block type="math_single"></block>

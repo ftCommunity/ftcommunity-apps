@@ -135,7 +135,7 @@ txt = None
 if txt_ip:
     try:
         import ftrobopy
-        txt = ftrobopy.ftrobopy(txt_ip, 65000)
+        txt = ftrobopy.ftrobopy('auto')
         # all outputs normal mode
         M = [ txt.C_OUTPUT, txt.C_OUTPUT, txt.C_OUTPUT, txt.C_OUTPUT ]
         I = [ (txt.C_SWITCH, txt.C_DIGITAL ),

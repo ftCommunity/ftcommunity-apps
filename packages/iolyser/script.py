@@ -140,7 +140,7 @@ class FtcGuiApplication(TouchApplication):
 
         self.exec_()
     def __ioStart(self):
-        self.io = ftrobopy.ftrobopy("127.0.0.1",65000)
+        self.io = ftrobopy.ftrobopy('auto')
         time.sleep(1)
     def __readerThread(self):
         print("Thread started.")

@@ -39,8 +39,8 @@ managed: yes
 set: 524328 ROBOTICS TXT Discovery Set
 model: Pedestrian Light
 uuid: 55238f32-e0f3-4e55-9a02-5f901a19d3e0
-version: 1.0
-firmware: >=0.9.0, <0.9.3
+version: 1.1
+firmware: >=0.9.3
 
 [brickly]
 name: Brickly
@@ -53,8 +53,8 @@ html: index.html
 exec: brickly_app.py
 managed: yes
 uuid: 1f2d90a3-11e9-4a92-955a-73ffaec0fe71
-version: 1.09
-firmware: >=0.9.0, <0.9.3
+version: 1.10
+firmware: >=0.9.3
 name_de: Brickly
 desc_de: Blockly-Demo
 html_de: index.html?lang=de
@@ -131,8 +131,8 @@ desc: Rubiks Cube solver
 exec: cube.py
 managed: yes
 uuid: be743ea4-187b-43d8-8f7b-1779fa589bec
-version: 1.3
-firmware: >=0.9.0, <0.9.3
+version: 1.4
+firmware: >=0.9.3
 
 [idas_ampel]
 name: Idas Ampel
@@ -142,8 +142,8 @@ desc: Idas Schleichtierampel
 exec: idas_ampel.py
 managed: yes
 uuid: 368f15ca-9907-4096-942c-0eebd7b1695d
-version: 1.0
-firmware: >=0.9.0, <0.9.3
+version: 1.1
+firmware: >=0.9.3
 
 [iolyser]
 name: IOlyser
@@ -155,8 +155,8 @@ url: http://localhost/
 exec: script.py
 managed: yes
 uuid: 3434343-5199-11e6-beb8-9e71128cae7
-version: 0.9.5
-firmware: >=0.9.0, <0.9.3
+version: 0.9.6
+firmware: >=0.9.3
 
 [jstest]
 name: Joystick
@@ -179,8 +179,8 @@ desc: MP3-Player, demo music: http://www.bensound.com
 exec: mp3_player.py
 managed: yes
 uuid: 44bd8baa-2de3-4ba5-b26e-2db41994a212
-version: 1.0
-firmware: >=0.9.0, <0.9.3
+version: 1.1
+firmware: >=0.9.3
 
 [pinball]
 name: Pinball
@@ -193,8 +193,8 @@ set: 516186 ROBO TX ElectroPneumatic
 model: Pinball machine
 managed: yes
 uuid: 28dd2ddd-76b1-431a-9669-8abca2af313f
-version: 0.2
-firmware: >=0.9.0, <0.9.3
+version: 0.3
+firmware: >=0.9.3
 
 [radio]
 name: Radio
@@ -230,8 +230,8 @@ desc: Simple App to control the TXT via the instant Messenger Telegram
 exec: telegram-app.py
 managed: yes
 uuid: 6026c098-cb9b-45da-9c8c-9d05eb44a4fd
-version: 1.0.5
-firmware: >=0.9.0, <0.9.3
+version: 1.0.6
+firmware: >=0.9.3
 
 [thermometer]
 name: Thermo
@@ -242,8 +242,8 @@ desc: A simple thermometer app using the TXTs temperature sensor on I1
 exec: thermometer.py
 managed: yes
 uuid: d23829ea-326a-4f85-8627-169b0dc56669
-version: 1.0
-firmware: >=0.9.0, <0.9.3
+version: 1.1
+firmware: >=0.9.3
 
 [websockets]
 name: WSDemo
@@ -257,8 +257,8 @@ managed: yes
 set: 524328 ROBOTICS TXT Discovery Set
 model: Pedestrian Light
 uuid: 934ece63-892d-49d8-ad66-143844da0c11
-version: 1.0
-firmware: >=0.9.0, <0.9.3
+version: 1.1
+firmware: >=0.9.3
 
 [wedotest]
 name: WeDo

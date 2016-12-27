@@ -135,7 +135,7 @@ class RunThread(QThread):
         self.txt = None
         try:
             import ftrobopy
-            self.txt = ftrobopy.ftrobopy(txt_ip, 65000)
+            self.txt = ftrobopy.ftrobopy('auto')
             # all outputs normal mode
             self.M = [ self.txt.C_OUTPUT, self.txt.C_OUTPUT,
                        self.txt.C_OUTPUT, self.txt.C_OUTPUT ]

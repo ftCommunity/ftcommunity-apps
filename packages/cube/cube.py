@@ -27,7 +27,7 @@ def txt_init():
     txt_ip = os.environ.get('TXT_IP')
     if txt_ip == None: txt_ip = "localhost"
     try:
-        txt = ftrobopy.ftrobopy(txt_ip, 65000)
+        txt = ftrobopy.ftrobopy('auto')
         
         # all outputs normal mode
         M = [ txt.C_OUTPUT, txt.C_OUTPUT, txt.C_OUTPUT, txt.C_OUTPUT ]

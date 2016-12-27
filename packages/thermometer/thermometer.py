@@ -151,7 +151,7 @@ class FtcGuiApplication(TxtApplication):
 
         txt_ip = os.environ.get('TXT_IP')
         if txt_ip == None: txt_ip = "localhost"
-        txt = ftrobopy.ftrobopy(txt_ip, 65000)
+        txt = ftrobopy.ftrobopy('auto')
 
         # create the empty main window
         self.w = TxtWindow("Thermo")

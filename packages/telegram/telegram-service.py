@@ -44,7 +44,7 @@ else:
         exit(2)
 bot = telepot.Bot(api_key)
 bot.getMe()
-txt = ftrobopy.ftrobopy('127.0.0.1', 65000)
+txt = ftrobopy.ftrobopy('auto')
 global function
 function = ''
 global tempdata

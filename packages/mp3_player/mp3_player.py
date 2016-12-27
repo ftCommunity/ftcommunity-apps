@@ -18,7 +18,7 @@ if platform.machine() == "armv7l":
 
     # dirs to scan for songs
     # since the app dir itself is on sd card we don't need to look there
-    DIRS=["/media/sdcard"]
+    DIRS=["/home/apps/44bd8baa-2de3-4ba5-b26e-2db41994a212"]
 
     # check if the executables really are executable
     # as the file came from a zip during installation it

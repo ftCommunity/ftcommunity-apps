@@ -15,7 +15,7 @@ class FtcGuiApplication(TxtApplication):
         txt_ip = os.environ.get('TXT_IP')                    # try to read TXT_IP environment variable
         if txt_ip == None: txt_ip = "localhost"              # use localhost otherwise
         try:
-            self.txt = ftrobopy.ftrobopy(txt_ip, 65000)      # try to connect to IO server
+            self.txt = ftrobopy.ftrobopy('auto')      # try to connect to IO server
         except:
             self.txt = None
 

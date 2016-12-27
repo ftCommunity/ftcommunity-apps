@@ -9,4 +9,4 @@ exec: radio.py
 managed: yes
 uuid: ad5e0ea4-4606-4254-add6-60c452c3db36
 version: 1.0
-firmware: 0.9
+firmware: >=0.9.0

@@ -8,4 +8,4 @@ exec: mp3_player.py
 managed: yes
 uuid: 44bd8baa-2de3-4ba5-b26e-2db41994a212
 version: 1.0
-firmware: 0.9
+firmware: >=0.9.0, <0.9.3

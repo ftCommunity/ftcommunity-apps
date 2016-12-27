@@ -9,4 +9,4 @@ exec: main.py
 managed: yes
 uuid: 443dd03b-d671-4103-b035-924c175e4e1c
 version: 1
-firmware: 0.9
+firmware: >=0.9.0

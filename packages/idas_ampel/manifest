@@ -7,4 +7,4 @@ exec: idas_ampel.py
 managed: yes
 uuid: 368f15ca-9907-4096-942c-0eebd7b1695d
 version: 1.0
-firmware: 0.9
+firmware: >=0.9.0, <0.9.3

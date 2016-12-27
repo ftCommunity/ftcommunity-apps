@@ -8,4 +8,4 @@ exec: color_range.py
 managed: yes
 uuid: eb075835-cb00-4686-9332-ec902a1ed0c0
 version: 1.0
-firmware: 0.9
+firmware: >=0.9.0

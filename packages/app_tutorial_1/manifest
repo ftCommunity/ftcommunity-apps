@@ -9,4 +9,4 @@ exec: test.py
 managed: yes
 uuid: 191fe5a6-313b-4083-af65-d1ad7fd6d281
 version: 1.0
-firmware: 0.9
+firmware: >=0.9.0

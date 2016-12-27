@@ -131,24 +131,46 @@ class RunThread(QThread):
 
         # connect to TXT
         txt_ip = os.environ.get('TXT_IP')
-        if txt_ip == None: txt_ip = "localhost"
         self.txt = None
         try:
             import ftrobopy
-            self.txt = ftrobopy.ftrobopy(txt_ip, 65000)
-            # all outputs normal mode
-            self.M = [ self.txt.C_OUTPUT, self.txt.C_OUTPUT,
-                       self.txt.C_OUTPUT, self.txt.C_OUTPUT ]
-            self.I = [ (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
-                       (self.txt.C_SWITCH, self.txt.C_DIGITAL ) ]
-            self.txt.setConfig(self.M, self.I)
-            self.txt.updateConfig()
+
+            # TXT IP address given explicitly
+            if txt_ip != None:
+                try:
+                    self.txt = ftrobopy.ftrobopy(txt_ip, 65000)
+                except:
+                    self.txt = None
+            else:
+                # check for ftrobopy version
+                if float(ftrobopy.__version__) > 1.56:
+                    # newer version use the "auto" keyword
+                    try:
+                        self.txt = ftrobopy.ftrobopy('auto')
+                    except:
+                        self.txt = None
+                else:
+                    # older versions need to use localhost
+                    try:
+                        self.txt = ftrobopy.ftrobopy("localhost", 65000)
+                    except:
+                        self.txt = None
+
+            if self.txt:
+                # all outputs normal mode
+                self.M = [ self.txt.C_OUTPUT, self.txt.C_OUTPUT,
+                           self.txt.C_OUTPUT, self.txt.C_OUTPUT ]
+                self.I = [ (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                           (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                           (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                           (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                           (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                           (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                           (self.txt.C_SWITCH, self.txt.C_DIGITAL ),
+                           (self.txt.C_SWITCH, self.txt.C_DIGITAL ) ]
+                self.txt.setConfig(self.M, self.I)
+                self.txt.updateConfig()
+                
         except:
             self.txt = None   
 

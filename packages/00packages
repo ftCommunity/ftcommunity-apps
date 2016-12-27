@@ -157,19 +157,6 @@ uuid: 3682679c-9438-4516-a528-83de5e27e5e5
 version: 1.0.1
 firmware: >=0.9.0
 
-[telegram]
-name: Telegram
-category: Remote Control
-author: Raphael Jacob &lt;r.jacob2002@gmail.com&gt;
-html: config.py
-icon: icon.png
-desc: Simple App to control the TXT via the instant Messenger Telegram
-exec: telegram-app.py
-managed: yes
-uuid: 6026c098-cb9b-45da-9c8c-9d05eb44a4fd
-version: 1.0.5
-firmware: >=0.9.0, <0.9.3
-
 [wedotest]
 name: WeDo
 category: Tests

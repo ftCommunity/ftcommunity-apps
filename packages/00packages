@@ -96,18 +96,6 @@ uuid: 443dd03b-d671-4103-b035-924c175e4e1c
 version: 1
 firmware: >=0.9.0
 
-[cube]
-name: Cube
-category: Models
-author: Till Harbaum &lt;till@harbaum.org&gt;
-icon: icon.png
-desc: Rubiks Cube solver
-exec: cube.py
-managed: yes
-uuid: be743ea4-187b-43d8-8f7b-1779fa589bec
-version: 1.4
-firmware: >=0.9.3
-
 [iolyser]
 name: IOlyser
 category: System
@@ -132,18 +120,6 @@ managed: yes
 uuid: 74a6287b-f6d7-45bd-a467-208052a4a29b
 version: 1.0
 firmware: >=0.9.0
-
-[mp3_player]
-name: MP3-Player
-category: Tests
-author: Till Harbaum
-icon: icon.png
-desc: MP3-Player, demo music: http://www.bensound.com
-exec: mp3_player.py
-managed: yes
-uuid: 44bd8baa-2de3-4ba5-b26e-2db41994a212
-version: 1.1
-firmware: >=0.9.3
 
 [radio]
 name: Radio
@@ -201,16 +177,5 @@ desc: QT Widgets gallery
 exec: widgetgallery.py
 managed: yes
 uuid: 94cac4ea-14ef-49a2-a000-20ca5720fb78
-version: 1.0
-firmware: >=0.9.0
-
-[zbartest]
-name: ZBar
-category: Tests
-icon: icon.png
-desc: Demo of ZBAR QR code decoder
-exec: zbartest.py
-managed: yes
-uuid: c2258ee6-b86b-4c52-90b4-0d57d4244aaf
 version: 1.0
 firmware: >=0.9.0

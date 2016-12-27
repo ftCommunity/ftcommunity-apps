@@ -1,7 +1,9 @@
 // custom block definitions for brickly incl. python code generation
 // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html
 
-CustomBlocksHUE = 200
+CustomBlocksHUE = 180
+InputBlocksHUE = 200
+OutputBlocksHUE = 220
 
 // json definition of custom blocks
 var block_wait = {
@@ -22,17 +24,19 @@ var block_pwm_value = {
       "type": "field_dropdown",
       "name": "state",
       "options": [ [ "100% ("+MSG['blockOn']+")",  "100" ],
-		   [ "87.5%",   "87.5"],
-		   [ "75%",     "75"  ],
-		   [ "62.5%",   "62.5"],
-		   [ "50%",     "50"  ],
-		   [ "37.5%",   "37.5"],
-		   [ "25%",     "25"  ],
-		   [ "12.5%",   "12.5"],
+		   [ "90%",  "90"  ],
+		   [ "80%",  "80"  ],
+		   [ "70%",  "70"  ],
+		   [ "60%",  "60"  ],
+		   [ "50%",  "50"  ],
+		   [ "40%",  "40"  ],
+		   [ "30%",  "30"  ],
+		   [ "20%",  "20"  ],
+		   [ "10%",  "10"  ],
 		   [ "0% ("+MSG['blockOff']+")", "0" ] ]
     } ],
   "output": "Number",
-  "colour": CustomBlocksHUE,
+  "colour": OutputBlocksHUE,
   "tooltip": MSG['blockPwmValueToolTip']
 };
 
@@ -45,7 +49,7 @@ var block_on_off = {
       "options": [ [ MSG['blockOn'], "100" ], [ MSG['blockOff'], "0" ] ]
     } ],
   "output": "Number",
-  "colour": CustomBlocksHUE,
+  "colour": OutputBlocksHUE,
   "tooltip": MSG['blockOnOffToolTip']
 };
 
@@ -67,8 +71,97 @@ var block_output = {
   ],
   "previousStatement": null,
   "nextStatement": null,
-  "colour": CustomBlocksHUE,
+  "colour": OutputBlocksHUE,
   "tooltip": MSG['blockOutputToolTip']
+}
+
+var block_motor = {
+  "type": "motor",
+  "message0": MSG['blockMotorMessage'],
+  "args0": [ {
+      "type": "field_dropdown",
+      "name": "port",
+      "options": [ [ "M1", "0" ], [ "M2", "1" ], [ "M3", "2" ], [ "M4", "3" ] ]
+  }, {
+      "type": "field_dropdown",
+      "name": "dir",
+      "options": [
+          [ MSG['blockLeft'] + ' \u21BA', "-1" ],
+	  [ MSG['blockRight'] + ' \u21BB', "1" ]
+      ]
+  }, {
+      "type": "input_value",
+      "name": "value",
+      "check": "Number"
+  }
+  ],
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": OutputBlocksHUE,
+  "tooltip": MSG['blockMotorToolTip']
+}
+
+var block_motor_steps = {
+    "type": "motor_steps",
+    "message0": MSG['blockMotorStepsMessage'],
+    "args0": [ {
+	"type": "field_dropdown",
+	"name": "port",
+	"options": [ [ "M1", "0" ], [ "M2", "1" ], [ "M3", "2" ], [ "M4", "3" ] ]
+    }, {
+  	"type": "field_dropdown",
+	"name": "dir",
+	"options": [
+	    [ MSG['blockLeft'] + ' \u21BA', "-1" ],
+	    [ MSG['blockRight'] + ' \u21BB', "1" ] ]
+    }, {
+	"type": "input_value",
+	"name": "value",
+	"check": "Number"
+    }, {
+	"type": "input_value",
+	"name": "steps",
+	"check": "Number"
+    }
+    ],
+    "previousStatement": null,
+    "nextStatement": null,
+    "colour": OutputBlocksHUE,
+    "tooltip": MSG['blockMotorStepsToolTip']
+}
+
+var block_motor_has_stopped = {
+    "type": "motor_has_stopped",
+    "message0": MSG['blockMotorHasStoppedMessage'] ,
+    "args0": [ {
+	"type": "field_dropdown",
+	"name": "port",
+	"options": [ [ "M1", "0" ], [ "M2", "1" ], [ "M3", "2" ], [ "M4", "3" ] ]
+    }
+  ],
+  "output": "Boolean",
+  "colour": OutputBlocksHUE,
+  "tooltip": MSG['blockMotorHasStoppedToolTip']
+}
+
+var block_motor_off = {
+    "type": "motor_off",
+    "message0": MSG['blockMotorOffMessage'],
+    "args0": [ {
+	"type": "field_dropdown",
+	"name": "port",
+	"options": [
+            [ "M1", "0" ], [ "M2", "1" ], [ "M3", "2" ], [ "M4", "3" ]
+	]
+    }, {
+	"type": "input_value",
+	"name": "value",
+	"check": "Number"
+    } ],
+    "previousStatement": null,
+    "nextStatement": null,
+    "colour": OutputBlocksHUE,
+    "tooltip": MSG['blockMotorOffToolTip']
 }
 
 var block_simple_input = {
@@ -85,7 +178,7 @@ var block_simple_input = {
     }
   ],
   "output": "Boolean",
-  "colour": CustomBlocksHUE,
+  "colour": InputBlocksHUE,
   "tooltip": MSG['blockSimpleInputToolTip']
 }
 
@@ -114,8 +207,30 @@ var block_input = {
     }
   ],
   "output": "Number",
-  "colour": CustomBlocksHUE,
+  "colour": InputBlocksHUE,
   "tooltip": MSG['blockInputToolTip']
+}
+
+var block_input_converter_r2t = {
+    "type": "input_converter_r2t",
+    "message0": MSG['blockInputConvTempMessage'],
+    "args0": [ {
+	"type": "field_dropdown",
+	"name": "system",
+	"options": [
+            [ "°C", '"degCelsius"' ],
+            [ "°F", '"degFahrenheit"' ],
+            [ "K",  '"kelvin"' ]
+	]
+    }, {
+	"type": "input_value",
+	"name": "value",
+	"check": "Number"
+    }
+	     ],
+    "output": "Number",
+    "colour": InputBlocksHUE,
+    "tooltip": MSG['blockInputConvTempToolTip']
 }
 
 var block_play_snd = {
@@ -193,11 +308,35 @@ Blockly.Python['on_off'] = function(block) {
     return [state, Blockly.Python.ORDER_NONE];
 };
 
-// generate python code for custom blocks
 Blockly.Python['output'] = function(block) {
     var port = block.getFieldValue('port');
     var value = Blockly.Python.valueToCode(block, 'value', Blockly.Python.ORDER_ATOMIC);
     return 'setOutput(%1, %2)\n'.replace('%1', port).replace('%2', value);
+}
+
+Blockly.Python['motor'] = function(block) {
+    var port = block.getFieldValue('port');
+    var dir = block.getFieldValue('dir');
+    var value = Blockly.Python.valueToCode(block, 'value', Blockly.Python.ORDER_ATOMIC);
+    return 'setMotor(%1, %2, %3)\n'.replace('%1', port).replace('%2', dir).replace('%3', value);
+}
+
+Blockly.Python['motor_steps'] = function(block) {
+    var port = block.getFieldValue('port');
+    var dir = block.getFieldValue('dir');
+    var value = Blockly.Python.valueToCode(block, 'value', Blockly.Python.ORDER_ATOMIC);
+    var steps = Blockly.Python.valueToCode(block, 'steps', Blockly.Python.ORDER_ATOMIC);
+    return 'setMotor(%1, %2, %3, %4)\n'.replace('%1', port).replace('%2', dir).replace('%3', value).replace('%4', steps);
+};
+
+Blockly.Python['motor_has_stopped'] = function(block) {
+    var port = block.getFieldValue('port');
+    return ['motorHasStopped(%1)\n'.replace('%1', port), Blockly.Python.ORDER_NONE];
+};
+
+Blockly.Python['motor_off'] = function(block) {
+    var port = block.getFieldValue('port');
+    return 'setMotorOff(%1)\n'.replace('%1', port);
 }
 
 Blockly.Python['simple_input'] = function(block) {
@@ -210,6 +349,13 @@ Blockly.Python['input'] = function(block) {
     var type = block.getFieldValue('type');
     var port = block.getFieldValue('input_port');
     code = 'getInput(%1, %2)'.replace("%1", type).replace('%2', port);
+    return [code, Blockly.Python.ORDER_NONE];
+};
+
+Blockly.Python['input_converter_r2t'] = function(block) {
+    var system = block.getFieldValue('system');
+    var value = Blockly.Python.valueToCode(block, 'value', Blockly.Python.ORDER_ATOMIC);
+    var code = "inputConvR2T(%1, %2)".replace("%1", system).replace("%2", value);
     return [code, Blockly.Python.ORDER_NONE];
 };
 
@@ -229,10 +375,20 @@ function custom_blocks_init() {
 	init: function() { this.jsonInit(block_wait); } };
     Blockly.Blocks['output'] = {
 	init: function() { this.jsonInit(block_output); } };
+    Blockly.Blocks['motor'] = {
+	init: function() { this.jsonInit(block_motor); } };
+    Blockly.Blocks['motor_steps'] = {
+	init: function() { this.jsonInit(block_motor_steps); } };
+    Blockly.Blocks['motor_has_stopped'] = {
+	init: function() { this.jsonInit(block_motor_has_stopped); } };
+    Blockly.Blocks['motor_off'] = {
+	init: function() { this.jsonInit(block_motor_off); } };
     Blockly.Blocks['simple_input'] = {
 	init: function() { this.jsonInit(block_simple_input); } };
     Blockly.Blocks['input'] = {
 	init: function() { this.jsonInit(block_input); } };
+    Blockly.Blocks['input_converter_r2t'] = {
+	init: function() { this.jsonInit(block_input_converter_r2t); } };
     Blockly.Blocks['pwm_value'] = {
 	init: function() { this.jsonInit(block_pwm_value); } };
     Blockly.Blocks['on_off'] = {

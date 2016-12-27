@@ -6,7 +6,7 @@ var MSG = {
     stateDisconnected: "getrennt",
     stateConnected: "verbunden",
     stateConnecting: "verbinde...",
-    stateProgramEnded: "Programm beendet",
+    stateProgramEnded: "beendet",
 
     // blocks
     blockWaitMessage: "warte %1 Sekunden",
@@ -30,6 +30,9 @@ var MSG = {
     blockInputMessage: "%1 an Eingang %2",
     blockInputToolTip: "Lies den Wert eines Eingangs",
 
+    blockInputConvTempMessage: "Temperatur %1 %2",
+    blockInputConvTempToolTip: "Konvertiere Widerstandswert in Temperatur",
+
     blockSimpleInputMessage: "Eingang %1 ist an",
     blockSimpleInputToolTip: "Lies den Zustand eines Eingangs",
     
@@ -37,7 +40,22 @@ var MSG = {
     blockOutputModeMotor: "Motorausgang",
 
     blockOutputMessage: "schalte Ausgang %1 %2",
-    blockOutputToolTip: "Schalte einen Ausgang ein oder aus",
+    blockOutputToolTip: "Schalte einen Einzelausgang",
+
+    blockMotorMessage: "starte Motor %1 %2 mit %3",
+    blockMotorToolTip: "Starte einen Motor",
+    blockLeft: "linksrum",
+    blockRight: "rechtsrum",
+
+    blockMotorStepsMessage: "starte Motor %1 %2 mit %3 für %4 Drehungen",
+    blockMotorStepsToolTip: "Starte einen Motor für eine vorgegebene Anzahl Drehungen",
+
+    blockMotorHasStoppedMessage: "Motor %1 hat gestoppt",
+    blockMotorHasStoppedToolTip: "Teste, ob Motor gestoppt hat",
+
+    blockMotorOffMessage: "stoppe Motor %1",
+    blockMotorOffToolTip: "Schalte einen Motor aus",
+
     blockPlaySndMessage: "spiele Geräusch %1",
     blockPlaySndToolTip: "Spiele ein Geräusch ab",
     blockSoundMessage: "%1",
@@ -74,6 +92,8 @@ var MSG = {
 
     // categories
     catCustom: "Spezial",
+    catInputs: "Eingänge",
+    catOutputs: "Ausgänge",
     catLogic: "Logik",
     catLoops: "Schleifen",
     catMath: "Mathe",

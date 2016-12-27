@@ -17,7 +17,7 @@ CLIENT = ""    # any client
 OUTPUT_DELAY = 0.01
 MAX_HIGHLIGHTS_PER_SEC = 25
 
-import time, sys, asyncio, websockets, queue, pty, json
+import time, sys, asyncio, websockets, queue, pty, json, math 
 
 # the websocket server is a seperate tread for handling the websocket
 class WebsocketServerThread(QThread):
@@ -152,6 +152,8 @@ class RunThread(QThread):
         except:
             self.txt = None   
 
+        self.motor = [ None, None, None, None ]
+
         # redirect stdout, sterr and highlight info to websocket server.
         # redirect stdout also to the local screen
         sys.stdout = io_sink("stdout", False, self.ws_thread, self.ui_queue)
@@ -201,7 +203,11 @@ class RunThread(QThread):
                 code_txt = code_txt.replace("# speed", "wrapper.ws_thread.speed");
                 code_txt = code_txt.replace("# highlightBlock(", "wrapper.highlightBlock(");
                 code_txt = code_txt.replace("setOutput(", "wrapper.setOutput(");
+                code_txt = code_txt.replace("setMotor(", "wrapper.setMotor(");
+                code_txt = code_txt.replace("setMotorOff(", "wrapper.setMotorOff(");
+                code_txt = code_txt.replace("motorHasStopped(", "wrapper.motorHasStopped(");
                 code_txt = code_txt.replace("getInput(", "wrapper.getInput(");
+                code_txt = code_txt.replace("inputConvR2T(", "wrapper.inputConvR2T(");
                 code_txt = code_txt.replace("playSound(", "wrapper.playSound(");
 
                 # if running in online mode wait for the client to
@@ -223,16 +229,71 @@ class RunThread(QThread):
 
             self.highlight.write("none")
 
-    def setOutput(self,port,val):
+    def setMotor(self,port=0,dir=1,val=0,steps=None):
         # make sure val is in 0..100 range
         val = max(0, min(100, val))
         # and scale it to 0 ... 512 range
         pwm_val = int(5.12 * val)
+        # apply direction
+        if dir < 0: pwm_val = -pwm_val;
+        
+        if not self.txt:
+            # if no TXT could be connected just write to stderr
+            print("M" + str(port+1) + "=" + str(pwm_val), file=sys.stderr)
+        else:
+            # check if that port is in motor mode and change if not
+            if self.M[port] != self.txt.C_MOTOR:
+                self.M[port] = self.txt.C_MOTOR
+                self.txt.setConfig(self.M, self.I)
+                self.txt.updateConfig()
+                # generate a motor object
+                self.motor[port] = self.txt.motor(port+1)
+                
+            if steps:
+                self.motor[port].setDistance(int(63*steps))
+                
+            self.motor[port].setSpeed(pwm_val)
+
             
+    def setMotorOff(self,port=0):
+        if not self.txt:
+            # if no TXT could be connected just write to stderr
+            print("M" + str(port+1) + "= off", file=sys.stderr)
+        else:
+            # make sure that the port is in motor mode
+            if self.M[port] == self.txt.C_MOTOR:
+                self.motor[port].stop()
+
+    def motorHasStopped(self,port=0):
+        if not self.txt:
+            # if no TXT could be connected just write to stderr
+            print("M" + str(port+1) + "= off?", file=sys.stderr)
+            return True
+        else:
+            # make sure that the port is in motor mode
+            if self.M[port] != self.txt.C_MOTOR:
+                return True
+
+        return self.motor[port].finished()
+
+    def setOutput(self,port=0,val=0):
+        # make sure val is in 0..100 range
+        val = max(0, min(100, val))
+        # and scale it to 0 ... 512 range
+        pwm_val = int(5.12 * val)
+
         if not self.txt:
             # if no TXT could be connected just write to stderr
             print("O" + str(port+1) + "=" + str(pwm_val), file=sys.stderr)
         else:
+            # check if that port is in output mode and change if not
+            if self.M[int(port/2)] != self.txt.C_OUTPUT:
+                self.M[int(port/2)] = self.txt.C_OUTPUT
+                self.txt.setConfig(self.M, self.I)
+                self.txt.updateConfig()
+                # forget about any motor object that may exist
+                self.motor[int(port/2)] = None                
+        
             self.txt.setPwm(port,pwm_val)
 
     def getInput(self,type,port):
@@ -259,7 +320,24 @@ class RunThread(QThread):
 
             # get value
             return self.txt.getCurrentInput(port)
- 
+
+    def inputConvR2T(self,sys="degCelsius",val=0):
+        K2C = 273.0
+        B = 3900.0
+        R_N = 1500.0
+        T_N = K2C + 25.0
+
+        if val == 0: return float('nan')
+        
+        # convert resistance to kelvin
+        t = T_N * B / (B + T_N * math.log(val / R_N))
+
+        # convert kelvin to deg celius or deg fahrenheit
+        if sys == "degCelsius":      t -= K2C
+        if sys == "degFahrenheit":   t = t * 9 / 5 - 459.67
+        
+        return t
+
     def playSound(self,snd):
         if not self.txt:
             # if no TXT could be connected just write to stderr

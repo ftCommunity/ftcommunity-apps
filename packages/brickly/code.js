@@ -12,7 +12,7 @@ function init() {
     //Blockly.Blocks.lists.HUE = 260;
     //Blockly.Blocks.logic.HUE = 210;
     //Blockly.Blocks.loops.HUE = 120;
-    //Blockly.Blocks.math.HUE = 230;
+    Blockly.Blocks.math.HUE = 240;
     //Blockly.Blocks.procedures.HUE = 290;
     //Blockly.Blocks.variables.HUE = 330;
 
@@ -51,10 +51,8 @@ function init() {
 
 function speed_change(value) {
     Code.speed = value;
-    if (typeof Code.ws !== 'undefined') {
-	console.log("TX", JSON.stringify( { speed: Code.speed } ));
+    if (typeof Code.ws !== 'undefined') 
 	Code.ws.send(JSON.stringify( { speed: Code.speed } ));
-    }
 }
 
 function get_lang(current) {
@@ -174,6 +172,7 @@ function ws_start(initial) {
 function stopCode() {
     var objDiv = document.getElementById("textArea");
     Code.spinner = new Spinner({top:"0%", position:"relative", color: '#fff'}).spin(objDiv)
+    button_set_state(false, false);
 
     var http = new XMLHttpRequest();
     http.open("GET", "./brickly_stop.py?pid="+pid);
@@ -229,7 +228,7 @@ function runCode() {
     // will run on any python setup. If highlighting is wanted these lines
     // need to be uncommented on server side
     Blockly.Python.STATEMENT_PREFIX = '# highlightBlock(%1)\n';
-    Blockly.Python.addReservedWords('highlightBlock');
+    Blockly.Python.addReservedWords('wrapper');
 
     // Generate Python code and POST it
     var code = Blockly.Python.workspaceToCode(Code.workspace);

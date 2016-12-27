@@ -28,20 +28,6 @@ uuid: 191fe5a6-313b-4083-af65-d1ad7fd6d281
 version: 1.0
 firmware: >=0.9.0
 
-[app_tutorial_3]
-name: Tut_3
-category: Tests
-author: Till Harbaum &lt;till@harbaum.org&gt;
-icon: icon.png
-desc: Tutorial No 3
-exec: tut3.py
-managed: yes
-set: 524328 ROBOTICS TXT Discovery Set
-model: Pedestrian Light
-uuid: 55238f32-e0f3-4e55-9a02-5f901a19d3e0
-version: 1.1
-firmware: >=0.9.3
-
 [brickly]
 name: Brickly
 category: Tools
@@ -53,7 +39,7 @@ html: index.html
 exec: brickly_app.py
 managed: yes
 uuid: 1f2d90a3-11e9-4a92-955a-73ffaec0fe71
-version: 1.12
+version: 1.11.1
 firmware: >=0.9.3
 name_de: Brickly
 desc_de: Blockly-Demo
@@ -97,18 +83,6 @@ uuid: 4fdef96d-4a27-4209-85c6-7786110d9f2f
 version: 1.0
 firmware: >=0.9.0
 
-[color_range]
-name: ColoRange
-category: Tools
-author: Till Harbaum &lt;till@harbaum.org&gt;
-icon: icon.png
-desc: Tool to pick color ranges for object detection
-exec: color_range.py
-managed: yes
-uuid: eb075835-cb00-4686-9332-ec902a1ed0c0
-version: 1.0
-firmware: >=0.9.0
-
 [cpu_load]
 name: CPU-Load
 category: System
@@ -132,17 +106,6 @@ exec: cube.py
 managed: yes
 uuid: be743ea4-187b-43d8-8f7b-1779fa589bec
 version: 1.4
-firmware: >=0.9.3
-
-[idas_ampel]
-name: Idas Ampel
-category: Tests
-icon: icon.png
-desc: Idas Schleichtierampel
-exec: idas_ampel.py
-managed: yes
-uuid: 368f15ca-9907-4096-942c-0eebd7b1695d
-version: 1.1
 firmware: >=0.9.3
 
 [iolyser]
@@ -182,20 +145,6 @@ uuid: 44bd8baa-2de3-4ba5-b26e-2db41994a212
 version: 1.1
 firmware: >=0.9.3
 
-[pinball]
-name: Pinball
-category: Models
-author: Till Harbaum &lt;till@harbaum.org&gt;
-icon: icon.png
-desc: Pinball
-exec: pinball.py
-set: 516186 ROBO TX ElectroPneumatic
-model: Pinball machine
-managed: yes
-uuid: 28dd2ddd-76b1-431a-9669-8abca2af313f
-version: 0.3
-firmware: >=0.9.3
-
 [radio]
 name: Radio
 category: Tests
@@ -231,33 +180,6 @@ exec: telegram-app.py
 managed: yes
 uuid: 6026c098-cb9b-45da-9c8c-9d05eb44a4fd
 version: 1.0.6
-firmware: >=0.9.3
-
-[thermometer]
-name: Thermo
-category: Tools
-author: Till Harbaum &lt;till@harbaum.org&gt;
-icon: icon.png
-desc: A simple thermometer app using the TXTs temperature sensor on I1
-exec: thermometer.py
-managed: yes
-uuid: d23829ea-326a-4f85-8627-169b0dc56669
-version: 1.1
-firmware: >=0.9.3
-
-[websockets]
-name: WSDemo
-category: Tests
-author: Till Harbaum &lt;till@harbaum.org&gt;
-html: index.html
-icon: icon.png
-desc: Websockets demo for TXT remote control
-exec: server.py
-managed: yes
-set: 524328 ROBOTICS TXT Discovery Set
-model: Pedestrian Light
-uuid: 934ece63-892d-49d8-ad66-143844da0c11
-version: 1.1
 firmware: >=0.9.3
 
 [wedotest]

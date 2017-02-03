@@ -1,6 +1,19 @@
 ; list of packages
 ; this file contains all manifests
 
+[TXTShow]
+name: TXTShow
+category: Tool
+author: Peter Habermehl
+icon: icon.png
+desc: Slideshow on TXT
+exec: txtshow.py
+html: index.py
+managed: yes
+uuid: 37681ea0-dc00-11e6-9598-0800200c9a66
+version: 0.2
+firmware: >=0.9
+
 [cpu_load]
 name: CPU-Load
 category: System

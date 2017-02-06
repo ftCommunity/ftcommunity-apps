@@ -28,6 +28,8 @@ class FtcGuiApplication(TouchApplication):
         translator = QTranslator()
         path = os.path.dirname(os.path.realpath(__file__))
         translator.load(QLocale.system(), os.path.join(path, "txtshow_"))
+        #q =QLocale("de_DE")
+        #translator.load(q, os.path.join(path, "txtshow_"))
         self.installTranslator(translator)
         
         

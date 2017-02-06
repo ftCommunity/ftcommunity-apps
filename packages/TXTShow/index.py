@@ -140,12 +140,12 @@ def create_html_output_pics(pdir):
     print('<div style="width:90%; height:296px; line-height:3em;overflow:scroll;padding:5px;background-color:#549adc;color:#0c6acc;border:4px solid #0c6acc;border-style: outset;">')
     
     for pic in picstack:
-      print('<div title="'+pic+'"; style="width:80; height:124px; float: left; padding: 2px; margin: 4px; border:1px #0c6acc solid; border-style: inset;"><a href="'+picsdir+pdir+"/"+pic+'">')
+      print('<div title="'+pic+'"; style="width:80; height:130px; float: left; padding: 2px; margin: 4px; border:1px #0c6acc solid; border-style: inset;"><a href="'+picsdir+pdir+"/"+pic+'">')
       print('<img style="border:1px #0c6acc solid; border-style: outset" src="'+picsdir+pdir+"/"+pic+'" height="96"></a><br>')
       if loc=="de":
-          print('<center><a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Wirklich das Bild '+pic+' l&ouml;schen?'+"'"+')"><img src="remove.png"></a></center>')
+          print('<center><a href="script/download.py?path='+hostdir+picsdir+pdir+"/&file="+pic+'"><img src="download.png"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + '<a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Wirklich das Bild '+pic+' l&ouml;schen?'+"'"+')"><img src="remove.png"></a></center>')
       else:
-          print('<center><a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Really delete image '+pic+'?'+"'"+')"><img src="remove.png"></a></center>')
+          print('<center><a href="script/download.py?path='+hostdir+picsdir+pdir+"/&file="+pic+'"><img src="download.png"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + '<a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Really delete image '+pic+'?'+"'"+')"><img src="remove.png"></a></center>')
       
       print('</div>')
 
@@ -153,7 +153,7 @@ def create_html_output_pics(pdir):
     print('</div><br>')
 
     if loc=="de":
-        print('Bild anklicken, um es anzuzeigen, Rechtsklick zum herunterladen.<br>L&ouml;schknopf <img src="remove.png"> anklicken, um das Bild <b>dauerhaft</b> zu l&ouml;schen.<br><br>')
+        print('Bild anklicken, um es anzuzeigen, <img src="download.png"> zum herunterladen.<br>L&ouml;schknopf <img src="remove.png"> anklicken, um das Bild <b>dauerhaft</b> zu l&ouml;schen.<br><br>')
         print('Bildgr&ouml;&szlig;e sollte zwischen 320x240 und 960x720 liegen. Bedenke die begrenzte Leistungsf&auml;higkeit des TXT.<br>')
         print('<form action="index.py" method="post" enctype="multipart/form-data">')
         print('<input name="directory" type="hidden" value="'+pdir+'">')
@@ -162,7 +162,7 @@ def create_html_output_pics(pdir):
         print('<button type="submit">Hinzuf&uuml;gen</button></form>')
         print('<br><br><a href="index.py"> Zur&uuml;ck zur Alben&uuml;bersich </a>')
     else:
-        print('Click on the picture itself to view. Right-click to download.<br>Click <img src="remove.png"> to remove picture from TXT <b>permanently.</b><br><br>')
+        print('Click on the picture itself to view. <img src="download.png"> to download.<br>Click <img src="remove.png"> to remove picture from TXT <b>permanently.</b><br><br>')
         print('Picture size should be 320x240 to 960x720. Mind the limited ressources of the TXT.<br>')
         print('<form action="index.py" method="post" enctype="multipart/form-data">')
         print('<input name="directory" type="hidden" value="'+pdir+'">')

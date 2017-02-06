@@ -48,31 +48,12 @@ def scan_directories():
     dirstack=list()
     
     for data in dirs:
-        if os.path.isdir(picsdir + data): dirstack.append(data)
+        if os.path.isdir(picsdir + data) and not os.path.isfile(picsdir + data + "/.hidden"): dirstack.append(data)
     
     dirstack.sort()
 
-"""def save_uploaded_file():
-    form = cgi.FieldStorage()
-    if "datei" not in form:
-        return False,"No file"
-
-    fileitem = form["datei"]
-    if not fileitem.file or not fileitem.filename:
-        return False,"No valid file"
-
-    filename = fileitem.filename
-    
-    if not os.path.exists(localdir+filename):
-        print("Writing file to " + filename + "<br/>")
-        open(localdir+filename, 'wb').write(fileitem.file.read())
-
-        return True,filename
-    else: 
-        return False,None
-"""
-
 def create_html_head():
+    global loc 
     print('Content-Type: text/html')
     print('')
     print('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">')
@@ -95,26 +76,37 @@ def create_html_head():
 
     print('<h1><div class="outline"><font color="red">fischer</font><font color="#046ab4">technik</font>&nbsp;<font color="#fcce04">TXT</font></div></h1>')
     
-    print('<p/><h1>TXTShow</h1><p/>Present your images on the TXT<br>')
+    if loc=="de":       print('<p/><h1>TXTShow</h1><p/>Pr&auml;sentiere Deine Bilder auf dem TXT<br>')          
+    else:               print('<p/><h1>TXTShow</h1><p/>Present your images on the TXT<br>')
 
 def create_html_output_dirs():
-    global dirstack
+    global dirstack, loc 
     create_html_head()
     print('<div style="width:90%; height:296px; line-height:3em;overflow:scroll;padding:5px;background-color:#549adc;color:#0c6acc;border:4px solid #0c6acc;border-style: outset;">')
     
     for d in dirstack:
       print('<div title="'+d+'"; style="width:120px; float: left; padding: 2px; margin: 4px; border:1px #0c6acc solid; border-style: inset;">')
       print('<a href="index.py?ld='+d+'"><img style="border:1px #0c6acc solid; border-style: outset" src="'+"icons/folder-image-people.png"+'"><br>'+d+"</a><br>")
-      print('<center><a href="index.py?rd='+d+'" onclick="return confirm('+"'"+'Really delete album <'+d+'>?'+"'"+')"><img src="remove.png"></a></center>')
+      if loc=="de":
+          print('<center><a href="index.py?rd='+d+'" onclick="return confirm('+"'"+'Soll das Album <'+d+'>wirklich gel&ouml;scht werden?'+"'"+')"><img src="remove.png"></a></center>')
+      else:  
+          print('<center><a href="index.py?rd='+d+'" onclick="return confirm('+"'"+'Really delete album <'+d+'>?'+"'"+')"><img src="remove.png"></a></center>')
       print('</div>')
 
     print('</div><br>')
     
-    print('Click on an album to manage its contents.<br>Click <img src="remove.png"> to remove album from TXT <b>permanently.</b><br><br>')
-    print('<form action="index.py" method="post" enctype="multipart/form-data">')
-    print('<label>Create a new album:')
-    print('<input name="newdir" type="text" size=12> </label>')
-    print('<button type="submit">Add</button></form>')
+    if loc=="de":
+        print('Album anklicken, um seinen Inhalt zu bearbeiten.<br>L&ouml;schknopf <img src="remove.png"> anklicken, um Album <b>dauerhaft</b> zu l&ouml;schen.<br><br>')
+        print('<form action="index.py" method="post" enctype="multipart/form-data">')
+        print('<label>Ein neues Album:')
+        print('<input name="newdir" type="text" size=12> </label>')
+        print('<button type="submit">erstellen</button></form>')  
+    else:
+        print('Click on an album to manage its contents.<br>Click <img src="remove.png"> to remove album from TXT <b>permanently.</b><br><br>')
+        print('<form action="index.py" method="post" enctype="multipart/form-data">')
+        print('<label>Create a new album:')
+        print('<input name="newdir" type="text" size=12> </label>')
+        print('<button type="submit">Add</button></form>')
     
     print('<br><br><a href="/"> TXT Home </a>')
     
@@ -124,6 +116,8 @@ def create_html_output_rd_fail():
     return
 
 def create_html_output_pics(pdir):
+    global loc 
+    
     pic = os.listdir(picsdir+pdir)
  
     picstack=list()
@@ -136,29 +130,46 @@ def create_html_output_pics(pdir):
     create_html_head()
     
     print('<form action="index.py" method="post" enctype="multipart/form-data">')
-    print('<input name="directory" type="hidden" value="'+pdir+'">')
-    print('<label>Current album is:')
+    print('<input name="directory" type="hidden" value="'+pdir+'">')    
+    if loc=="de": print('<label>Aktuelles Album ist:')
+    else:         print('<label>Current album is:')
     print('<input name="rendir" type="text" size=12 value="'+pdir+'"> </label>')
-    print('<button type="submit">Rename</button></form>')
+    if loc=="de": print('<button type="submit">Umbenennen</button></form>')
+    else:         print('<button type="submit">Rename</button></form>')
+    
     print('<div style="width:90%; height:296px; line-height:3em;overflow:scroll;padding:5px;background-color:#549adc;color:#0c6acc;border:4px solid #0c6acc;border-style: outset;">')
     
     for pic in picstack:
       print('<div title="'+pic+'"; style="width:80; height:124px; float: left; padding: 2px; margin: 4px; border:1px #0c6acc solid; border-style: inset;"><a href="'+picsdir+pdir+"/"+pic+'">')
       print('<img style="border:1px #0c6acc solid; border-style: outset" src="'+picsdir+pdir+"/"+pic+'" height="96"></a><br>')
-      print('<center><a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Really delete image '+pic+'?'+"'"+')"><img src="remove.png"></a></center>')
+      if loc=="de":
+          print('<center><a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Wirklich das Bild '+pic+' l&ouml;schen?'+"'"+')"><img src="remove.png"></a></center>')
+      else:
+          print('<center><a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Really delete image '+pic+'?'+"'"+')"><img src="remove.png"></a></center>')
+      
       print('</div>')
 
 
     print('</div><br>')
-    
-    print('Click on the picture itself to view. Right-click to download.<br>Click <img src="remove.png"> to remove picture from TXT <b>permanently.</b><br><br>')
-    print('Picture size should be 320x240 to 960x720. Mind the limited ressources of the TXT.<br>')
-    print('<form action="index.py" method="post" enctype="multipart/form-data">')
-    print('<input name="directory" type="hidden" value="'+pdir+'">')
-    print('<label>Select a picture to add (*.png, *.jpg):')
-    print('<input name="datei" type="file" size="50" accept="image/*"> </label>')
-    print('<button type="submit">Add</button></form>')
-    print('<br><br><a href="index.py"> Back to album list </a>')
+
+    if loc=="de":
+        print('Bild anklicken, um es anzuzeigen, Rechtsklick zum herunterladen.<br>L&ouml;schknopf <img src="remove.png"> anklicken, um das Bild <b>dauerhaft</b> zu l&ouml;schen.<br><br>')
+        print('Bildgr&ouml;&szlig;e sollte zwischen 320x240 und 960x720 liegen. Bedenke die begrenzte Leistungsf&auml;higkeit des TXT.<br>')
+        print('<form action="index.py" method="post" enctype="multipart/form-data">')
+        print('<input name="directory" type="hidden" value="'+pdir+'">')
+        print('<label>Bild zum hochladen auf den TXT (*.png, *.jpg):')
+        print('<input name="datei" type="file" size="50" accept="image/*"> </label>')
+        print('<button type="submit">Hinzuf&uuml;gen</button></form>')
+        print('<br><br><a href="index.py"> Zur&uuml;ck zur Alben&uuml;bersich </a>')
+    else:
+        print('Click on the picture itself to view. Right-click to download.<br>Click <img src="remove.png"> to remove picture from TXT <b>permanently.</b><br><br>')
+        print('Picture size should be 320x240 to 960x720. Mind the limited ressources of the TXT.<br>')
+        print('<form action="index.py" method="post" enctype="multipart/form-data">')
+        print('<input name="directory" type="hidden" value="'+pdir+'">')
+        print('<label>Select a picture to add (*.png, *.jpg):')
+        print('<input name="datei" type="file" size="50" accept="image/*"> </label>')
+        print('<button type="submit">Add</button></form>')
+        print('<br><br><a href="index.py"> Back to album list </a>')
     
     print('</body></html>')
     
@@ -197,6 +208,24 @@ def clean(newdir,maxlen):
 
 form = cgi.FieldStorage()
 
+loc=""
+if "lang" in form:
+    if form["lang"].value=="de":
+        f = open(".locale","w")
+        f.write("de")
+        f.close
+    else:
+        f = open(".locale","w")
+        f.write("en")
+        f.close
+
+if os.path.isfile(".locale"):
+    f = open(".locale","r")
+    loc = f.read()
+    f.close()
+
+if loc=="": loc="en"
+
 if "ld" in form:
     create_html_output_pics(form["ld"].value)    
 elif "rd" in form:
@@ -208,8 +237,13 @@ elif "rd" in form:
       create_html_output_dirs()
     else:
       create_html_head()
-      print("</p><b>"+form["rd"].value+"</b> is the last existing Album and can not be removed.")
-      print("</p><a href="+'"'+"index.py"+'">'+"Back to album list</a></html></head>") 
+      if loc=="de":
+          print("</p><b>"+form["rd"].value+"</b> ist das letzte Album auf dem TXT und kann nicht gel&ouml;scht werden.")
+          print("</p><a href="+'"'+"index.py"+'">'+"Zur&uuml;ck zur Alben&uuml;bersicht</a></html></head>")  
+      else:    
+          print("</p><b>"+form["rd"].value+"</b> is the last existing album and can not be removed.")
+          print("</p><a href="+'"'+"index.py"+'">'+"Back to album list</a></html></head>")  
+        
 elif "rp" in form:
     dummy = os.remove(hostdir+"pics/" + form["directory"].value+"/"+form["rp"].value)
     create_html_output_pics(form["directory"].value) 
@@ -235,8 +269,12 @@ elif "datei" in form:
         create_html_output_pics(form["directory"].value)
     else:
         create_html_head()
-        print("</p>Error uploading image! File already exists or no memory available.")
-        print("</p><a href="+'"'+"index.py"+'">'+"Back to album list</a></html></head>") 
+        if loc=="de":
+            print("</p>Fehler beim Hinzuf&uuml;gen des Bildes! Eventuell existiert schon ein Bild gleichen Namens, oder der Speicher ist voll.")
+            print("</p><a href="+'"'+"index.py"+'">'+"Zur&uuml;ck zur Alben&uuml;bersicht</a></html></head>")
+        else:    
+            print("</p>Error uploading image! File already exists or no memory available.")
+            print("</p><a href="+'"'+"index.py"+'">'+"Back to album list</a></html></head>")
 else:
     scan_directories()
     create_html_output_dirs()

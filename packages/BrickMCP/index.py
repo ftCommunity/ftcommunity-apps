@@ -3,7 +3,7 @@
 #
 
 import cgi, shutil
-import sys, os
+import sys, os, socket
 import ba
 import xml.etree.ElementTree as et
 import zipfile as z
@@ -15,6 +15,10 @@ brickdir = hostdir + "../1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
 # für die Entwicklungsumgebung PeH
 if not os.path.exists(brickdir):
     brickdir = hostdir + "../../1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
+    develop=True
+else:
+    develop=False
+    
     
 def run_program(rcmd):
     """
@@ -106,26 +110,32 @@ def indexpage():
     
 
     
-    print('<table width="360px" border="0" rules="rows" cellpadding="5">')
+    # vtab
+    print('<table border="0"><tr><td width="48px"></td><td>')
+    
+    print('<table width="500px" border="0" rules="rows" cellpadding="5">')
     print('<thead><tr>')
     
-    if loc=="de":       print('<th width="50%">Projekt</th><th>Download</th><th>L&ouml;schen</th><th width="20px"></th></tr>')
-    elif loc=="fr":     print('<th width="50%">Projet</th><th>T&eacute;l&eacute;charger</th><th>Supprimer</th><th width="20px"></th></tr>')
-    else:               print('<th width="50%">Project</th><th>Download</th><th>Delete</th><th width="20px"></th></tr>')
+    if loc=="de":       print('<th width="20%">Projekt</th><th>Download</th><th>Sch&uuml;tzen</th>'+
+                              '<th>Anheften</th><th>L&ouml;schen</th><th width="20px"></th></tr>')
+    elif loc=="fr":     print('<th width="20%">Projet</th><th>T&eacute;l&eacute;charger</th><th>Extinguible</th>'+
+                              '<th>Attacher</th><th>Supprimer</th><th width="20px"></th></tr>')
+    else:               print('<th width="20%">Project</th><th>Download</th><th>Deleteable</th>'+
+                              '<th>Sticky</th><th>Remove</th><th width="20px"></th></tr>')
     
     print('</thead>')
     print('</table>')
     
-    print('<div style="height:110px; width:360px; overflow:auto;">')
+    print('<div style="height:110px; width:500px; overflow:auto;">')
     
-    print('<table width="340px" border="1" rules="rows" cellpadding="5">')
+    print('<table width="480px" border="1" rules="rows" cellpadding="5">')
     
     for b in bricks:
         
         print('<tr>')
         
         # erste Spalte
-        print('<td width="50%">')
+        print('<td width="20%">')
         
         print("<a href='ba.py?file=" + b[0] + "&path=" + brickdir + "&brickpack=True'>" + b[1] + "</a>")
         
@@ -141,6 +151,25 @@ def indexpage():
         # dritte Spalte
         print('<td>')
         
+        (isdel,ismov)=islocked(b[0])
+        
+        if not isdel: print("<center><a href='index.py?lock=" + b[0] + "'>" + "<img src='icons/lock-disabled.png' alt='Lock'>" + "</a></center>")
+        else:     print("<center><a href='index.py?lock=" + b[0] + "'>" + "<img src='icons/lock.png' alt='Unlock'>" + "</a></center>")
+        
+        print('</td>')
+        
+        # vierte Spalte
+        print('<td>')
+        
+        if not ismov: print("<center><a href='index.py?move=" + b[0] + "'>" + "<img src='icons/immovable-disabled.png' alt='Fix'>" + "</a></center>")
+        else:     print("<center><a href='index.py?move=" + b[0] + "'>" + "<img src='icons/immovable.png' alt='Move'>" + "</a></center>")
+        
+        print('</td>')
+        
+        
+        # fünfte Spalte
+        print('<td>')
+        
         if loc=="de":   print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Soll das Projekt "  + b[1] + ' wirklich gel&ouml;scht werden?"'+")'><img src='remove.png'></a></center>")
         elif loc=="fr": print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Voulez-vous vraiment supprimer le projet "  + b[1] + '?"'+")'><img src='remove.png'></a></center>")
         else:           print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Do you really want to delete "  + b[1] + '?"'+")'><img src='remove.png'></a></center>")
@@ -148,18 +177,22 @@ def indexpage():
         print('</td>')
         
         # Ende der Zeile
-        print('</tr')
+        print('</tr>')
     
     # Ende divTableBody
-    if loc=="de":       print('<tr><td colspan="3"><center>Ende der Liste</center></td></tr')
-    elif loc=="fr":     print('<tr><td colspan="3"><center>Fin de la liste</center></td></tr>')
-    else:               print('<tr><td colspan="3"><center>End of the list</center></td></tr>')
+    if loc=="de":       print('<tr><td colspan="5"><center>Ende der Liste</center></td></tr')
+    elif loc=="fr":     print('<tr><td colspan="5"><center>Fin de la liste</center></td></tr>')
+    else:               print('<tr><td colspan="5"><center>End of the list</center></td></tr>')
     print('</tbody>')
     
     # Ende divTable
     print('</table>')
-    print('</div><br>')
-        
+
+    print('</div>')
+    
+    print('</td><td align="center">')    
+    print('<a href="index.py"><img src="icons/view-refresh.png"></a><br>')
+    print('</td></tr></table>')    
         
     print("<hr /><br>")
     
@@ -200,10 +233,9 @@ def indexpage():
     
     # html abschließen    
     print("<br><hr /><br>")
-        
-    if loc=="de":        ba.htmlfoot("Viel Spa&szlig;",        "/",    "TXT Home")
-    elif loc=="fr":      ba.htmlfoot("Amusez-vous",      "/",    "TXT Home")
-    else:                ba.htmlfoot("Have fun",         "/",    "TXT Home")
+    
+    print("<a href='../1f2d90a3-11e9-4a92-955a-73ffaec0fe71/index.html'>[ Brickly ]</a><br>")
+    ba.htmlfoot("", "/", "[ TXT Home] ")
 
 def cleanup():
     if os.path.isfile(".xml"):
@@ -385,12 +417,9 @@ def remove(brick):
     os.chdir(brickdir)
     
     if os.path.isfile(brick):
-
         os.remove(brick)
     if os.path.isfile(brick[:-4]+".py"):
-
         os.remove(brick[:-4]+".py")
-
 
     os.chdir(m)
 
@@ -437,7 +466,90 @@ def locked():
     elif loc=="fr":      ba.htmlfoot("", "/",    "TXT Home")
     else:                ba.htmlfoot("", "/",    "TXT Home")
 
+def islocked(brick:str):
+    l=False
+    m=False
+    if os.path.isfile(brickdir+brick):    
+        with open(brickdir+brick,"r", encoding='utf-8') as f:
+            st=f.read()
+            f.close()
+        if 'deletable="false"' in st: l=True
+        if 'movable="false"' in st: m=True
+    return l,m
+    
+def change_lock(brick:str):
+    m=os.getcwd()
+    os.chdir(brickdir)
+    
+    if os.path.isfile(brick):
+        # so, und jetzt wird's luschtyg...
+        (lock,move)=islocked(brick)
+        if lock:
+            with open(brick,"r", encoding='utf-8') as f:
+                st=f.read()
+                f.close()
+            st=st.replace('deletable="false" ', '')
+            with open(brick, 'w', encoding="utf-8") as fi:
+                fi.write(st)
+                fi.close()
+        else:
+            with open(brick,"r", encoding='utf-8') as f:
+                st=f.read()
+                f.close()
+            if 'deletable="true" ' in st:
+                st=st.replace('deletable="true" ', '')
+                st=st.replace('<block ', '<block deletable="false" ')
+            else:  st=st.replace('<block ', '<block deletable="false" ')    
+            with open(brick, 'w', encoding="utf-8") as fi:
+                fi.write(st)
+                fi.close()
+    
+    os.chdir(m)
 
+def change_move(brick:str):
+    m=os.getcwd()
+    os.chdir(brickdir)
+    
+    if os.path.isfile(brick):
+        # so, und jetzt wird's luschtyg...
+        (lock,move)=islocked(brick)
+        if move:
+            with open(brick,"r", encoding='utf-8') as f:
+                st=f.read()
+                f.close()
+            st=st.replace('movable="false" ', '')
+            with open(brick, 'w', encoding="utf-8") as fi:
+                fi.write(st)
+                fi.close()
+        else:
+            with open(brick,"r", encoding='utf-8') as f:
+                st=f.read()
+                f.close()
+            if 'movable="true" ' in st:
+                st=st.replace('movable="true" ', '')
+                st=st.replace('<block ', '<block movable="false" ')
+            else:  st=st.replace('<block ', '<block movable="false" ')    
+            with open(brick, 'w', encoding="utf-8") as fi:
+                fi.write(st)
+                fi.close()
+    
+    os.chdir(m)
+
+
+def killTXTApp():
+    if develop: return
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        # Connect to server and send data
+        sock.connect(("localhost", 9000))
+        sock.sendall(bytes("stop-app\n", "UTF-8"))
+    except socket.error as msg:
+        ba.htmlhead("BrickMCP","General Error")
+        print("<h2>Unable to connect to Launcher!</h2>")
+        print("<h2>" , msg, "</h1>")
+        ba.htmlfoot("","/","TXT Home")        
+    finally:
+        sock.close()
 
 
 
@@ -477,6 +589,9 @@ if __name__ == "__main__":
         brickly_not_found()
         exit()
     
+    # APPschießen
+    killTXTApp()
+    
     # Überprüfen, ob BrickMCP gelockt ist...
     
     if "lockTXT" in form:
@@ -495,6 +610,12 @@ if __name__ == "__main__":
     # ab hier dann arbeiten...
     if "del" in form:
         remove(form["del"].value)
+        indexpage()
+    elif "lock" in form:
+        change_lock(form["lock"].value)
+        indexpage()
+    elif "move" in form:
+        change_move(form["move"].value)
         indexpage()
     elif "datei" in form:
         upload(form["datei"])

@@ -7,7 +7,9 @@ import sys, os, socket
 import ba
 import xml.etree.ElementTree as et
 import zipfile as z
+import cgitb
 
+cgitb.enable()
 
 hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
 brickdir = hostdir + "../1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
@@ -62,14 +64,30 @@ def scan_brickly():
         stack=os.listdir(brickdir)
         for l in stack:
 
-            if ("brickly" in l) and (".xml" in l): 
+            if l[:8]=="brickly-" and l[-4:]==".xml": 
                 name=""
-                xml=et.parse(brickdir+l).getroot()
+                """xml=et.parse(brickdir+l).getroot()
                 for child in xml:
                     # remove any namespace from the tag
                     if '}' in child.tag: child.tag = child.tag.split('}', 1)[1]
                     if child.tag == "settings" and 'name' in child.attrib:
                         name = child.attrib['name']
+                """
+                with open(brickdir+l,"r", encoding="utf-8") as f:
+                  
+                    d=f.read()
+                    f.close()
+                   
+                    if "<settings " in d:
+                        d=d[ (d.index("<settings "))+10 : ]
+                        
+                    if 'name="' in d:
+                        d=d[d.index('name="')+6:]
+                        name=d[:d.index('"')]
+                        
+                    elif "name='" in d:
+                        d=d[d.index("name='")+6:]
+                        name=d[:d.index("'")-1]
                 if name != "": bricks.append((l,name))
                 
         bricks=sorted(bricks, key=getkey)   
@@ -137,7 +155,10 @@ def indexpage():
         # erste Spalte
         print('<td width="20%">')
         
-        print("<a href='ba.py?file=" + b[0] + "&path=" + brickdir + "&brickpack=True'>" + b[1] + "</a>")
+        print("<a href='ba.py?file=" + b[0] + "&path=" + brickdir + "&brickpack=True'>")
+        ff=b[1].encode('ascii', 'xmlcharrefreplace').decode('ascii')
+        print(ff)
+        print("</a>")
         
         print('</td>')
         
@@ -170,9 +191,9 @@ def indexpage():
         # fünfte Spalte
         print('<td>')
         
-        if loc=="de":   print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Soll das Projekt "  + b[1] + ' wirklich gel&ouml;scht werden?"'+")'><img src='remove.png'></a></center>")
-        elif loc=="fr": print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Voulez-vous vraiment supprimer le projet "  + b[1] + '?"'+")'><img src='remove.png'></a></center>")
-        else:           print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Do you really want to delete "  + b[1] + '?"'+")'><img src='remove.png'></a></center>")
+        if loc=="de":   print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Soll das Projekt "  + ff + ' wirklich gel&ouml;scht werden?"'+")'><img src='remove.png'></a></center>")
+        elif loc=="fr": print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Voulez-vous vraiment supprimer le projet "  + ff + '?"'+")'><img src='remove.png'></a></center>")
+        else:           print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Do you really want to delete "  + ff + '?"'+")'><img src='remove.png'></a></center>")
         
         print('</td>')
         

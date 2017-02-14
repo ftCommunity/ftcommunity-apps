@@ -93,7 +93,8 @@ def htmlhead(progname:str, headtext:str):
     print('<link rel="stylesheet" href="/txt.css" />')
     print('<link rel="icon" href="/favicon.ico" type="image/x-icon" />')
     print('</head>')
-    print('<body>')    
+    print('<body>')
+    #print('<pre>' + sys.stdout.encoding + '</pre>')    
     print('<center>')
     print('<h1><div class="outline"><font color="red">fischer</font><font color="#046ab4">technik</font>&nbsp;<font color="#fcce04">TXT</font></div></h1>')    
     print('<p/><h1>' + progname + '</h1><p/>' + headtext + '<br>')
@@ -244,6 +245,7 @@ if __name__ == "__main__":
     
     form = cgi.FieldStorage()
 
+    loc=""
     if os.path.isfile(".locale"):
         f = open(".locale","r")
         loc = f.read()

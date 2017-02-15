@@ -105,14 +105,22 @@ class FtcGuiApplication(TouchApplication):
         idir="/media/usb0/"
         if develop: idir="/home/apdent/Downloads/"
         
-        l = os.listdir(idir)
         liste=[]
+        if os.path.exists(idir): l = os.listdir(idir)
+        
         for m in l:
             #if os.path.isdir(idir+m) and not m[:1]==".": liste.append("<"+m+">")  # Directories
             if m[:8]=="Brickly-" and m[-4:]==".zip": liste.append(m[8:-4])
             
         liste.sort()
         
+        if len(liste)==0:
+            r=TouchAuxMessageBox(QCoreApplication.translate("usbimport","Info"), self.parent())
+            r.setText(QCoreApplication.translate("usbimport","No Brickly projects found."))
+            r.setPosButton(QCoreApplication.translate("usbimport","Okay"))
+            r.exec_()
+            return
+          
         (success,result) = TouchAuxListRequester( QCoreApplication.translate("usbimport","Select"),
                                                   "",
                                                   liste, liste[0],

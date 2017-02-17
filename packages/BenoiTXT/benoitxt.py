@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 
+# code based upon the work of Jean Francois Puget, found at
+# https://www.ibm.com/developerworks/community/blogs/jfp/entry/How_To_Compute_Mandelbrodt_Set_Quickly?lang=en
+#
+
+
 import numpy as np
 import sys, math
 from auxiliaries import *
@@ -21,7 +26,7 @@ else:
 
 
 colormap=[1,1,1]*16
-curcolset="autumn"
+curcolset="r-g-b"
 colormap=setColorMap(curcolset)
 
 cancel=False
@@ -39,8 +44,8 @@ class FtcGuiApplication(TouchApplication):
         self.xmax=0.9
         self.ymin=-1.25
         self.ymax=1.25
-        self.maxiter=4
-        print("maxiter",math.pow(2,(self.maxiter+3)))
+        self.maxiter=3
+        print("maxiter",int(math.pow(2,(self.maxiter+3))))
         
         # create the empty main window
         self.w = TouchWindow("BenoiTxt")
@@ -134,9 +139,8 @@ class FtcGuiApplication(TouchApplication):
                 r=self.setIterations()
                 if r:
                     success=False
-                    self.bild.hide()
-                    self.progress.setValue(0)
-                    print("maxiter",pow(2,self.maxiter+3))
+                    #self.bild.hide()
+                    #self.progress.setValue(0)
             elif result==QCoreApplication.translate("obc","Set colors"):
                 self.setColors()
                 success=False
@@ -144,18 +148,27 @@ class FtcGuiApplication(TouchApplication):
     
     def setColors(self):
         global curcolset, colormap
+        c=curcolset
+        self.bild.hide()
         (success,result) = TouchAuxListRequester(QCoreApplication.translate("colors","Colors"),
                                                  QCoreApplication.translate("colors","Select color set"),
-                                                 ["rainbow", "forest", "planet", "fire", "dreamy", "autumn", "icy", "r-g-b", "y-c-m", "amstrad", "zuse", "monochrome", "default"],
-                                                 curcolset,
+                                                 ["rainbow", "forest", "planet", "fire", "dreamy", "autumn", "icy", "r-g-b", "y-c-m", "amstrad", "zuse", "roentgen", "binary", "default"],
+                                                 c,
                                                  QCoreApplication.translate("colors","Okay")
-                                                 ).exec_()
+                                                 ,self.parent()).exec_()
         if success:
             curcolset=result
             colormap=setColorMap(result)
-            self.mand2pixmap(320,240,self.m,int(math.pow(2,(self.maxiter+3))),self.bild.pixmap())
-            self.bild.update()
             
+            self.knopf.setEnabled(False)
+            self.text.setText("...colormapping")
+            self.processEvents()
+            self.mand2pixmap(320,240,self.m,int(math.pow(2,(self.maxiter+3))),self.bild.pixmap(), self.progress, self)
+            self.bild.update()
+            self.text.setText("...ready")
+            self.processEvents()
+        self.bild.show()
+        self.knopf.setEnabled(True)
             
     def setIterations(self):
       
@@ -229,66 +242,56 @@ class FtcGuiApplication(TouchApplication):
         self.progress.setValue(0)
         (xv,yv,self.m)=mandelbrot_set2(self.xmin, self.xmax, self.ymin, self.ymax, 320, 240, int(math.pow(2,(self.maxiter+3))), self.progress, self)      
         
-        if cancel:
-            self.text.setText("...yawn")
-            self.progress.setValue(0)
-        else:
-            self.mand2pixmap(320,240,self.m,int(math.pow(2,(self.maxiter+3))),self.bild.pixmap())
-            self.bild.show()
-            self.text.setText("...ready")
+        self.text.setText("...colormapping")
+        self.progress.setValue(100)
+        self.processEvents()
+        self.mand2pixmap(320,240,self.m,int(math.pow(2,(self.maxiter+3))),self.bild.pixmap(), self.progress, self)
+        self.bild.show()
+        self.text.setText("...ready")
         
         self.knopf.setEnabled(True)
         self.processEvents()
-
-        
-        
-    def colorize(self, n, maxiter):
-        if n>0 and n<maxiter:
-          return colormap[int(n % 16)]
-        
-        else:
-          return 0,0,0
         
     
-    def mand2pixmap(self,width,height,mand, maxiter, pixmap):
-       
+    def mand2pixmap(self,width:int,height:int,mand, maxiter:int, pixmap, progress, e):
+        pen=[]
+        for i in range(16):
+            (r,g,b)=colormap[i]
+            pen.append(QColor(r,g,b))
+        pen.append(QColor(0,0,0))
         p = QPainter()
         p.begin(pixmap)
+        
         for i in range(width):
-            
             for j in range(height):
-                (r,g,b)=self.colorize(mand[i,j],maxiter)
-
-                p.setPen(QColor(r,g,b,255))
+                pe=mand[i,j]
+                if pe >0: p.setPen(pen[pe%16])#QColor(r,g,b))
+                else: p.setPen(pen[16])
                 p.drawPoint(QPoint(height-j-1,width-i-1))
+            progress.setValue(100*i/width)
+            e.processEvents()
         p.end()
           
 def mandelbrot_set2(xmin,xmax,ymin,ymax,width,height,maxiter, progress, e):
     r1 = np.linspace(xmin, xmax, width)
     r2 = np.linspace(ymin, ymax, height)
-    n3 = np.empty((width,height))
-    nup=100/(width*height)
-    z=0
-    for i in range(width):
-        for j in range(height):
-            n3[i,j]=mandelbrot(r1[i],r2[j],maxiter)
-            z=z+1
-            progress.setValue(z*nup)
-            e.processEvents()
-            if cancel: return [],[],[]
-    return r1,r2,n3
+    c = r1 + r2[:,None]*1j
+    n3 = mandelbrot_numpy(c,maxiter, progress, e)
+    return (r1,r2,n3.T) 
 
-def mandelbrot(creal,cimag,maxiter):
-    real = creal
-    imag = cimag
-    for n in range(maxiter):
-        real2 = real*real
-        imag2 = imag*imag
-        if real2 + imag2 > 4.0:
-            return n
-        imag = 2* real*imag + cimag
-        real = real2 - imag2 + creal       
-    return 0
+def mandelbrot_numpy(c, maxiter, progress, e):
+    output = np.zeros(c.shape, int)
+    z = np.zeros(c.shape, np.complex64)
+    for it in range(maxiter):
+        notdone = np.less(z.real*z.real + z.imag*z.imag, 4.0)
+        output[notdone] = it
+        z[notdone] = z[notdone]**2 + c[notdone]
+        e.processEvents()
+        progress.setValue(100*it/maxiter)
+    output[output == 0] = 1
+    output[output == maxiter-1] = 0
+    return output
+  
   
 if __name__ == "__main__":
     FtcGuiApplication(sys.argv)

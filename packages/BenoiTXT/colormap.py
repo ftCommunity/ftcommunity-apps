@@ -191,7 +191,7 @@ def setColorMap(name:str="default"):
         colormap[13]=[32,   16,   0] 
         colormap[14]=[255, 128,   0] 
         colormap[15]=[32,   16,   0]    
-    elif name=="monochrome":        
+    elif name=="roentgen":        
         colormap[ 0]=[  0,   0,   0]
         colormap[ 1]=[ 16,  16,  16]
         colormap[ 2]=[ 32,  32,  32]
@@ -208,6 +208,23 @@ def setColorMap(name:str="default"):
         colormap[13]=[208, 208, 208] 
         colormap[14]=[224, 224, 224] 
         colormap[15]=[240, 240, 240]
+    elif name=="binary":        
+        colormap[ 0]=[255, 255, 255]
+        colormap[ 1]=[255, 255, 255]
+        colormap[ 2]=[255, 255, 255]
+        colormap[ 3]=[255, 255, 255]
+        colormap[ 4]=[  0,   0,   0]  
+        colormap[ 5]=[  0,   0,   0] 
+        colormap[ 6]=[  0,   0,   0] 
+        colormap[ 7]=[  0,   0,   0]  
+        colormap[ 8]=[255, 255, 255] 
+        colormap[ 9]=[255, 255, 255] 
+        colormap[10]=[255, 255, 255] 
+        colormap[11]=[255, 255, 255] 
+        colormap[12]=[  0,   0,   0] 
+        colormap[13]=[  0,   0,   0] 
+        colormap[14]=[  0,   0,   0] 
+        colormap[15]=[  0,   0,   0]
     else:  
         colormap[ 0]=[ 66,  30,  15]
         colormap[ 1]=[ 25,   7,  26]

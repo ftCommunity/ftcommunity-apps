@@ -738,7 +738,6 @@ class TouchAuxMessageBox(TouchDialog):
             textfield.setObjectName("smallerlabel")
         elif self.textSize==1:
             textfield.setObjectName("tinylabel")
-
         textfield.setAlignment(Qt.AlignCenter)
         textfield.setReadOnly(True)
         self.layout.addWidget(textfield)

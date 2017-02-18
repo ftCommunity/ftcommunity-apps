@@ -147,6 +147,8 @@ class FtcGuiApplication(TouchApplication):
                               ]) 
                 (success,result)=t.exec_() 
             
+            if success==False: self.bild.show()
+            
             if result==QCoreApplication.translate("obc","Reset region"):
                 self.xmin=-2.15
                 self.xmax=1.1833333
@@ -245,7 +247,7 @@ class FtcGuiApplication(TouchApplication):
       
     def saveImage(self):
         m=TouchAuxMessageBox(QCoreApplication.translate("save","Save"), self.parent())
-        m.setText(QCoreApplication.translate("save","Save TXT image or generate HiRes 1280x900 image (will take a lot of time)?"))
+        m.setText(QCoreApplication.translate("save","Save TXT image or generate HiRes 1280x960 image (will take a lot of time)?"))
         m.setPosButton(QCoreApplication.translate("save","Save"))
         m.setNegButton(QCoreApplication.translate("save","Generate"))
         (s,r)=m.exec_()
@@ -254,9 +256,10 @@ class FtcGuiApplication(TouchApplication):
             if os.path.isdir(showdir + "BenoiTxt"):
               void=self.bild.pixmap().save(showdir + "BenoiTxt/" +time.strftime("%y%m%d%H%M%S")+".png","PNG",80)
         elif s and r==QCoreApplication.translate("save","Generate"):  
-            self.riese(1280,900)
+            self.riese(1280,960)
         self.bild.show()
         self.knopf.setEnabled(True)     
+    
     def setColors(self):
         global curcolset, colormap
         self.bild.hide()
@@ -395,6 +398,7 @@ class FtcGuiApplication(TouchApplication):
         self.bild.hide()
         self.text.setText("...computing<br>hi-res")
         self.progress.setValue(0)
+        self.processEvents()
         (xv,yv,ma)=mandelbrot_set2(self.xmin, self.xmax, self.ymin, self.ymax, width, height, int(math.pow(2,(self.maxiter+3))), self.progress, self)
         self.text.setText("...colormapping<br>hi-res")
         self.progress.setValue(100)
@@ -402,6 +406,7 @@ class FtcGuiApplication(TouchApplication):
         mpm=QPixmap(height,width)
         self.mand2pixmap(width,height,ma,int(math.pow(2,(self.maxiter+3))),mpm, self.progress, self)
         self.text.setText("...save")
+        self.processEvents()
         if not os.path.exists(showdir + "BenoiTxt/"): os.mkdir(showdir + "BenoiTxt")
         if os.path.isdir(showdir + "BenoiTxt"):
           void=mpm.transformed(QTransform().rotate(90)).save(showdir + "BenoiTxt/" +time.strftime("%y%m%d%H%M%S")+".png","PNG",80)
@@ -410,27 +415,32 @@ class FtcGuiApplication(TouchApplication):
     
     def mand2pixmap(self,width:int,height:int, mand, maxiter:int, pixmap, progress, e):
         pen=[]
-        pen.append(QColor(0,0,0))
+        pen.append(qRgb(0,0,0))
         for i in range(16):
             (r,g,b)=colormap[i]
-            pen.append(QColor(r,g,b))
+            pen.append(qRgb(r,g,b))
         
         z = np.full((width, height),16, dtype=int)
         mand2 = np.remainder(mand, z)
         mand2[mand==0]=-1
         mand2 = np.add(mand2, np.ones((width, height), int))
-        
-        p = QPainter()
-        p.begin(pixmap)
+              
         st=100/height
-        for j in range(height):
+        im=QImage(height, width, QImage.Format_RGB888)
+        for j in range(0,height-1,5):
             for i in range(width):
-                p.setPen(pen[mand2[i,j]])
-                p.drawPoint(QPoint(height-j-1,width-i-1))
+                im.setPixel(height-j-1,width-i-1,pen[mand2[i,j]])
+                im.setPixel(height-j-2,width-i-1,pen[mand2[i,j+1]])
+                im.setPixel(height-j-3,width-i-1,pen[mand2[i,j+2]])
+                im.setPixel(height-j-4,width-i-1,pen[mand2[i,j+3]])
+                im.setPixel(height-j-5,width-i-1,pen[mand2[i,j+4]])
             progress.setValue(st*j)
             e.processEvents()
-        p.end()
-
+        p = QPainter()
+        p.begin(pixmap)
+        p.drawImage(QPoint(0,0),im)
+        self.bild.update()
+        
 def isfloat(value):
   try:
     float(value)

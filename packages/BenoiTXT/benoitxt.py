@@ -25,7 +25,19 @@ if not os.path.exists(showdir):
 else:
     develop=False
 
-
+try:
+    with open(hostdir+"manifest","r") as f:
+        r=f.readline()
+        while not "version" in r:
+          r=f.readline()
+        
+        if "version" in r:
+          vstring = "v" + r[ r.index(":")+2 : ]
+        else: vstring=""
+        f.close()
+except:
+    vstring=""
+    
 colormap=[1,1,1]*16
 curcolset="r-g-b"
 colormap=setColorMap(curcolset)
@@ -47,7 +59,6 @@ class FtcGuiApplication(TouchApplication):
         self.ymax=1.25
         self.maxiter=3
         self.zoomfac=2
-        print("maxiter",int(math.pow(2,(self.maxiter+3))))
         
         # create the empty main window
         self.w = TouchWindow("BenoiTxt")
@@ -58,7 +69,14 @@ class FtcGuiApplication(TouchApplication):
         self.centralwidget=QWidget()
         
         self.layout=QVBoxLayout()
-        self.layout.addStretch()
+        
+        self.vers=QLabel()
+        self.vers.setObjectName("tinylabel")
+        self.vers.setAlignment(Qt.AlignRight)
+        self.vers.setText(vstring)
+        self.layout.addWidget(self.vers)
+        
+        #self.layout.addStretch()
         
         self.text=QLabel()
         self.text.setText("...yawn...")
@@ -100,7 +118,7 @@ class FtcGuiApplication(TouchApplication):
 
     
     def on_bild_clicked(self,sender):
-        
+        self.bild.mousePressEvent=None
         success=True
         while success:
             t=TouchAuxMultibutton("BenoiTxt",self.parent())
@@ -173,6 +191,9 @@ class FtcGuiApplication(TouchApplication):
             elif result==QCoreApplication.translate("obc","Set colors"):
                 self.setColors()
                 success=False
+                
+        self.bild.mousePressEvent=self.on_bild_clicked 
+    
     
     def regionData(self):
         xwidth=self.xmax-self.xmin
@@ -249,16 +270,6 @@ class FtcGuiApplication(TouchApplication):
         self.maxiter=result
         return True
     
-    def do_zoom(self):
-        x=self.xmin
-        self.bild.mousePressEvent=self.on_zoom_clicked
-        self.bild.update()
-        
-        while x==self.xmin:
-            self.processEvents()
-            
-        self.bild.mousePressEvent=self.on_bild_clicked
-
     def setZoomFactor(self):
         if self.zoomfac==1.5: self.zoomfac=1
         (success,result) = TouchAuxRequestInteger(QCoreApplication.translate("reqint","Zoom"),
@@ -278,10 +289,9 @@ class FtcGuiApplication(TouchApplication):
         self.bild.update()
         
         while x==self.xmin:
-            self.processEvents()
-            
-        self.bild.mousePressEvent=self.on_bild_clicked        
-    
+            self.processEvents()       
+        self.bild.mousePressEvent=None
+        
     def on_zoom_clicked(self, event):
         z=1/self.zoomfac
         
@@ -290,7 +300,7 @@ class FtcGuiApplication(TouchApplication):
                
         dx = (self.xmax - self.xmin)
         dy = (self.ymax - self.ymin)
-        print("dx/dy",dx/dy)
+
         self.xmin = self.xmin + (dx*kx) - (0.5 * z * dx) 
         self.ymin = self.ymin + (dy*ky) - (0.5 * z * dy)
         self.xmax = self.xmin + (z * dx)
@@ -303,9 +313,8 @@ class FtcGuiApplication(TouchApplication):
         
         while x==self.xmin:
             self.processEvents()
-              
-        self.bild.mousePressEvent=self.on_bild_clicked
-    
+        self.bild.mousePressEvent=None
+        
     def on_zoom_out_clicked(self, event):
         ky = 1-(event.pos().x())/240
         kx = 1-(event.pos().y())/320
@@ -326,9 +335,8 @@ class FtcGuiApplication(TouchApplication):
         
         while x==self.xmin:
             self.processEvents()
-            
-        self.bild.mousePressEvent=self.on_bild_clicked
-    
+        self.bild.mousePressEvent=None
+        
     def on_move_clicked(self, event):
         ky = 1-(event.pos().x())/240
         kx = 1-(event.pos().y())/320 
@@ -363,20 +371,25 @@ class FtcGuiApplication(TouchApplication):
     
     def mand2pixmap(self,width:int,height:int,mand, maxiter:int, pixmap, progress, e):
         pen=[]
+        pen.append(QColor(0,0,0))
         for i in range(16):
             (r,g,b)=colormap[i]
             pen.append(QColor(r,g,b))
-        pen.append(QColor(0,0,0))
+        pen.append(QColor(0,0,0))  
+        
+        z = np.full((width, height),16, dtype=int)
+        mand = np.remainder(mand, z)
+        mand[mand==0]=-1
+        mand = np.add(mand, np.ones((width, height), int))
+        
         p = QPainter()
         p.begin(pixmap)
-        
-        for i in range(width):
-            for j in range(height):
-                pe=mand[i,j]
-                if pe >0: p.setPen(pen[pe%16])
-                else: p.setPen(pen[16])
+        st=100/height
+        for j in range(height):
+            for i in range(width):
+                p.setPen(pen[mand[i,j]])
                 p.drawPoint(QPoint(height-j-1,width-i-1))
-            progress.setValue(100*i/width)
+            progress.setValue(st*j)
             e.processEvents()
         p.end()
 

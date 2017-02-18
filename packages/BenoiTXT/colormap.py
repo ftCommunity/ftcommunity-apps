@@ -3,7 +3,7 @@
 #
 
 def listColorMaps():
-    return ["default","rainbow","forest","planet","beach","fire","dreamy","autumn","icy","r-g-b","y-c-m","amstrad","zuse","boole","roentgen","3d glasses","soylent green","douglas adams","matrix","from hell", "night flash"]
+    return ["default","rainbow","forest","planet","beach","fire","dreamy","autumn","icy","r-g-b","y-c-m","kill bill","amstrad","zuse","boole","roentgen","3d glasses","soylent green","douglas adams","matrix","from hell", "night flash"]
 
 def setColorMap(name:str="default"):
     colormap=[1,1,1]*16
@@ -347,6 +347,23 @@ def setColorMap(name:str="default"):
         colormap[13]=[  0,   0,   0] 
         colormap[14]=[  0,   0,   0] 
         colormap[15]=[  0,   0,   0]
+    elif name=="kill bill":        
+        colormap[ 0]=[255, 255,   0]
+        colormap[ 1]=[255, 255,   0]
+        colormap[ 2]=[255, 255,   0]
+        colormap[ 3]=[224, 224,   0]
+        colormap[ 4]=[208, 208,   0] 
+        colormap[ 5]=[192, 192,   0] 
+        colormap[ 6]=[176, 176,   0] 
+        colormap[ 7]=[  0,   0,   0] 
+        colormap[ 8]=[  0,   0,   0] 
+        colormap[ 9]=[255, 255,   0] 
+        colormap[10]=[  0,   0,   0] 
+        colormap[11]=[  0,   0,   0] 
+        colormap[12]=[176, 176,   0] 
+        colormap[13]=[192, 192,   0] 
+        colormap[14]=[208, 208,   0] 
+        colormap[15]=[224, 224,   0]
     else:  
         colormap[ 0]=[ 66,  30,  15]
         colormap[ 1]=[ 25,   7,  26]

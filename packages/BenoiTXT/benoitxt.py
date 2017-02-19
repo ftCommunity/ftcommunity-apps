@@ -39,7 +39,7 @@ except:
     vstring=""
     
 colormap=[1,1,1]*16
-curcolset="r-g-b"
+curcolset="r-g-b 32" 
 colormap=setColorMap(curcolset)
 
 cancel=False
@@ -416,11 +416,12 @@ class FtcGuiApplication(TouchApplication):
     def mand2pixmap(self,width:int,height:int, mand, maxiter:int, pixmap, progress, e):
         pen=[]
         pen.append(qRgb(0,0,0))
-        for i in range(16):
+        maxcol=int(len(colormap)/3)
+        for i in range(maxcol):
             (r,g,b)=colormap[i]
             pen.append(qRgb(r,g,b))
         
-        z = np.full((width, height),16, dtype=int)
+        z = np.full((width, height),maxcol, dtype=int)
         mand2 = np.remainder(mand, z)
         mand2[mand==0]=-1
         mand2 = np.add(mand2, np.ones((width, height), int))

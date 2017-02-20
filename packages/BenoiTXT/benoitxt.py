@@ -10,12 +10,15 @@
 import numpy as np
 import sys, math, time
 from auxiliaries import *
+from helper import *
 from TouchStyle import *
 from colormap import *
 
 hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
 showdir=showdir = hostdir + "../37681ea0-dc00-11e6-9598-0800200c9a66/pics/"
 if not os.path.exists(showdir): showdir=""
+
+TXT = os.path.isfile("/etc/fw-ver.txt")
 
 # für die Entwicklungsumgebung PeH
 if not os.path.exists(showdir):
@@ -38,14 +41,15 @@ try:
 except:
     vstring=""
     
-colormap=[1,1,1]*16
 curcolset="r-g-b 32" 
 colormap=setColorMap(curcolset)
 
 cancel=False
 
 class FtcGuiApplication(TouchApplication):
+    
     def __init__(self, args):
+        global colormap    
         TouchApplication.__init__(self, args)
 
         translator = QTranslator()
@@ -59,6 +63,18 @@ class FtcGuiApplication(TouchApplication):
         self.ymax=1.25
         self.maxiter=3
         self.zoomfac=2
+        
+        self.coffset=0
+        self.ccset=""
+        
+        #create backdrop window for TXT
+        if TXT:
+          b=TouchWindow("")
+          bb = QLabel(b)
+          bb.setGeometry(0, 0, 240, 320)
+          bb.setPixmap(QPixmap(hostdir+"blank.png"))
+          self.center(b)
+          b.show()
         
         # create the empty main window
         self.w = TouchWindow("BenoiTxt")
@@ -104,7 +120,8 @@ class FtcGuiApplication(TouchApplication):
         self.w.setCentralWidget(self.centralwidget)
         
         self.w.show()
-
+        self.center(self.w)
+        
         # create an overlay pixmap:
   
         self.bild = QLabel(self.w)
@@ -114,10 +131,24 @@ class FtcGuiApplication(TouchApplication):
         self.bild.mousePressEvent=self.on_bild_clicked
         
         self.exec_()
-         
+    
+    def clean(self,newdir,maxlen):
+        res=""
+        valid="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_-."
+        for ch in newdir:
+            if ch in valid: res=res+ch
+        return res[:maxlen]
+    
+    def center(self, window):
+        frameGm = window.frameGeometry()
+        screen = QApplication.desktop().screenNumber(QApplication.desktop().cursor().pos())
+        centerPoint = QApplication.desktop().screenGeometry(screen).center()
+        frameGm.moveCenter(centerPoint)
+        window.move(frameGm.topLeft())     
 
     
     def on_bild_clicked(self,sender):
+        self.w.hide()        
         self.bild.mousePressEvent=None
         self.bild.hide()
         success=True
@@ -147,46 +178,56 @@ class FtcGuiApplication(TouchApplication):
                               ]) 
                 (success,result)=t.exec_() 
             
-            if success==False: self.bild.show()
-            
+            if success==False:
+                self.bild.show()
+                self.w.show()
             if result==QCoreApplication.translate("obc","Reset region"):
                 self.xmin=-2.15
                 self.xmax=1.1833333
                 self.ymin=-1.25
                 self.ymax=1.25
+                self.w.show()
                 success=False
                 self.progress.setValue(0)
             if result==QCoreApplication.translate("obc","Region data"):
                 r=self.regionData()
+                self.w.show()
                 if not r:
                     self.bild.show()
+                    
                 success=False
             elif result==QCoreApplication.translate("obc","Re-calculate"):
                 success=False
+                self.w.show()
                 self.progress.setValue(0)
             elif result==QCoreApplication.translate("obc","Save image"):    
                 self.saveImage()
                 success=False
                 self.bild.show()
+                self.w.show()
             elif result==QCoreApplication.translate("obc","Zoom factor"):
                 r=self.setZoomFactor()
                 if r:
                     success=False
                     self.bild.show()
+                    self.w.show()
             elif result==QCoreApplication.translate("obc","Zoom in"):
                 self.bild.show()
+                self.w.show()
                 self.do_zoom()
                 success=False
                 self.bild.hide()
                 self.progress.setValue(0)
             elif result==QCoreApplication.translate("obc","Zoom out"):
                 self.bild.show()
+                self.w.show()
                 self.do_zoom_out()
                 success=False
                 self.bild.hide()
                 self.progress.setValue(0) 
             elif result==QCoreApplication.translate("obc","Move"):
                 self.bild.show()
+                self.w.show()
                 self.do_move()
                 success=False
                 self.bild.hide()
@@ -196,17 +237,20 @@ class FtcGuiApplication(TouchApplication):
                 if r:
                     success=False
                     self.bild.show()
+                    self.w.show()
             elif result==QCoreApplication.translate("obc","Set colors"):
+                
                 self.setColors()
                 success=False
             self.processEvents()
         
         self.processEvents()
-        
+        self.w.show()
         if self.bild.isVisible(): self.bild.mousePressEvent=self.on_bild_clicked     
         else:                     self.bild.mousePressEvent=None
         self.processEvents()
         
+
     def regionData(self):
         xwidth=self.xmax-self.xmin
         ywidth=self.ymax-self.ymin
@@ -251,6 +295,7 @@ class FtcGuiApplication(TouchApplication):
         m.setPosButton(QCoreApplication.translate("save","Save"))
         m.setNegButton(QCoreApplication.translate("save","Generate"))
         (s,r)=m.exec_()
+        self.w.show()
         if s and r==QCoreApplication.translate("save","Save"):
             if not os.path.exists(showdir + "BenoiTxt/"): os.mkdir(showdir + "BenoiTxt")
             if os.path.isdir(showdir + "BenoiTxt"):
@@ -260,18 +305,133 @@ class FtcGuiApplication(TouchApplication):
         self.bild.show()
         self.knopf.setEnabled(True)     
     
+    def scanColormaps(self):
+        maps=os.listdir(hostdir+"colormaps/")
+        li=[]
+        for i in maps:
+          if os.path.isfile(hostdir+"colormaps/"+i):
+            li.append(i)
+        return li
+    
+    def saveColormap(self):
+        p=TouchAuxKeyboard(QCoreApplication.translate("savemap","Name?"),self.ccset,self.parent())
+        pw1=self.clean(p.exec_(),12)
+        if not os.path.exists(hostdir+"colormaps/"+pw1):
+            with open(hostdir+"colormaps/"+pw1,"w") as f:
+              for i in range(len(colormap)):
+                f.write(str(colormap[i][0])+";")
+                f.write(str(colormap[i][1])+";")
+                f.write(str(colormap[i][2])+";")
+              f.close()
+            self.ccset=pw1
+        else:
+          m=TouchAuxMessageBox("Warning",self.parent())
+          m.setText(QCoreApplication.translate("savemap","Colorset already exists!"))
+          m.setPosButton(QCoreApplication.translate("savemap","Overwrite"))
+          m.setNegButton(QCoreApplication.translate("savemap","Cancel"))
+          (r,s)=m.exec_()
+          if s==QCoreApplication.translate("savemap","Overwrite"):
+            with open(hostdir+"colormaps/"+pw1,"w") as f:
+              for i in range(len(colormap)):
+                f.write(str(colormap[i][0])+";")
+                f.write(str(colormap[i][1])+";")
+                f.write(str(colormap[i][2])+";")
+              f.close()
+            self.ccset=pw1            
+    
+    def loadColormap(self):
+        global curcolset, colormap
+        cm=self.scanColormaps()
+        if len(cm)>0:
+            (success, loadmap)=TouchAuxListRequester(QCoreApplication.translate("loadmap","Load"),"",cm,cm[0],"Okay",self.parent()).exec_()
+            if not success: return False
+            with open(hostdir+"colormaps/"+loadmap,"r") as f:
+              s=f.read()
+              f.close()
+            colormap=[]
+            while len(s)>2:
+              r=int(s[:s.index(";")])
+              s=s[s.index(";")+1:]
+              g=int(s[:s.index(";")])
+              s=s[s.index(";")+1:]
+              b=int(s[:s.index(";")])
+              s=s[s.index(";")+1:]
+              colormap.append([r, g, b])
+            self.ccset=loadmap
+            return True
+        else:
+          m=TouchAuxMessageBox("Sorry",self.parent())
+          m.setText(QCoreApplication.translate("loadmap","No custom colorsets found!"))
+          m.setPosButton("Okay")
+          m.exec_()
+          return False
+
+    def deleteColormap(self):
+        global curcolset, colormap
+        cm=self.scanColormaps()
+        if len(cm)>0:
+            (success, loadmap)=TouchAuxListRequester(QCoreApplication.translate("delmap","Delete"),"",cm,cm[0],"Okay",self.parent()).exec_()
+            if not success: return False
+            m=TouchAuxMessageBox("Warning",self.parent())
+            m.setText(QCoreApplication.translate("delmap","Really delete colorset?"))
+            m.setPosButton(QCoreApplication.translate("savemap","Delete"))
+            m.setNegButton(QCoreApplication.translate("savemap","Cancel"))
+            (r,s)=m.exec_()
+            if s==QCoreApplication.translate("savemap","Delete"):
+               os.remove(hostdir+"colormaps/"+loadmap)
+        else:
+          m=TouchAuxMessageBox("Sorry",self.parent())
+          m.setText(QCoreApplication.translate("loadmap","No custom colorsets found!"))
+          m.setPosButton("Okay")
+          m.exec_()
+        return False
+
+      
     def setColors(self):
         global curcolset, colormap
         self.bild.hide()
-        (success,result) = TouchAuxListRequester(QCoreApplication.translate("colors","Colors"),
-                                                 QCoreApplication.translate("colors","Select color set"),
-                                                 listColorMaps(),
-                                                 curcolset,
-                                                 QCoreApplication.translate("colors","Okay")
-                                                 ,self.parent()).exec_()
+        
+        m =TouchAuxMultibutton(QCoreApplication.translate("colors","Colors"),self.parent())
+        m.setButtons([QCoreApplication.translate("colors","Preset"),
+                     QCoreApplication.translate("colors","Offset"),
+                     QCoreApplication.translate("colors","Edit"),
+                     QCoreApplication.translate("colors","Load custom"),
+                     QCoreApplication.translate("colors","Save custom"),
+                     QCoreApplication.translate("colors","Delete custom")])
+                     
+          
+        (success,result) = m.exec_()                                       
+        
+        if result==QCoreApplication.translate("colors","Preset"):
+            (success,result) = TouchAuxListRequester(QCoreApplication.translate("colors","Colors"),
+                                                   QCoreApplication.translate("colors","Select color set"),
+                                                   listColorMaps(),
+                                                   curcolset,
+                                                   QCoreApplication.translate("colors","Okay")
+                                                   ,self.parent()).exec_()
+            if success:
+                self.ccset=""
+                curcolset=result
+                colormap=setColorMap(result)
+
+        elif result==QCoreApplication.translate("colors","Delete custom"):
+            success=self.deleteColormap()
+        elif result==QCoreApplication.translate("colors","Load custom"):        
+            success=self.loadColormap()
+        elif result==QCoreApplication.translate("colors","Save custom"):
+            self.saveColormap()
+            success=False
+        elif result==QCoreApplication.translate("colors","Offset"):
+            (s,r) = TouchAuxRequestInteger(QCoreApplication.translate("colors","Colors"),QCoreApplication.translate("colors","Set offset"),self.coffset,0,31,"Okay",self.parent()).exec_()
+            if s:self.coffset=r
+            else:success=False
+        elif result==QCoreApplication.translate("colors","Edit"):
+            c = colorset("Colors",colormap,self.parent())
+            (a,b)=c.exec_()
+            if a: colormap=b
+            else: success=False
+        self.w.show()
         if success:
-            curcolset=result
-            colormap=setColorMap(result)
             
             self.knopf.setEnabled(False)
             self.text.setText("...colormapping")
@@ -280,6 +440,7 @@ class FtcGuiApplication(TouchApplication):
             self.bild.update()
             self.text.setText("...ready")
             self.processEvents()
+        
         self.bild.show()
         self.knopf.setEnabled(True)
             
@@ -416,12 +577,14 @@ class FtcGuiApplication(TouchApplication):
     def mand2pixmap(self,width:int,height:int, mand, maxiter:int, pixmap, progress, e):
         pen=[]
         pen.append(qRgb(0,0,0))
-        maxcol=int(len(colormap)/3)
+        maxcol=len(colormap)
         for i in range(maxcol):
-            (r,g,b)=colormap[i]
+            (r,g,b)=colormap[(i+self.coffset)%maxcol]
             pen.append(qRgb(r,g,b))
+
         
         z = np.full((width, height),maxcol, dtype=int)
+
         mand2 = np.remainder(mand, z)
         mand2[mand==0]=-1
         mand2 = np.add(mand2, np.ones((width, height), int))

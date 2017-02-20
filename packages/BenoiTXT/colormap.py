@@ -7,7 +7,7 @@ def listColorMaps():
 
 def setColorMap(name:str="default"):
     if name=="rainbow":        
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[255,   0,   0]
         colormap[ 1]=[255,  80,   0]
         colormap[ 2]=[255, 180,   0]
@@ -25,7 +25,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[192,   0, 255] 
         colormap[15]=[255,   0, 255] 
     elif name=="forest":        
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[0]=[142,  94,   5] # d.braun
         colormap[1]=[180, 120,   7]
         colormap[2]=[210, 150,  12]
@@ -43,7 +43,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[132, 180,  45] 
         colormap[15]=[160, 105,   6] 
     elif name=="planet":        
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[0]=[255, 255, 255] # weiß
         colormap[1]=[227, 227, 255]
         colormap[2]=[200, 200, 255] # h.blau
@@ -61,7 +61,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[ 90, 120,  60] 
         colormap[15]=[ 42,  42,   0] # d.bn
     elif name=="fire":        
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[ 32,   0,   0] # bk
         colormap[ 1]=[ 32,  32,   5]
         colormap[ 2]=[ 64,  32,   8] # d.red
@@ -79,7 +79,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[240, 240, 255] 
         colormap[15]=[255, 255, 255]
     elif name=="dreamy":
-        colormap=[1,1,1]*16     
+        colormap=[[0,0,0]]*16     
         colormap[ 0]=[255, 255, 255]
         colormap[ 1]=[228, 228, 255]
         colormap[ 2]=[204, 204, 255]
@@ -97,7 +97,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[255, 255, 202] 
         colormap[15]=[255, 255, 255]
     elif name=="autumn":        
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[  0, 120,   0]
         colormap[ 1]=[ 40, 108,   3]
         colormap[ 2]=[ 80,  95,   6]
@@ -115,7 +115,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[170, 210,  42] 
         colormap[15]=[100, 170,  20]
     elif name=="icy":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[ 64, 128, 255]
         colormap[ 1]=[ 95, 145, 255]
         colormap[ 2]=[125, 170, 255]
@@ -133,7 +133,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[ 64,  96, 255] 
         colormap[15]=[ 64, 107, 255]
     elif name=="r-g-b":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[  0,   0,   0]
         colormap[ 1]=[ 64,   0,   0]
         colormap[ 2]=[128,   0,   0]
@@ -151,7 +151,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[  0,   0, 128] 
         colormap[15]=[ 0, 0, 64]
     elif name=="r-g-b 32":
-        colormap=[1,1,1]*32
+        colormap=[[0,0,0]]*32
         colormap[ 0]=[  0,   0,   0]
         colormap[ 1]=[ 32,   0,   0]
         colormap[ 2]=[ 64,   0,   0]
@@ -185,7 +185,7 @@ def setColorMap(name:str="default"):
         colormap[30]=[  0,   0,  64] 
         colormap[31]=[  0,   0,  32]
     elif name=="y-c-m":        
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[255, 255, 255]
         colormap[ 1]=[255, 255, 196]
         colormap[ 2]=[255, 255, 128]
@@ -203,7 +203,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[255, 192, 255] 
         colormap[15]=[255, 255, 255]
     elif name=="amstrad":        
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[  0,  32,   0]
         colormap[ 1]=[  6,  48,   2]
         colormap[ 2]=[ 12,  64,   4]
@@ -221,7 +221,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[126, 255,  29] 
         colormap[15]=[126, 255,  32]
     elif name=="zuse":        
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[255, 128,   0]
         colormap[ 1]=[32,   16,   0]
         colormap[ 2]=[255, 128,   0]
@@ -239,7 +239,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[255, 128,   0] 
         colormap[15]=[32,   16,   0]    
     elif name=="roentgen":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[  0,   0,   0]
         colormap[ 1]=[ 16,  16,  16]
         colormap[ 2]=[ 32,  32,  32]
@@ -257,7 +257,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[224, 224, 224] 
         colormap[15]=[240, 240, 240]
     elif name=="boole":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[255, 255, 255]
         colormap[ 1]=[255, 255, 255]
         colormap[ 2]=[255, 255, 255]
@@ -275,7 +275,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[  0,   0,   0] 
         colormap[15]=[  0,   0,   0]
     elif name=="beach":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[128, 128, 255] # light blue sky
         colormap[ 1]=[ 64,  64, 255]
         colormap[ 2]=[  0,   0, 255]
@@ -293,7 +293,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[  0,   0, 192] 
         colormap[15]=[192, 192, 255] # white crest waves
     elif name=="3d glasses":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[255,   0,   0]
         colormap[ 1]=[224,  32,  32]
         colormap[ 2]=[192,  64,  64]
@@ -311,7 +311,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[192,  64,  64] 
         colormap[15]=[224,  32,  32]
     elif name=="soylent green":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[  0, 255,   0]
         colormap[ 1]=[ 32, 255,   0]
         colormap[ 2]=[ 64, 255,   0]
@@ -329,7 +329,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[ 64, 255,   0] 
         colormap[15]=[ 32, 255,   0]    
     elif name=="douglas adams":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[ 42,   0,   0]
         colormap[ 1]=[ 84,  42,   0]
         colormap[ 2]=[126,  84,  42]
@@ -347,7 +347,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[126,  84,  42] 
         colormap[15]=[168, 126,  84]
     elif name=="matrix":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[  0,   0,   0]
         colormap[ 1]=[  0,   0,   0]
         colormap[ 2]=[  0,  64,   0]
@@ -365,7 +365,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[  0,  32,   0] 
         colormap[15]=[  0,   0,   0]
     elif name=="from hell":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[  0,   0,   0]
         colormap[ 1]=[ 32,   0,   0]
         colormap[ 2]=[ 96,   0,   0]
@@ -383,7 +383,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[255,   0,   0] 
         colormap[15]=[  0,   0,   0]    
     elif name=="night flash":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[  0,   0,   0]
         colormap[ 1]=[  0,   0,   0]
         colormap[ 2]=[  0,   0,   0]
@@ -401,7 +401,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[  0,   0,   0] 
         colormap[15]=[  0,   0,   0]
     elif name=="kill bill":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[255, 255,   0]
         colormap[ 1]=[255, 255,   0]
         colormap[ 2]=[255, 255,   0]
@@ -419,7 +419,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[208, 208,   0] 
         colormap[15]=[224, 224,   0]
     elif name=="oeco telecom":
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[255,   0, 255]
         colormap[ 1]=[224,  32, 224]
         colormap[ 2]=[192,  64, 192]
@@ -437,7 +437,7 @@ def setColorMap(name:str="default"):
         colormap[14]=[192,  64, 192] 
         colormap[15]=[224,  32, 224]
     else:
-        colormap=[1,1,1]*16
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[ 66,  30,  15]
         colormap[ 1]=[ 25,   7,  26]
         colormap[ 2]=[  9,   1,  47]
@@ -458,6 +458,7 @@ def setColorMap(name:str="default"):
 
 """
     elif name=="":        
+        colormap=[[0,0,0]]*16
         colormap[ 0]=[]
         colormap[ 1]=[]
         colormap[ 2]=[]

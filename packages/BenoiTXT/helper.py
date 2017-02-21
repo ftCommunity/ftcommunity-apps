@@ -290,7 +290,7 @@ class colorset(TouchDialog):
     def set_palette(self):
         self.mode=""
         cnc = len(self.colors)
-        (s,r) = TouchAuxRequestInteger("Colors","Set palette size:",cnc,4,32,"Okay",self.parent()).exec_()
+        (s,r) = TouchAuxRequestInteger("Colors","Set palette size:",cnc,4,32,"Okay",None).exec_()
         if s and r!=cnc:
             if r>cnc:
               for i in range(cnc,r): self.addcolor()

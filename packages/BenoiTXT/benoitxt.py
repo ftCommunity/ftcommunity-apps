@@ -95,7 +95,7 @@ class FtcGuiApplication(TouchApplication):
         #self.layout.addStretch()
         
         self.text=QLabel()
-        self.text.setText("...yawn...")
+        self.text.setText(QCoreApplication.translate("main","...yawn..."))
         self.text.setObjectName("smalllabel")
         self.text.setAlignment(Qt.AlignCenter)
         
@@ -110,7 +110,7 @@ class FtcGuiApplication(TouchApplication):
         self.layout.addWidget(self.progress)
         self.layout.addStretch()
         
-        self.knopf=QPushButton("Start")
+        self.knopf=QPushButton(QCoreApplication.translate("main","Start"))
         self.knopf.clicked.connect(self.rechne)
         
         self.layout.addWidget(self.knopf)
@@ -434,11 +434,11 @@ class FtcGuiApplication(TouchApplication):
         if success:
             
             self.knopf.setEnabled(False)
-            self.text.setText("...colormapping")
+            self.text.setText(QCoreApplication.translate("main","...colormapping"))
             self.processEvents()
             self.mand2pixmap(320,240,self.m,int(math.pow(2,(self.maxiter+3))),self.bild.pixmap(), self.progress, self)
             self.bild.update()
-            self.text.setText("...ready")
+            self.text.setText(QCoreApplication.translate("main","...ready"))
             self.processEvents()
         
         self.bild.show()
@@ -538,16 +538,16 @@ class FtcGuiApplication(TouchApplication):
     
     def rechne(self):
         self.knopf.setDisabled(True)
-        self.text.setText("...computing")
+        self.text.setText(QCoreApplication.translate("main","...computing"))
         self.progress.setValue(0)
         (xv,yv,self.m)=mandelbrot_set2(self.xmin, self.xmax, self.ymin, self.ymax, 320, 240, int(math.pow(2,(self.maxiter+3))), self.progress, self)      
         
-        self.text.setText("...colormapping")
+        self.text.setText(QCoreApplication.translate("main","...colormapping"))
         self.progress.setValue(100)
         self.processEvents()
         self.mand2pixmap(320,240,self.m,int(math.pow(2,(self.maxiter+3))),self.bild.pixmap(), self.progress, self)
         self.bild.show()
-        self.text.setText("...ready")
+        self.text.setText(QCoreApplication.translate("main","...ready"))
         
         self.knopf.setEnabled(True)
         self.processEvents()
@@ -557,22 +557,22 @@ class FtcGuiApplication(TouchApplication):
         
         self.knopf.setDisabled(True)
         self.bild.hide()
-        self.text.setText("...computing<br>hi-res")
+        self.text.setText(QCoreApplication.translate("main","...computing<br>hi-res"))
         self.progress.setValue(0)
         self.processEvents()
         (xv,yv,ma)=mandelbrot_set2(self.xmin, self.xmax, self.ymin, self.ymax, width, height, int(math.pow(2,(self.maxiter+3))), self.progress, self)
-        self.text.setText("...colormapping<br>hi-res")
+        self.text.setText(QCoreApplication.translate("main","...colormapping<br>hi-res"))
         self.progress.setValue(100)
         self.processEvents()
         mpm=QPixmap(height,width)
         self.mand2pixmap(width,height,ma,int(math.pow(2,(self.maxiter+3))),mpm, self.progress, self)
-        self.text.setText("...save")
+        self.text.setText(QCoreApplication.translate("main","...save"))
         self.processEvents()
         if not os.path.exists(showdir + "BenoiTxt/"): os.mkdir(showdir + "BenoiTxt")
         if os.path.isdir(showdir + "BenoiTxt"):
           void=mpm.transformed(QTransform().rotate(90)).save(showdir + "BenoiTxt/" +time.strftime("%y%m%d%H%M%S")+".png","PNG",80)
         self.bild.show()
-        self.text.setText("...ready")
+        self.text.setText(QCoreApplication.translate("main","...ready"))
     
     def mand2pixmap(self,width:int,height:int, mand, maxiter:int, pixmap, progress, e):
         pen=[]

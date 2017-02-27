@@ -57,6 +57,8 @@ class FtcGuiApplication(TouchApplication):
         translator.load(QLocale.system(), os.path.join(path, "benoitxt_"))
         self.installTranslator(translator)
 
+        self.precision="double"
+        
         self.xmin=-2.15
         self.xmax=1.1833333
         self.ymin=-1.25
@@ -207,10 +209,9 @@ class FtcGuiApplication(TouchApplication):
                 self.w.show()
             elif result==QCoreApplication.translate("obc","Zoom factor"):
                 r=self.setZoomFactor()
-                if r:
-                    success=False
-                    self.bild.show()
-                    self.w.show()
+                success=False
+                self.bild.show()
+                self.w.show()
             elif result==QCoreApplication.translate("obc","Zoom in"):
                 self.bild.show()
                 self.w.show()
@@ -234,10 +235,9 @@ class FtcGuiApplication(TouchApplication):
                 self.progress.setValue(0)
             elif result==QCoreApplication.translate("obc","Set iterations"):
                 r=self.setIterations()
-                if r:
-                    success=False
-                    self.bild.show()
-                    self.w.show()
+                success=False
+                self.bild.show()
+                self.w.show()
             elif result==QCoreApplication.translate("obc","Set colors"):
                 
                 self.setColors()
@@ -540,7 +540,7 @@ class FtcGuiApplication(TouchApplication):
         self.knopf.setDisabled(True)
         self.text.setText(QCoreApplication.translate("main","...computing"))
         self.progress.setValue(0)
-        (xv,yv,self.m)=mandelbrot_set2(self.xmin, self.xmax, self.ymin, self.ymax, 320, 240, int(math.pow(2,(self.maxiter+3))), self.progress, self)      
+        (xv,yv,self.m)=mandelbrot_set2(self.xmin, self.xmax, self.ymin, self.ymax, 320, 240, int(math.pow(2,(self.maxiter+3))), self.precision, self.progress, self)      
         
         self.text.setText(QCoreApplication.translate("main","...colormapping"))
         self.progress.setValue(100)
@@ -560,7 +560,7 @@ class FtcGuiApplication(TouchApplication):
         self.text.setText(QCoreApplication.translate("main","...computing<br>hi-res"))
         self.progress.setValue(0)
         self.processEvents()
-        (xv,yv,ma)=mandelbrot_set2(self.xmin, self.xmax, self.ymin, self.ymax, width, height, int(math.pow(2,(self.maxiter+3))), self.progress, self)
+        (xv,yv,ma)=mandelbrot_set2(self.xmin, self.xmax, self.ymin, self.ymax, width, height, int(math.pow(2,(self.maxiter+3))), self.precision,self.progress, self)
         self.text.setText(QCoreApplication.translate("main","...colormapping<br>hi-res"))
         self.progress.setValue(100)
         self.processEvents()
@@ -612,16 +612,24 @@ def isfloat(value):
   except:
     return False          
 
-def mandelbrot_set2(xmin,xmax,ymin,ymax,width,height,maxiter, progress, e):
-    r1 = np.linspace(xmin, xmax, width)
-    r2 = np.linspace(ymin, ymax, height)
+def mandelbrot_set2(xmin,xmax,ymin,ymax,width,height,maxiter, precision,progress, e):
+    if precision=="single":
+      r1 = np.linspace(xmin, xmax, width)
+      r2 = np.linspace(ymin, ymax, height)
+    else:
+      r1 = np.linspace(xmin, xmax, width, np.longdouble)
+      r2 = np.linspace(ymin, ymax, height, np.longdouble)
+    
     c = r1 + r2[:,None]*1j
-    n3 = mandelbrot_numpy(c,maxiter, progress, e)
+    n3 = mandelbrot_numpy(c,maxiter, precision, progress, e)
     return (r1,r2,n3.T) 
 
-def mandelbrot_numpy(c, maxiter, progress, e):
+def mandelbrot_numpy(c, maxiter, precision, progress, e):
     output = np.zeros(c.shape, int)
-    z = np.zeros(c.shape, np.complex64)
+    if precision=="single":
+          z = np.zeros(c.shape, np.complex64)
+    else: z = np.zeros(c.shape, np.complex128)
+    
     for it in range(maxiter):
         notdone = np.less(z.real*z.real + z.imag*z.imag, 4.0)
         output[notdone] = it

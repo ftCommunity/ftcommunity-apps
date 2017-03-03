@@ -5,7 +5,7 @@
 import cgi, shutil
 import sys, os, socket
 import ba
-import xml.etree.ElementTree as et
+#import xml.etree.ElementTree as et
 import zipfile as z
 import cgitb
 
@@ -66,13 +66,7 @@ def scan_brickly():
 
             if l[:8]=="brickly-" and l[-4:]==".xml": 
                 name=""
-                """xml=et.parse(brickdir+l).getroot()
-                for child in xml:
-                    # remove any namespace from the tag
-                    if '}' in child.tag: child.tag = child.tag.split('}', 1)[1]
-                    if child.tag == "settings" and 'name' in child.attrib:
-                        name = child.attrib['name']
-                """
+
                 with open(brickdir+l,"r", encoding="utf-8") as f:
                   
                     d=f.read()
@@ -310,7 +304,6 @@ def upload(fileitem):
           upload_error("nab")
           return
         
-    #zf.extractall()
     if ".xml" in zf.namelist():
         zf.extract(".xml")
     else: 

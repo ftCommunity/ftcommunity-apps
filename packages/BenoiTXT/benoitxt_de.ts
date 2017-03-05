@@ -209,7 +209,7 @@
     <message>
         <location filename="benoitxt.py" line="457"/>
         <source>Set calc. depth:</source>
-        <translation>Max. Iterationstiefe einstellen:</translation>
+        <translation>Max. Rechentiefe einstellen:</translation>
     </message>
     <message>
         <location filename="benoitxt.py" line="467"/>
@@ -224,7 +224,7 @@
     <message>
         <location filename="benoitxt.py" line="467"/>
         <source>Set zoom factor:</source>
-        <translation>Vergrößerungsfaktor wählen:</translation>
+        <translation>Vergrößerungs- faktor wählen:</translation>
     </message>
 </context>
 <context>

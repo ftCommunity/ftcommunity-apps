@@ -71,12 +71,12 @@ class FtcGuiApplication(TouchApplication):
         
         #create backdrop window for TXT
         if TXT:
-          b=TouchWindow("")
-          bb = QLabel(b)
+          self.b=TouchWindow("")
+          bb = QLabel(self.b)
           bb.setGeometry(0, 0, 240, 320)
           bb.setPixmap(QPixmap(hostdir+"blank.png"))
-          self.center(b)
-          b.show()
+          self.center(self.b)
+          self.b.show()
         
         # create the empty main window
         self.w = TouchWindow("BenoiTxt")
@@ -122,7 +122,8 @@ class FtcGuiApplication(TouchApplication):
         self.w.setCentralWidget(self.centralwidget)
         
         self.w.show()
-        self.center(self.w)
+        
+        self.w.titlebar.close.clicked.connect(self.ende)
         
         # create an overlay pixmap:
   
@@ -133,6 +134,10 @@ class FtcGuiApplication(TouchApplication):
         self.bild.mousePressEvent=self.on_bild_clicked
         
         self.exec_()
+
+    
+    def ende(self):
+        exit()
     
     def clean(self,newdir,maxlen):
         res=""
@@ -165,7 +170,7 @@ class FtcGuiApplication(TouchApplication):
                            ]) 
             (success,result)=t.exec_()
             
-            if   result==QCoreApplication.translate("obc","Exit"): self.exit()
+            if   result==QCoreApplication.translate("obc","Exit"): exit()
             elif result==QCoreApplication.translate("obc","Options"):
                 save=QCoreApplication.translate("obc","Save image")
                 if showdir=="": save=""

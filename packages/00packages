@@ -48,6 +48,23 @@ firmware: >=0.9.2
 desc_de: Fotografiere und verwalte Bilder mit dem TXT
 html_de: index.py?lang=de
 
+[brickly]
+name: Brickly
+category: Tools
+author: Till Harbaum
+icon: icon.png
+desc: Blockly demo
+url: https://developers.google.com/blockly/
+html: index.html
+exec: brickly_app.py
+managed: yes
+uuid: 1f2d90a3-11e9-4a92-955a-73ffaec0fe71
+version: 1.28
+firmware: >=0.9.0
+name_de: Brickly
+desc_de: Blockly-Demo
+html_de: index.html?lang=de
+
 [cpu_load]
 name: CPU-Load
 category: System

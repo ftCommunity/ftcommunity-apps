@@ -28,8 +28,6 @@ class FtcGuiApplication(TouchApplication):
         translator = QTranslator()
         path = os.path.dirname(os.path.realpath(__file__))
         translator.load(QLocale.system(), os.path.join(path, "txtshow_"))
-        #q =QLocale("de_DE")
-        #translator.load(q, os.path.join(path, "txtshow_"))
         self.installTranslator(translator)
         
         
@@ -53,14 +51,18 @@ class FtcGuiApplication(TouchApplication):
         
         # read preferences here
         
+        if os.path.isfile(local + ".txtshowconf"):
+            with open(local+".txtshowconf","r") as f:
+                r=f.readline()
+                while r!="":
+                    if "album=" in r: self.currdir=r[r.index("album=")+6 : -1]
+                    if "delay=" in r: self.timerdelay=int(r[r.index("delay=")+6 : -1])
+                    r=f.readline()
+        # prefs done
+        
         self.scan_images()
         
         self.window.show()
-        
-        #mb = TouchAuxKeyboard("A","B",self.parent())
-        #a=mb.exec_()
-        #print(a)
-        #exit()
         
         # *********** check for camera presence **************
         self.set_camera()
@@ -70,8 +72,11 @@ class FtcGuiApplication(TouchApplication):
         self.currpic=-1
         self.on_timer() # erstes Bild laden!
          
-        self.exec_()        
-
+        self.exec_()     
+        
+        # write preferences here
+        
+        self.saveprefs()
 #
 #*****************************
 #
@@ -150,7 +155,6 @@ class FtcGuiApplication(TouchApplication):
         
         self.picstack=list()
         
-      
         if self.currdir in self.dirstack:
             self.picstack=os.listdir(picsdir+self.currdir)
             self.picstack.sort()
@@ -213,7 +217,6 @@ class FtcGuiApplication(TouchApplication):
     
         
     def setupLayout(self):
-        # create the empty main window
         
         self.myStack = QStackedWidget()
 
@@ -232,7 +235,7 @@ class FtcGuiApplication(TouchApplication):
         self.myStack.setCurrentIndex(0)
         
         self.window.setCentralWidget(self.myStack)
-        
+
         self.layer_black = QLabel(self.window)
         self.layer_black.setGeometry(0, 0, 240, 320)
         self.layer_black.setPixmap(QPixmap(ovldir+"ovl_black.png"))
@@ -392,7 +395,13 @@ class FtcGuiApplication(TouchApplication):
         self.on_timer() # --> load current picture here
     
     def program_exit(self):
+        self.saveprefs()
         exit()
+        
+    def saveprefs(self):
+        with open(local+".txtshowconf","w", encoding="utf-8") as f:
+            f.write("album="+self.currdir+"\n")
+            f.write("delay="+str(self.timerdelay)+"\n")
         
     def set_delay(self):
         msg=TouchAuxRequestInteger(QCoreApplication.translate("context","Delay"),QCoreApplication.translate("context","Set slide show delay:"),self.timerdelay/1000,2,30,QCoreApplication.translate("context","Set"))

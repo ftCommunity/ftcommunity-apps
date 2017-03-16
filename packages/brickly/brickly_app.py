@@ -388,11 +388,41 @@ class RunThread(QThread):
         return (self.joystick != None) and (len(self.joystick.joysticks()) > 0)
 
     def jsGetAxis(self, axis):
+        # try ir remote if support present
+        if self.txt and float(ftrobopy.version()) >= 1.68:
+            if axis == "x":
+                val = self.txt.joystick(0).leftright()
+            elif axis == "y":
+                val = -self.txt.joystick(0).updown()
+            elif axis == "rx":
+                val = self.txt.joystick(1).leftright()
+            elif axis == "ry":
+                val = -self.txt.joystick(1).updown()
+            else:
+                val = None        
+
+            # ir remote returned something?
+            if val:
+                return 100.0 * val / 15
+                
         val = self.joystick.axis(None, axis)
         if val == None: val = 0
         return 100.0 * val
 
     def jsGetButton(self, button):
+        # try ir remote if support present
+        if self.txt and float(ftrobopy.version()) >= 1.68:
+            if button == "ir_on":
+                val = self.txt.joybutton(0).pressed()
+            elif button == "ir_off":
+                val = self.txt.joybutton(1).pressed()
+            else:
+                val = None        
+
+            # ir remote returned something?
+            if val:
+                return val
+
         val = self.joystick.button(None, button)
         if val == None: val = False
         return val != 0

@@ -56,7 +56,10 @@ class FtcGuiApplication(TouchApplication):
                 r=f.readline()
                 while r!="":
                     if "album=" in r: self.currdir=r[r.index("album=")+6 : -1]
-                    if "delay=" in r: self.timerdelay=int(r[r.index("delay=")+6 : -1])
+                    try:
+                        if "delay=" in r: self.timerdelay=int(r[r.index("delay=")+6 : -1])
+                    except:
+                        self.timerdelay=int(3000)
                     r=f.readline()
         # prefs done
         
@@ -401,7 +404,7 @@ class FtcGuiApplication(TouchApplication):
     def saveprefs(self):
         with open(local+".txtshowconf","w", encoding="utf-8") as f:
             f.write("album="+self.currdir+"\n")
-            f.write("delay="+str(self.timerdelay)+"\n")
+            f.write("delay="+str(int(self.timerdelay))+"\n")
         
     def set_delay(self):
         msg=TouchAuxRequestInteger(QCoreApplication.translate("context","Delay"),QCoreApplication.translate("context","Set slide show delay:"),self.timerdelay/1000,2,30,QCoreApplication.translate("context","Set"))

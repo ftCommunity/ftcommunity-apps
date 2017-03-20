@@ -151,7 +151,7 @@ class FtcGuiApplication(TouchApplication):
         if camera_present:      
             msg=TouchAuxFTCamPhotoRequester(QCoreApplication.translate("context","Smile..."),960,720, QCoreApplication.translate("context","Snap"))
             img=msg.exec_()
-            void=img.save(picsdir+self.currdir+"/"+time.strftime("%y%m%d%H%M%S")+".png","PNG",80)
+            if img != None: void=img.save(picsdir+self.currdir+"/"+time.strftime("%y%m%d%H%M%S")+".png","PNG",80)
 
 
     def scan_images(self):

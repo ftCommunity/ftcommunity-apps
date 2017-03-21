@@ -726,19 +726,26 @@ function get_parm(name, current) {
   return val ? decodeURIComponent(val[1].replace(/\+/g, '%20')) : current;
 }
     
+function set_search_parm(search, name, val) {
+    if (search.length <= 1) {
+	search = '?'+name+'=' + val;
+    } else if (search.match(new RegExp('[?&]'+name+'=[^&]*'))) {
+	search = search.replace(new RegExp('([?&]'+name+'=)[^&]*'), '$1'+val);
+    } else {
+	search = search.replace(/\?/, '?'+name+'='+val+'&');
+    }
+    return search
+}
+
 function set_parm(name, newVal, curVal) {
     // don't do anything if the value hasn't changed
     if(newVal != curVal) {
-	var search = window.location.search;
+	search = set_search_parm(window.location.search, name, newVal)
 
-	if (search.length <= 1) {
-	    search = '?'+name+'=' + newVal;
-	} else if (search.match(new RegExp('[?&]'+name+'=[^&]*'))) {
-	    search = search.replace(new RegExp('([?&]'+name+'=)[^&]*'), '$1'+newVal);
-	} else {
-	    search = search.replace(/\?/, '?'+name+'='+newVal+'&');
-	}
-    
+	// add program name and file name
+	search = set_search_parm(search, "name", encodeURIComponent(Code.program_name[0]))
+	search = set_search_parm(search, "file", encodeURIComponent(Code.program_name[1]))
+
 	window.location = window.location.protocol + '//' +
 	    window.location.host + window.location.pathname + search;
     }
@@ -1213,13 +1220,14 @@ var onresize = debounce(function() {
 
 // "lang" is set in settings.js
 // language may not be set by now. Use english as default then
-if (typeof lang === 'undefined') { lang = 'en'; }
-// try to override from url
-Code.lang = get_parm("lang", lang);
+if (typeof lang !== 'undefined') Code.lang = lang;
+// and try to override from url
+Code.lang = get_parm("lang", Code.lang);
 
-if (typeof skill === 'undefined') { skill = 1; }
+// default skill is 1
+if (typeof skill !== 'undefined') Code.skill = skill;
 // try to override from url
-Code.skill = parseInt(get_parm("skill", skill));
+Code.skill = parseInt(get_parm("skill", Code.skill));
 
 // the settings may also contain info about the name of
 // the last program used
@@ -1227,9 +1235,17 @@ if((typeof program_name !== 'undefined')&&
    (typeof program_file_name !== 'undefined'))
     Code.program_name = [ program_file_name, program_name ]
 
+// get program name/file from url
+Code.program_name = [
+    get_parm("name", Code.program_name[0]),
+    get_parm("file", Code.program_name[1])
+]
+
 document.title = "Brickly: " + htmlDecode(Code.program_name[1]);
 document.head.parentElement.setAttribute('lang', Code.lang);
 document.head.parentElement.setAttribute('skill', Code.skill);
+document.head.parentElement.setAttribute('name', Code.program_name[0]);
+document.head.parentElement.setAttribute('file', Code.program_name[1]);
 document.write('<script src="blockly/' + Code.lang + '.js"></script>\n');
 document.write('<script src="' + Code.lang + '.js"></script>\n');
 window.addEventListener('load', init);

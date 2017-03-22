@@ -7,6 +7,7 @@ Code.workspace = null;
 Code.Msg = {};
 Code.speed = 90;                                     // 90% default speed
 Code.skill = 1;                                      // GUI level: 1 = beginner ... expert
+Code.lang = 'en';                                    // default language
 Code.program_name = [ "brickly-0.xml", "Brickly" ];  // default file name and program name
 Code.connected = false;
 Code.spinner = null;

@@ -522,6 +522,9 @@ function loadPlugin(plugin) {
 				translations = pluginGetTranslations(dom.childNodes[i]);
 
 		    if(translations) {
+			// {{_SELF}} points to the class itself
+			translations["_SELF"] = "wrapper.plugins[\"" + plugin + "\"]"
+			
 			// apply previously loaded translations
 			text = http.responseText.replace(/{{(\w+)}}/g,
 					 function(m, p1) { return translations[p1]});
@@ -862,6 +865,21 @@ function ws_start(initial) {
 
 	    // handle the various json values
 
+	    // try to find all plugin related data
+	    for (prop in obj) {
+		parts = prop.split(':')
+		if(parts[0] == "plugin") {
+		    // call plugin
+		    var plugin = Code.plugins[parts[1]]
+		    if(typeof plugin === 'object') {
+			var fn = plugin[parts[2]];
+			if(typeof fn === 'function') {
+			    fn(obj[prop])
+			}
+		    }
+		}
+	    }
+	    
 	    // commands from client
 	    if(typeof obj.gui_cmd !== 'undefined') {
 		if(obj.gui_cmd == "clear") display_text_clr();

@@ -28,6 +28,7 @@ class WebsocketServerThread(QThread):
     program_name = pyqtSignal(list)
     client_connected = pyqtSignal(bool)
     speed_changed = pyqtSignal(int)
+    plugin_cmd = pyqtSignal(str, str, str)
     
     def __init__(self): 
         super(WebsocketServerThread,self).__init__()
@@ -81,6 +82,12 @@ class WebsocketServerThread(QThread):
                     self.python_code.emit(msg['python_code'])
                 if 'blockly_code' in msg:
                     self.blockly_code.emit(msg['blockly_code'])
+
+                # check if one entry begins with "plugin:"
+                for i in msg:
+                    parts = i.split(':')
+                    if len(parts) == 3 and parts[0] == "plugin":
+                        self.plugin_cmd.emit(parts[1], parts[2], msg[i])
                     
             except websockets.exceptions.ConnectionClosed:
                 pass
@@ -135,16 +142,16 @@ class UserInterrupt(Exception):
 
 # load the client side of plugins
 class PluginLoader:
-    def __init__(self):
-        self.loadAll()
+    def __init__(self, run_thread):
+        self.run_thread = run_thread
 
     def loadCode(self, name, code):
         # create a class
-        code = "class Plugin_"+name+":\n" + code
-        exec(code, globals())
+        class_code = "class Plugin_"+name+":\n" + code
+        exec(class_code, globals())
 
         # instantiate the class
-        exec( "plugins."+name + " = Plugin_"+name+"()", globals())
+        return eval("Plugin_"+name+"( self.run_thread )")
 
     def load(self, name):
         path = os.path.dirname(os.path.realpath(__file__))
@@ -153,18 +160,22 @@ class PluginLoader:
         try:
             root = xml.etree.ElementTree.parse(fname).getroot()
         except:
-            return
+            return None
 
         # root element must be plugin
         if root.tag != "plugin": 
-            return
+            return None
 
+        # only the first "exec" element is executed
         for child in root:
             if child.tag == "exec":
-                self.loadCode(name, child.text)
+                return self.loadCode(name, child.text)
+
+        return None
 
     def loadAll(self):
-        plugins = [ ] 
+        plugins = { }
+        plugin_names = [ ]
 
         # read the plugins file
         path = os.path.dirname(os.path.realpath(__file__))
@@ -174,30 +185,25 @@ class PluginLoader:
                 for line in f:
                     l = line.split(';')[0].strip()
                     if(len(l) > 0):
-                        plugins.append(l)        
+                        plugin_names.append(l)        
         except:
             return
 
         # got list, now try to load em all
-        for p in plugins:
-            self.load(p)
+        for p in plugin_names:
+            plugins[p] = self.load(p)
 
+        return plugins
+            
 # another sperate thread executes the code itself
 class RunThread(QThread):
-    # just an empty class to register the various plugins in
-    class Plugins():
-        def __init__(self):
-            pass    
-
     done = pyqtSignal()
     
     def __init__(self, ws_thread, ui_queue):
-        global plugins
-        plugins = self.Plugins()
-
         super(RunThread,self).__init__()
 
-        self.pluginLoader = PluginLoader()
+        loader = PluginLoader(self)
+        self.plugins = loader.loadAll()
 
         self.speed = 90  # range 0 .. 100
 
@@ -239,6 +245,10 @@ class RunThread(QThread):
 
         if not self.txt:
             print("TXT init failed", file=sys.stderr)
+
+        # this is a convenience function to be used by plugins
+    def tx(self, msg):
+        self.ws_thread.send( msg )
 
     def setJoystick(self, js):
         self.joystick = js
@@ -341,7 +351,12 @@ class RunThread(QThread):
 
     def set_speed(self, val):
         self.speed = val
-            
+
+    def on_plugin_cmd(self, name, cmd, data):
+        # Received a plugin specific command from the browser. This
+        # calls a method inside the plugin
+        getattr(self.plugins[name], cmd)(data)
+
     def wait(self, duration):
         # make sure we never pause more than 100ms to be able
         # to react fast on user interrupts
@@ -971,6 +986,7 @@ class Application(TouchApplication):
         self.thread.setJoystick(self.joystick)
         self.thread.done.connect(self.on_program_ended)
         self.ws.speed_changed.connect(self.thread.set_speed)
+        self.ws.plugin_cmd.connect(self.thread.on_plugin_cmd)
 
         self.w.show()
         self.exec_()        

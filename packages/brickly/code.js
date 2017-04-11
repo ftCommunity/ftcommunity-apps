@@ -561,6 +561,40 @@ function loadPlugin(plugin) {
     }
     http.send();
 }
+
+// prevent duplicate array contents
+Array.prototype.unique = function() {
+    var a = this.concat();
+    for(var i=0; i<a.length; ++i) 
+        for(var j=i+1; j<a.length; ++j) 
+            if(a[i] === a[j])
+                a.splice(j--, 1);
+    
+    return a;
+};
+
+function plugins_from_xml(xml) {
+    var plugins = [ ];
+    
+    for (var i = 0; i < xml.childNodes.length; i++) {
+	var xmlChild = xml.childNodes[i];
+	var name = xmlChild.nodeName.toLowerCase();
+	
+	if (name == 'block') {
+	    // check if this is a plugin block
+	    parts =  xmlChild.getAttribute('type').split(':');
+		
+	    if(parts[0].toLowerCase() == "plugin" )
+		if(!plugins.includes(parts[1]))
+		    plugins.push(parts[1]);
+	}
+	    
+	// check sub-elements
+	for (var j = 0; j < xmlChild.childNodes.length; j++)
+	    plugins = plugins.concat(plugins_from_xml(xmlChild.childNodes[j])).unique();
+    }
+    return plugins;
+}
     
 function loadManifest() {
     var http = new XMLHttpRequest();
@@ -1066,11 +1100,32 @@ function program_load(name) {
 		    }
 		}
 
-		// make sure the file loading is not considered "editing"
-		Blockly.Xml.domToWorkspace(xml, Code.workspace);
+		// --- check if all plugins used by this program are actually present ---
+		var required_plugins = plugins_from_xml(xml);
+		var missing_plugins = [];
+		for(var req=0; req<required_plugins.length; req++) {
+		    var required = required_plugins[req];
+		    var present = false;
+		    
+		    // check if this plugin is present
+		    for(var p in Code.plugins) 
+			if(required in Code.plugins[p])
+			    present = true;
 
-		// everything is saved
-		check_savestate(true)
+		    if(!present)
+			missing_plugins.push(required);
+		}
+
+		if(missing_plugins.length) {
+		    alert(MSG['missingPlugins'].replace("%1", missing_plugins));
+		    workspace_start();
+		} else {
+		    // finally load the code into the workspace
+		    Blockly.Xml.domToWorkspace(xml, Code.workspace);
+
+		    // everything is saved
+		    check_savestate(true)
+		}
             } else {
 		// could not load program. Make sure the
 		// default start block is there
@@ -1166,7 +1221,7 @@ function txt_connect() {
     if(!Code.connected) {
 	
 	// if we aren't connected then we need to start the brickly app on the TXT
-	// first. This is done by posting the code
+	// first. This is done by ivoking brickly_launch.py
 	
 	button_set('run', false);
         display_state(MSG['stateConnecting']);

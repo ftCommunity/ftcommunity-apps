@@ -13,6 +13,8 @@ var MSG = {
     confirm_delete: "Really delete the entire program '%1'?",
     delete_not_connected: "The TXT has to be connected to be able to delete the entire program",
 
+    missingPlugins: "The program cannot be loaded as it uses plugins '%1' which are not installed on this system.",
+    
     // the menu
     dropdown_new: "New",
     dropdown_del: "Delete",

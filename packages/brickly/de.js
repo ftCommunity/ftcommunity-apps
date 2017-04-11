@@ -14,6 +14,8 @@ var MSG = {
     confirm_delete: "Wirklich das ganze Programm '%1' löschen?",
     delete_not_connected: "Zum Löschen des ganzen Programms muss der TXT verbunden sein",
 
+    missingPlugins: "Das Programm kann nicht geladen werden, da es die Plugins '%1' verwendet, die auf diesem System nicht vorhanden sind.",
+    
     // the menu
     dropdown_new: "Neu",
     dropdown_del: "Löschen",

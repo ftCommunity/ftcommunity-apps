@@ -562,17 +562,6 @@ function loadPlugin(plugin) {
     http.send();
 }
 
-// prevent duplicate array contents
-Array.prototype.unique = function() {
-    var a = this.concat();
-    for(var i=0; i<a.length; ++i) 
-        for(var j=i+1; j<a.length; ++j) 
-            if(a[i] === a[j])
-                a.splice(j--, 1);
-    
-    return a;
-};
-
 function plugins_from_xml(xml) {
     var plugins = [ ];
     
@@ -590,8 +579,18 @@ function plugins_from_xml(xml) {
 	}
 	    
 	// check sub-elements
-	for (var j = 0; j < xmlChild.childNodes.length; j++)
-	    plugins = plugins.concat(plugins_from_xml(xmlChild.childNodes[j])).unique();
+	for (var j = 0; j < xmlChild.childNodes.length; j++) {
+	    plugins = plugins.concat(plugins_from_xml(xmlChild.childNodes[j]));
+	    console.log("Vorher:", plugins);
+	    
+	    // remove any duplicate antries
+	    for(var ri=0; ri<plugins.length; ++ri) 
+		for(var rj=ri+1; rj<plugins.length; ++rj) 
+		    if(plugins[ri] === plugins[rj])
+			plugins.splice(rj--, 1);
+
+	    console.log("Navhher:", plugins);
+	}
     }
     return plugins;
 }

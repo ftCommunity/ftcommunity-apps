@@ -1101,14 +1101,7 @@ function program_load(name) {
 		var missing_plugins = [];
 		for(var req=0; req<required_plugins.length; req++) {
 		    var required = required_plugins[req];
-		    var present = false;
-		    
-		    // check if this plugin is present
-		    for(var p in Code.plugins) 
-			if(required in Code.plugins[p])
-			    present = true;
-
-		    if(!present)
+		    if(!(required in Code.plugins))
 			missing_plugins.push(required);
 		}
 

@@ -303,8 +303,11 @@ class RunThread(QThread):
                     for func in functions:
                         code_txt = code_txt.replace(func+"(", "wrapper."+func+"(");
 
-                    # code = compile(code_txt, "brickly.py", 'exec')
-                    # exec(code, globals())
+                    # inform all interested plugins that the program now runs
+                    for p in self.plugins:
+                        init = getattr(self.plugins[p], "init", None)
+                        if callable(init):
+                            self.plugins[p].init();
 
                     exec(code_txt, globals())
 
@@ -322,6 +325,12 @@ class RunThread(QThread):
                         self.txt.SyncDataEnd();            
                     self.sync_open = False
                 
+                # inform all interested plugins that the program has ended
+                for p in self.plugins:
+                    cleanup = getattr(self.plugins[p], "cleanup", None)
+                    if callable(cleanup):
+                        self.plugins[p].cleanup();
+
             self.done.emit()
             self.send_highlight("none")
 

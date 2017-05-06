@@ -47,6 +47,18 @@ html_de: index.py?lang=de
 desc_fr: Brickly Master Control Program pour organiser vos projets Brickly
 html_fr: index.py?lang=fr
 
+[I2C]
+name: I2C
+category: Tools
+author: Christian Hehr &lt;christian@fa-hehr.de&gt;
+icon: icon.png
+desc: I2C Address Bus Scanner
+exec: I2C.py
+managed: yes
+uuid: c0cce9f0-2c50-11e7-9598-0800200c9a66
+version: 1.0
+firmware: >=0.9.0
+
 [TXTShow]
 name: TXTShow
 category: Tools

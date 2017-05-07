@@ -9,5 +9,5 @@ url: https://leon.home-webserver.de/
 exec: poll.py
 managed: yes
 uuid: 3434343-5199-11e6-beb8-9e71128cae7
-version: 0.9.6
+version: 0.9.7
 firmware: >=0.9.3

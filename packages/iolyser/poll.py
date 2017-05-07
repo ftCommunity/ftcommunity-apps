@@ -5,7 +5,11 @@ import ftrobopy
 import time
 import threading
 import json
+<<<<<<< HEAD:packages/iolyser/poll.py
 import camera
+=======
+from camera import CamWidget
+>>>>>>> 2547f174b05f3fceb624d43bcde20c406036b44a:packages/iolyser/poll.py
 from TouchStyle import *
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -176,7 +180,11 @@ class FtcGuiApplication(TouchApplication):
         self.tabBar = QTabWidget()
         self.tabBar.addTab(page_1, "Input")
         self.tabBar.addTab(page_2, "Output")
+<<<<<<< HEAD:packages/iolyser/poll.py
         # self.tabBar.addTab(page_3, "Camera")
+=======
+        self.tabBar.addTab(page_3, "Camera")
+>>>>>>> 2547f174b05f3fceb624d43bcde20c406036b44a:packages/iolyser/poll.py
         self.tabBar.setStyleSheet(TAB_STYLE)
         # Add the Tab-widget to the Window
         window.setCentralWidget(self.tabBar)
@@ -189,10 +197,10 @@ class FtcGuiApplication(TouchApplication):
         self.__webServerStart()
         self.__readerThread()
         print("Threadingcheck")
-        print(self.tabBar.currentIndex())
 
         self.exec_()
 
+<<<<<<< HEAD:packages/iolyser/poll.py
     def close(self):
         self.__webServerStop()
         TouchDialog.close(self)
@@ -208,6 +216,19 @@ class FtcGuiApplication(TouchApplication):
         self.server = HTTPServer(("", 8001), Srv)
 
         self.server.serve_forever()
+=======
+    def __webServerStart(self):
+        self.loop = True
+        self.thr = threading.Thread(target=self.__webServerLoop)
+        self.thr.start()
+
+    def __webServerLoop(self):
+        self.server = HTTPServer(("", 8001), Srv)
+        while (time.time() - self.lastexec) < 1:
+            self.server.handle_request()
+            time.sleep(0.01)
+        self.server.server_close()
+>>>>>>> 2547f174b05f3fceb624d43bcde20c406036b44a:packages/iolyser/poll.py
 
     def __ioStart(self):
         self.io = ios
@@ -222,6 +243,10 @@ class FtcGuiApplication(TouchApplication):
 
     def __readerProcess(self):
         global setting
+<<<<<<< HEAD:packages/iolyser/poll.py
+=======
+        self.lastexec = time.time()
+>>>>>>> 2547f174b05f3fceb624d43bcde20c406036b44a:packages/iolyser/poll.py
         #while True:
         if self.tabBar.currentIndex() == 0:
             #Process each line of Input and change their content
@@ -230,7 +255,10 @@ class FtcGuiApplication(TouchApplication):
                 btn = line[1]    # Get the Button (also the Type)
                 value = line[2]  # Get the Element to write to.
 
+<<<<<<< HEAD:packages/iolyser/poll.py
 
+=======
+>>>>>>> 2547f174b05f3fceb624d43bcde20c406036b44a:packages/iolyser/poll.py
                 # compare with setting-variable
                 if setting[n-1] == "1":
                     btn.setText("pushbutton")

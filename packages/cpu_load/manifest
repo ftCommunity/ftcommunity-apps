@@ -4,7 +4,7 @@ category: System
 author: Leon Schnieber (olagino)
 icon: icon.png
 desc: A small App for the TXT to check the average processor load and the available RAM.
-url: https://leon.home-webserver.de/
+url: http://leon.home-webserver.de/wiki/doku.php?id=fischertechnik:start
 exec: main.py
 managed: yes
 uuid: 443dd03b-d671-4103-b035-924c175e4e1c

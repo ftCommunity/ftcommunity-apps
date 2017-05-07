@@ -5,7 +5,7 @@ import ftrobopy
 import time
 import threading
 import json
-import camera
+from camera import CamWidget
 from TouchStyle import *
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -176,7 +176,7 @@ class FtcGuiApplication(TouchApplication):
         self.tabBar = QTabWidget()
         self.tabBar.addTab(page_1, "Input")
         self.tabBar.addTab(page_2, "Output")
-        # self.tabBar.addTab(page_3, "Camera")
+        self.tabBar.addTab(page_3, "Camera")
         self.tabBar.setStyleSheet(TAB_STYLE)
         # Add the Tab-widget to the Window
         window.setCentralWidget(self.tabBar)
@@ -189,25 +189,20 @@ class FtcGuiApplication(TouchApplication):
         self.__webServerStart()
         self.__readerThread()
         print("Threadingcheck")
-        print(self.tabBar.currentIndex())
 
         self.exec_()
 
-    def close(self):
-        self.__webServerStop()
-        TouchDialog.close(self)
-
     def __webServerStart(self):
+        self.loop = True
         self.thr = threading.Thread(target=self.__webServerLoop)
         self.thr.start()
 
-    def __webServerStop(self):
-        self.server.server_close()
-
     def __webServerLoop(self):
         self.server = HTTPServer(("", 8001), Srv)
-
-        self.server.serve_forever()
+        while (time.time() - self.lastexec) < 1:
+            self.server.handle_request()
+            time.sleep(0.01)
+        self.server.server_close()
 
     def __ioStart(self):
         self.io = ios
@@ -222,6 +217,7 @@ class FtcGuiApplication(TouchApplication):
 
     def __readerProcess(self):
         global setting
+        self.lastexec = time.time()
         #while True:
         if self.tabBar.currentIndex() == 0:
             #Process each line of Input and change their content
@@ -229,7 +225,6 @@ class FtcGuiApplication(TouchApplication):
                 n = line[0]      # Get the Input-number
                 btn = line[1]    # Get the Button (also the Type)
                 value = line[2]  # Get the Element to write to.
-
 
                 # compare with setting-variable
                 if setting[n-1] == "1":

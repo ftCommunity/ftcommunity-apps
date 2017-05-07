@@ -20,8 +20,9 @@ category: System
 author: Leon Schnieber (olagino)
 icon: icon.png
 desc: This tool is used for testing the IOs of the TXT without a computer nearby.
-url: http://localhost/
-exec: script.py
+html: redirect.html
+url: https://leon.home-webserver.de/
+exec: poll.py
 managed: yes
 uuid: 3434343-5199-11e6-beb8-9e71128cae7
 version: 0.9.6

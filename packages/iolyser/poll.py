@@ -1,13 +1,13 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
 import sys
 import ftrobopy
 import time
-#import camera
-#import threading
-from camera import *
+import threading
+import json
+import camera
 from TouchStyle import *
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 #style section
 BUTTON_STYLE = """
@@ -29,22 +29,76 @@ QTabBar::tab {border: none; border-radius: none}
 QTabBar::tab:!selected {color:lightgrey;}
 """
 
+ios = ftrobopy.ftrobopy('auto')
+setting = "11111111"
 
+
+class Srv(BaseHTTPRequestHandler):
+    def __init__(self, request, client_address, server):
+        super(BaseHTTPRequestHandler, self).__init__(request, client_address, server)
+        global ios
+        global setting
+
+    def do_GET(self):
+        # split parameter from path
+        try:
+            path = self.path.split("?")
+        except BaseException:
+            path = self.path
+
+        self.send_response(200)
+        if path[0] == "/status" or path[0] == "/mot":
+            self.send_header("Content-type", "text/json")
+        elif path[0].strip("/").split("/")[0] == "css":
+            self.send_header("Content-type", "text/stylesheed")
+        elif path[0].strip("/").split("/")[0] == "js":
+            self.send_header("Content-type", "text/javascript")
+        else:
+            self.send_header("Content-type", "text/html")
+        self.send_header("Access-Control-Allow-Credentials", "true")
+        self.end_headers()
+
+        if path[0] == "/status" and isinstance(int(path[1]), int):
+            stat = str(path[1])
+            global setting
+            setting = stat
+            data = []
+            i = 0
+            for t in stat:
+                i = i + 1
+                if t == "1":
+                    data.append(ios.input(i).state())
+                elif t == "2":
+                    data.append(ios.resistor(i).value())
+                elif t == "3":
+                    data.append(ios.ultrasonic(i).distance())
+                elif t == "4":
+                    data.append(ios.voltage(i).voltage())
+                elif t == "5":
+                    data.append(ios.trailfollower(i).state())
+            self.wfile.write(bytes(json.dumps(data), "utf-8"))
+        elif path[0] == "/mot":
+            if int(path[1]) <= 4 and int(path[2]) >= -512 and int(path[2]) <= 512:
+                ios.motor(int(path[1])).setSpeed(int(path[2]))
+        else:
+            if path[0] == "/":
+                name = "index.html"
+            else:
+                name = path[0].strip("/")
+            data = open(name, "r")
+            text = "".join(data.readlines())
+            data.close()
+            self.wfile.write(bytes(text, "utf-8"))
 
 
 class FtcGuiApplication(TouchApplication):
     def __init__(self, args):
         TouchApplication.__init__(self, args)
-
         #create the window
         window = TouchWindow("IOlyser")
-
-
-
         #Start filling the first tab
         page_1 = QWidget()
         vbox = QVBoxLayout()
-
         n = 1
         self.inputListObject = []
         while n <= 8:
@@ -64,7 +118,7 @@ class FtcGuiApplication(TouchApplication):
             type.clicked.connect(self.__toggleInputType)
             hbox.addWidget(type)
 
-            self.inputListObject.append([n,type,value]) #Add each line to a list for some other functions
+            self.inputListObject.append([n, type, value])  # Add each line to a list for some other functions
             #Add the "line" to the Tab
             vbox.addLayout(hbox)
 
@@ -102,7 +156,7 @@ class FtcGuiApplication(TouchApplication):
 
             speed = 512
 
-            self.outputListObject.append([n,left,right,speed]) #Add each line to a list for some other functions
+            self.outputListObject.append([n, left, right, speed])  # Add each line to a list for some other functions
             #Add the "lines" to the Tab
             vbox.addLayout(hbox)
 
@@ -112,53 +166,82 @@ class FtcGuiApplication(TouchApplication):
         #########################################################################################################################################,
         page_3 = QWidget()
         vbox = QVBoxLayout()
-        #Add camera element to the camera-page
+        # Add camera element to the camera-page
         cam = CamWidget()
         vbox.addWidget(cam)
-
-
         page_3.setLayout(vbox)
         #########################################################################################################################################
 
-        #Create the Tab-Element and add the pages to that
+        # Create the Tab-Element and add th pages to that
         self.tabBar = QTabWidget()
-        self.tabBar.addTab(page_1,"Input")
-        self.tabBar.addTab(page_2,"Output")
-        self.tabBar.addTab(page_3,"Camera")
+        self.tabBar.addTab(page_1, "Input")
+        self.tabBar.addTab(page_2, "Output")
+        # self.tabBar.addTab(page_3, "Camera")
         self.tabBar.setStyleSheet(TAB_STYLE)
-        #Add the Tab-widget to the Window
+        # Add the Tab-widget to the Window
         window.setCentralWidget(self.tabBar)
 
-        #Move the Block to the Display.
+        # Move the Block to the Display.
         window.show()
-        #Call some background functions
+        # Call some background functions
         print("Execute things")
         self.__ioStart()
+        self.__webServerStart()
         self.__readerThread()
         print("Threadingcheck")
         print(self.tabBar.currentIndex())
 
         self.exec_()
+
+    def close(self):
+        self.__webServerStop()
+        TouchDialog.close(self)
+
+    def __webServerStart(self):
+        self.thr = threading.Thread(target=self.__webServerLoop)
+        self.thr.start()
+
+    def __webServerStop(self):
+        self.server.server_close()
+
+    def __webServerLoop(self):
+        self.server = HTTPServer(("", 8001), Srv)
+
+        self.server.serve_forever()
+
     def __ioStart(self):
-        self.io = ftrobopy.ftrobopy("127.0.0.1",65000)
+        self.io = ios
         time.sleep(1)
+
     def __readerThread(self):
         print("Thread started.")
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.__readerProcess)
-        self.timer.start(10);
+        self.timer.start(20);
 
-        #self.thread = threading.Thread(target=self.__readerProcess)
-        #self.thread.start()
 
     def __readerProcess(self):
+        global setting
         #while True:
         if self.tabBar.currentIndex() == 0:
             #Process each line of Input and change their content
             for line in self.inputListObject:
-                n = line[0] #Get the Input-number
-                btn = line[1] #Get the Button (also the Type)
-                value = line[2] #Get the Element to write to.
+                n = line[0]      # Get the Input-number
+                btn = line[1]    # Get the Button (also the Type)
+                value = line[2]  # Get the Element to write to.
+
+
+                # compare with setting-variable
+                if setting[n-1] == "1":
+                    btn.setText("pushbutton")
+                elif setting[n-1] == "2":
+                    btn.setText("resistor")
+                elif setting[n-1] == "3":
+                    btn.setText("ultrasonic")
+                elif setting[n-1] == "4":
+                    btn.setText("voltage")
+                elif setting[n-1] == "5":
+                    btn.setText("linesens")
 
                 #Get the mode of the input:
                 type = btn.text()
@@ -166,6 +249,7 @@ class FtcGuiApplication(TouchApplication):
                 #try:
                 if type == "pushbutton":
                     sensor = self.io.input(n).state()
+
                 elif type == "resistor":
                     try:
                         sensor = self.io.resistor(n).value()
@@ -182,15 +266,10 @@ class FtcGuiApplication(TouchApplication):
                     sensor = self.io.trailfollower(n).state()
                 else:
                     sensor = "NUL"
-                # except:
-                #     sensor = "N"
-
-
-
                 value.setText(str(sensor) + str(unit))
 
-
     def __toggleInputType(self):
+        global setting
         #Get the object, which called this function
         rec = self.sender()
         #Find the object id in the self.inputListObject-list and update the value there
@@ -218,7 +297,6 @@ class FtcGuiApplication(TouchApplication):
             elif rec == mot[2]:
                 self.io.motor(mot[0]).setSpeed(-mot[3])
 
-
     def __switchMotorOff(self):
         rec = self.sender()
         for mot in self.outputListObject:
@@ -226,7 +304,6 @@ class FtcGuiApplication(TouchApplication):
                 self.io.motor(mot[0]).stop()
             if rec == mot[2]:
                 self.io.motor(mot[0]).stop()
-
 
 if __name__ == "__main__":
     FtcGuiApplication(sys.argv)

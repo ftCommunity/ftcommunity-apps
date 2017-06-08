@@ -1,0 +1,1 @@
+["# Haendetrockner", "# ", "# Lichschranke an", "Motor RIF 1 l 7", "# Beginn Endlosschleife", "Tag start", "# warte auf Lichtschranke", "WaitInDig RIF 1 Falling 0", "# Geblaese an", "Motor RIF 2 r 7", "# Warte auf Lichtschranke", "WaitInDig RIF 1 Raising 0", "# Geblaese aus", "Motor RIF 2 s 0", "# und wieder zum start", "Print Jump", "Jump start"]

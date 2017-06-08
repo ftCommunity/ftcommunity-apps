@@ -1,0 +1,1 @@
+["# Kuehlschrank", "Tag START", "WaitInDig RIF 1 Raising 0", "Output RIF 1 7", "WaitInDig RIF 1 Falling 3000", "IfInDig RIF 1 False END", "Tag LOOP", "Output RIF 2 7", "WaitInDig RIF 1 Falling 100", "IfInDig RIF 1 False END", "Output RIF 2 0", "WaitInDig RIF 1 Falling 400", "IfInDig RIF 1 False END", "Jump LOOP", "Tag END", "Motor RIF 1 s 0", "Motor RIF 2 s 0", "Jump START"]

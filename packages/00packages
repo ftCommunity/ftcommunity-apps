@@ -104,6 +104,18 @@ uuid: 443dd03b-d671-4103-b035-924c175e4e1c
 version: 1
 firmware: >=0.9.0
 
+[ftdb]
+name: ft:db
+category: Tools
+author: Raphael Jacob
+icon: icon.png
+desc: ft:db search app. Icon partly by http://www.webalys.com/
+exec: ftdb.py
+managed: yes
+uuid: dce63db7-1327-4cb3-a04e-c358ac04b794
+version: 1.0
+firmware: >=0.9
+
 [iolyser]
 name: IOlyser
 category: System

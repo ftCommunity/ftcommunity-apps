@@ -286,6 +286,9 @@ function menu_append_files(f) {
 window.onclick = function(event) {
     if(!event.target.classList.contains('dropdown-keep-open')) 
 	menu_close();
+    
+    if(!event.target.classList.contains('plugin_list-keep-open')) 
+	plugin_list_close();
 }
 
 function init() {
@@ -315,6 +318,16 @@ function init() {
     // below skill level 3 hide the menu
     if(Code.skill <= 2) document.getElementById("dropdown").style.display = "none";    
 
+    // no plugin selection and svg export below skill level 5
+    if(Code.skill < 5) {
+	document.getElementById("plugins").style.display = "none";
+	document.getElementById("export_svg").style.display = "none";
+    } else {
+	// otherwise set tooltops for both
+	document.getElementById("plugins").title = MSG['pluginsToolTip']
+	document.getElementById("export_svg").title = MSG['exportSvgToolTip']
+    }
+
     // initially disable the dropdown menu
     menu_disable(true);
 
@@ -330,7 +343,77 @@ function init() {
 
 // ===================================== plugin handling ======================================
 
+function plugin_include_toolbox(toolbox, plugin_toolbox) {
+    for(var c=0;c<plugin_toolbox.length;c++) {
+	var t = plugin_toolbox[c];
+	var cat = "custom";
+	
+	// install toolbox
+	if(t.getAttribute('type'))
+	    cat = t.getAttribute('type')
+
+	// search through existing toolbox for matching category
+	for (var i = 0; i < toolbox.childNodes.length; i++) {
+	    var xmlChild = toolbox.childNodes[i];
+	
+	    // integrate plugins dom into toolbox if matching category was found
+	    if((xmlChild.nodeName.toLowerCase() == 'category') &&
+	       (xmlChild.getAttribute('plugins') == cat)) {
+		
+		// append a copy of all childnodes to toolbox
+		for(var n=0;n<t.childNodes.length;n++)
+		    xmlChild.appendChild(t.childNodes[n].cloneNode(true));
+	    }
+	}
+    }
+    
+    return toolbox;
+}
+
+function toolbox_update_plugins() {    
+    // Load initial toolbox
+    var toolbox = Code.toolbox.cloneNode(true);
+
+    // include enabled plugins toolboxes only
+    for(var i in Code.plugins)
+	if(Code.plugins[i]["enabled"])
+	    toolbox = plugin_include_toolbox(toolbox, Code.plugins[i]["toolbox"]);
+    
+    // update toolbox
+    Code.workspace.updateToolbox(toolbox);        
+}
+
+function plugin_selected(name) {
+    // toggle plugin enable flag
+    Code.plugins[name]["enabled"] = !Code.plugins[name]["enabled"];
+
+    toolbox_update_plugins();
+}
+
+function select_plugins() {
+    // plugins
+    var plugin_list_html = "";
+    for(var i in Code.plugins) {
+	var plugin = Code.plugins[i];
+	plugin_list_html += '<tr><td><input onclick="plugin_selected(\''+i+'\');" type="checkbox"';
+	if(plugin["enabled"]) plugin_list_html += ' checked';
+	plugin_list_html += '>' + plugin["name"];
+	plugin_list_html += '</td></tr>';
+    }
+    
+    document.getElementById("plugin_list_content").innerHTML = plugin_list_html;
+    document.getElementById("plugin_list").classList.toggle("show");
+}
+
+function plugin_list_close() {
+    document.getElementById("plugin_list").classList.remove("show");
+}
+
 function pluginsDone() {
+    // no plugins present at all? Hide plugin menu icon
+    if(Object.keys(Code.plugins).length == 0)
+	document.getElementById("plugins").style.display = "none";
+    
     // fixme: this must not happen before screen resizing is done
     setTimeout(function() { program_load( USER_FILES + Code.program_name[0] ) }, 100); 
 }
@@ -450,34 +533,6 @@ function pluginTypeExpand(plugin, blocks, dom) {
     }
 }
 
-function pluginInstallToolbox(plugin, blocks, dom) {
-    // install toolbox		
-    if(dom.nodeName.toLowerCase() == 'toolbox') {
-	if(dom.getAttribute('type'))
-	    plugin_category = dom.getAttribute('type')
-
-	// walk over dom and expand block types of plugins own blocks
-	// from "<blockname>" to "plugin:<pluginname>:<blockname>"
-	pluginTypeExpand(plugin, blocks, dom);
-
-	// search through existing toolbox for matching category
-	for (var i = 0; i < Code.toolbox.childNodes.length; i++) {
-	    var xmlChild = Code.toolbox.childNodes[i];
-
-	    // integrate plugins dom into toolbox if matching category was found
-	    if((xmlChild.nodeName.toLowerCase() == 'category') &&
-	       (xmlChild.getAttribute('plugins') == plugin_category)) {
-	    
-		// move all childnodes to toolbox
-		while(dom.childNodes.length > 0)
-		    xmlChild.appendChild(dom.childNodes[0]);
-	    
-		Code.workspace.updateToolbox(Code.toolbox);
-	    }
-	}
-    }
-}
-
 function pluginGetTranslations(dom) {
     dict = { }
     
@@ -506,21 +561,39 @@ function loadPlugin(plugin) {
 
 		// root element should be "plugin"
 		if(dom.nodeName.toLowerCase() == 'plugin') {
-
+		    
+		    // use file name as name by default
+		    Code.plugins[plugin]["name"] = plugin;
+		    if(dom.getAttribute('name'))
+			Code.plugins[plugin]["name"] = dom.getAttribute('name');
+		    
 		    // try to get translations for current language
 		    translations = null
-		    for (var i = 0; i < dom.childNodes.length; i++)
+		    for (var i = 0; i < dom.childNodes.length; i++) {
 			if((dom.childNodes[i].nodeName.toLowerCase() == "translations") && 
-			   (dom.childNodes[i].getAttribute('lang') == Code.lang))
+			   (dom.childNodes[i].getAttribute('lang') == Code.lang)) {
 			    translations = pluginGetTranslations(dom.childNodes[i]);
 
+			    // get translated plugin name if present
+			    if(dom.childNodes[i].getAttribute('name'))
+				Code.plugins[plugin]["name"] = dom.childNodes[i].getAttribute('name');
+			}
+		    }
+			
 		    // fallback to english translations
-		    if(!translations)
-			for (var i = 0; i < dom.childNodes.length; i++)
+		    if(!translations) {
+			for (var i = 0; i < dom.childNodes.length; i++) {
 			    if((dom.childNodes[i].nodeName.toLowerCase() == "translations") && 
-			       (dom.childNodes[i].getAttribute('lang') == 'en'))
+			       (dom.childNodes[i].getAttribute('lang') == 'en')) {
 				translations = pluginGetTranslations(dom.childNodes[i]);
 
+			    // get translated plugin name if present
+			    if(dom.childNodes[i].getAttribute('name'))
+				Code.plugins[plugin]["name"] = dom.childNodes[i].getAttribute('name');
+			    }
+			}
+		    }
+		    
 		    if(translations) {
 			// {{_SELF}} points to the class itself
 			translations["_SELF"] = "wrapper.plugins[\"" + plugin + "\"]"
@@ -542,15 +615,27 @@ function loadPlugin(plugin) {
 				blocks = blocks.concat(pluginInstallBlocks(plugin, dom.childNodes[i]));
 
 			// finally extend toolbox
+			// todo: a plugin may have multiple toolbox entries. Test this!
+			Code.plugins[plugin]["toolbox"] = [ ]
 			for (var i = 0; i < dom.childNodes.length; i++) {
-			    if(dom.childNodes[i].nodeName.toLowerCase() == "toolbox")
-				pluginInstallToolbox(plugin, blocks, dom.childNodes[i]);
+			    if(dom.childNodes[i].nodeName.toLowerCase() == "toolbox") {
+				
+				// walk over dom and expand block types of plugins own blocks
+				// from "<blockname>" to "plugin:<pluginname>:<blockname>"
+				pluginTypeExpand(plugin, blocks, dom.childNodes[i]);
+				
+				// create a local copy of the dom to be able to re-do the entire
+				// toolbox later if the user en- and disables plugins
+				Code.plugins[plugin]["toolbox"].push(dom.childNodes[i].cloneNode(true));
+			    }
 			}
 		    }
 		}
 
 		// mark plugin as fully loaded
 		Code.plugins[plugin]["complete"] = true;
+		// by default all plugins are disabled
+		Code.plugins[plugin]["enabled"] = false;
 	    } else {
 		// downloading xml for this plugin failed. remove it
 		// from dictionary
@@ -707,10 +792,15 @@ function toolbox_install(toolboxText) {
 
     set_skill_tooltips();
 
-    Code.toolbox = Blockly.Xml.textToDom(toolboxText);
+    var toolbox = Blockly.Xml.textToDom(toolboxText);
+
+    // save a backup up this basic toolbox to be able to re-use it when
+    // changing plugins
+    Code.toolbox = toolbox.cloneNode(true);
+    
     Code.workspace = Blockly.inject('blocklyDiv',
 				    { media: 'blockly/media/',
-				      toolbox: Code.toolbox,
+				      toolbox: toolbox,
 				      // scrollbars: false,  // 
 				      zoom: { // controls: true,
 					  wheel: true,
@@ -1096,6 +1186,10 @@ function program_load(name) {
 		    }
 		}
 
+		// --- by default diable all plugins
+		for(var i in Code.plugins)
+		    Code.plugins[i]["enabled"] = false;
+		
 		// --- check if all plugins used by this program are actually present ---
 		var required_plugins = plugins_from_xml(xml);
 		var missing_plugins = [];
@@ -1103,8 +1197,14 @@ function program_load(name) {
 		    var required = required_plugins[req];
 		    if(!(required in Code.plugins))
 			missing_plugins.push(required);
+		    else
+			// enable plugin if it's being used
+			Code.plugins[required]["enabled"] = true;
 		}
 
+		// update toolbox to reflect new state of enabled plugins
+		toolbox_update_plugins();
+		
 		if(missing_plugins.length) {
 		    alert(MSG['missingPlugins'].replace("%1", missing_plugins));
 		    workspace_start();

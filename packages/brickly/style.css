@@ -353,6 +353,18 @@ table#dropdown_content_files {
     color: #fcce04;
 }
 
+/* Plugin list (Hidden by Default) */
+.plugin_list {
+    z-index: 100;
+    right: 0;
+    display: none;
+    position: absolute;
+    background-color: #448acc;
+    min-width: 200px;
+    border: 1px solid lightgrey;    
+    box-shadow: 8px 8px 10px rgba(0,0,0,0.4);
+}
+
 /* Show the dropdown menu (use JS to add this class to the */
 /* .dropdown_content container when the user clicks on the */
 /* dropdown button) */

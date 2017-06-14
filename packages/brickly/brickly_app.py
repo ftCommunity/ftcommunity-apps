@@ -1182,9 +1182,12 @@ class Application(TouchApplication):
     def on_program_name(self, x):
         # x[0] is the file name
         # x[1] is the internal program name
-        self.set_program(x)
-        self.text.clear()
-        
+
+        # check if program name has changed and erase screen if yes
+        if self.program_name != x:
+            self.set_program(x)        
+            self.text.clear()
+
         # also store the current program name in the settings
         self.on_setting( { "program_file_name": x[0], "program_name": x[1] } );
 

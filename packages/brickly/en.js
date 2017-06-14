@@ -27,6 +27,9 @@ var MSG = {
     skill4: "senior",
     skill5: "expert",
 
+    pluginsToolTip: "Choose which plugins to use in the current project.",
+    exportSvgToolTip: "Export current program as SVG graphic into a new browser window.",
+    
     // blocks
     blockStartToolTip: "Program execution starts here",
     blockStartToolTipUnsaved: "\n(the program has not been saved yet)",

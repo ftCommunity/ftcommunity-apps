@@ -3,6 +3,7 @@
 #
 from TouchStyle import *
 import os
+import __main__
 
 icon_path = os.path.dirname(os.path.realpath(__file__)) + '/osk/'
 # simple on-screen-keyboard to be used on devices without physical
@@ -72,6 +73,7 @@ class TouchKeyboard(TouchDialog):
             self.init = False
 
     text_changed = pyqtSignal(str)
+    update_suggestions = pyqtSignal()
 
     keys_tab = ["A-O", "P-Z", "0-9"]
     keys_upper = [
@@ -90,6 +92,8 @@ class TouchKeyboard(TouchDialog):
     def __init__(self, parent=None):
         TouchDialog.__init__(self, "Input", parent)
 
+        self.db = __main__.db
+
         edit = QWidget()
         edit.hbox = QHBoxLayout()
         edit.hbox.setContentsMargins(0, 0, 0, 0)
@@ -97,6 +101,7 @@ class TouchKeyboard(TouchDialog):
         self.line = self.FocusLineEdit()
         self.line.setProperty("nopopup", True)
         self.line.setAlignment(Qt.AlignCenter)
+        self.line.textChanged.connect(self.updateSuggestions)
         edit.hbox.addWidget(self.line)
         but = QPushButton(" ")
         but.setIcon(QIcon(icon_path + "osk_erase"))
@@ -108,6 +113,7 @@ class TouchKeyboard(TouchDialog):
         self.layout.addWidget(edit)
 
         self.tab = QTabWidget()
+        self.tab.setStyleSheet("QTabBar {font: 20px;}")
 
         if self.caps:
             keys = self.keys_upper
@@ -136,6 +142,10 @@ class TouchKeyboard(TouchDialog):
 
             page.setLayout(page.grid)
             self.tab.addTab(page, self.keys_tab[a])
+
+        self.SuggestionsList = QListWidget()
+        self.SuggestionsList.itemClicked.connect(self.clickedSuggesion)
+        self.tab.addTab(self.SuggestionsList, "Sug")
 
         self.tab.tabBar().setExpanding(True)
         self.tab.tabBar().setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -198,6 +208,17 @@ class TouchKeyboard(TouchDialog):
         TouchDialog.close(self)
         self.line.reset()
         self.text_changed.emit(self.line.text())
+
+    def updateSuggestions(self):
+        self.SuggestionsList.clear()
+        suggestions = self.db.get_suggestions(self.line.text())
+        if suggestions == []:
+            self.SuggestionsList.addItem(QListWidgetItem("No Results"))
+        for sug in suggestions:
+            self.SuggestionsList.addItem(QListWidgetItem(sug["value"]))
+
+    def clickedSuggesion(self, item):
+        self.line.setText(item.text())
 
 
 class TouchInputContext(QInputContext):

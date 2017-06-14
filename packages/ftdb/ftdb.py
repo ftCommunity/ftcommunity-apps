@@ -59,7 +59,9 @@ class FtcGuiApplication(TouchApplication):
 
     def search(self):
         search_str = self.edit.text()
-        print('Searching:' + search_str)
+        if search_str == "":
+            return
+        #print('Searching:' + search_str)
         dialog = SearchResultDialog(self.w, search_str)
         dialog.exec_()
         # self.sender().setDisabled(False)

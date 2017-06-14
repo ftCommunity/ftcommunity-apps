@@ -27,7 +27,10 @@ class ftDB():
 
     def call_server_json(self, call):
         # download JSON from the server
-        print('Loading:' + self.base_url + call)
+        try:
+            print('Loading:' + self.base_url + call)
+        except:
+            pass
         # download and decode JSON
         try:
             data = json.loads(urllib.request.urlopen(self.base_url + call, context=self.ctx).read().decode('utf-8'))
@@ -40,7 +43,10 @@ class ftDB():
 
     def call_server_html(self, call):
         # download html
-        print('Loading: ' + self.base_url + call)
+        try:
+            print('Loading: ' + self.base_url + call)
+        except:
+            pass
         data = urllib.request.urlopen(self.base_url + call, context=self.ctx).read().decode('utf-8', 'replace')
         # return data
         return(data)
@@ -192,3 +198,9 @@ class ftDB():
 
     def img_url(self, img_id, height):
         return(self.base_url + 'thumbnail/' + str(img_id) + '?size=' + str(height))
+
+    def get_suggestions(self, search):
+        data = self.call_server_json('api/suggest-searches?q='+search)
+        if data == {}:
+            return([])
+        return(data["suggestions"])

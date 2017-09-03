@@ -244,6 +244,7 @@ class execThread(QThread):
             self.parent.processEvents()
         
         if not self.halt: self.msgOut("<End>")
+        else: self.msgOut("<Break>")
 
         if self.RIF!=None:
             for i in range(1,9):

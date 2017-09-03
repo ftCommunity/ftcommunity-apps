@@ -8,5 +8,5 @@ url: https://github.com/PeterDHabermehl/startIDE
 exec: startide.py
 managed: yes
 uuid: 0e500e10-33ee-11e7-9598-0800200c9a66
-version: 0.5
+version: 0.51
 firmware: >=0.9.3

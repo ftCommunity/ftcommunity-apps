@@ -1621,6 +1621,10 @@ class FtcGuiApplication(TouchApplication):
         self.add.setStyleSheet("font-size: 20px;")
         self.add.clicked.connect(self.addCodeLine)
         
+        self.cop = QPushButton("#")
+        self.cop.setStyleSheet("font-size: 20px;")
+        self.cop.clicked.connect(self.copyCodeLine)        
+        
         self.rem = QDblPushButton("-")
         self.rem.setStyleSheet("font-size: 20px;")
         self.rem.doubleClicked.connect(self.remCodeLine)
@@ -1634,6 +1638,7 @@ class FtcGuiApplication(TouchApplication):
         self.don.clicked.connect(self.lineDown)
         
         h.addWidget(self.add)
+        h.addWidget(self.cop)
         h.addWidget(self.rem)
         h.addWidget(self.upp)
         h.addWidget(self.don)
@@ -2075,6 +2080,7 @@ class FtcGuiApplication(TouchApplication):
         #true -> main window enabled 
         
         self.add.setVisible(status)
+        self.cop.setVisible(status)
         self.rem.setVisible(status)
         self.upp.setVisible(status)
         self.don.setVisible(status)
@@ -2083,8 +2089,13 @@ class FtcGuiApplication(TouchApplication):
         self.output.setVisible(not status)
     
         if status: self.starter.setText(QCoreApplication.translate("main","Start")) 
-        else:      self.starter.setText(QCoreApplication.translate("main","Stopp"))
+        else:      self.starter.setText(QCoreApplication.translate("main","Stop"))
 
+    def copyCodeLine(self):
+        row=self.proglist.currentRow()
+        i=self.proglist.item(row).text()
+        self.proglist.insertItem(row+1,i)
+    
     def addCodeLine(self):
         fta=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Add line"), self.mainwindow)
         fta.setText(QCoreApplication.translate("addcodeline","Select new:"))
@@ -2269,6 +2280,7 @@ class FtcGuiApplication(TouchApplication):
             i=self.proglist.takeItem(row)
             self.proglist.insertItem(row-1,i)
             self.proglist.setCurrentRow(row-1)
+            self.codeSaved=False
     
     def lineDown(self):
         row=self.proglist.currentRow()
@@ -2276,6 +2288,7 @@ class FtcGuiApplication(TouchApplication):
             i=self.proglist.takeItem(row)
             self.proglist.insertItem(row+1,i)
             self.proglist.setCurrentRow(row+1)
+            self.codeSaved=False
 
     def progItemDoubleClicked(self):
         crow=self.proglist.currentRow()

@@ -13,6 +13,7 @@ Code.connected = false;
 Code.spinner = null;
 Code.files = [ ]        // array of program filenames and names
 Code.plugins = { }      // array of plugin names and descriptions
+Code.highlight = { };
 
 function export_svg() {
     aleph = Code.workspace.svgBlockCanvas_.cloneNode(true);
@@ -370,6 +371,38 @@ function plugin_include_toolbox(toolbox, plugin_toolbox) {
     return toolbox;
 }
 
+function toolbox_hide_txt_dom(toolbox) {
+    var sth_removed = false;
+    
+    // walk over entire toolbox and collect children to be removed
+    var remove = [ ]
+    for (var i = 0; i < toolbox.childNodes.length; i++) {
+	var xmlChild = toolbox.childNodes[i];
+
+	// only process nodes that actually have attributes
+	if(xmlChild.attributes)
+	    if(xmlChild.getAttribute('platform') &&
+	       (xmlChild.getAttribute('platform') == "txt"))
+		remove.push(xmlChild);
+	    
+	sth_removed = toolbox_hide_txt_dom(xmlChild) || sth_removed;
+    }
+
+    // remove all children that have been flagged to be removed
+    for (var i = 0; i < remove.length; i++) {
+	toolbox.removeChild(remove[i]);
+	sth_removed = true;
+    }
+    
+    // return whether s'th has been removed
+    return sth_removed;
+}
+    
+function toolbox_hide_txt() {
+    if(toolbox_hide_txt_dom(Code.toolbox))
+	toolbox_update_plugins();
+}
+
 function toolbox_update_plugins() {    
     // Load initial toolbox
     var toolbox = Code.toolbox.cloneNode(true);
@@ -596,7 +629,7 @@ function loadPlugin(plugin) {
 		    
 		    if(translations) {
 			// {{_SELF}} points to the class itself
-			translations["_SELF"] = "wrapper.plugins[\"" + plugin + "\"]"
+			translations["_SELF"] = "brickly.plugins[\"" + plugin + "\"]"
 			
 			// apply previously loaded translations
 			text = http.responseText.replace(/{{(\w+)}}/g,
@@ -968,6 +1001,26 @@ function display_text_clr() {
     document.getElementById("textDiv").innerHTML = "";
 }
 
+// handle hightlights
+function highlight(tid, id) {
+    // if no thread id was given remove all highlights
+    if(tid === undefined) {
+	Code.workspace.highlightBlock();
+	Code.highlight = { };
+    } else {
+	// remove any existing highlight for the given thread id
+	if(tid in Code.highlight) {
+	    Code.workspace.highlightBlock(Code.highlight[tid], false);	    
+	    delete Code.highlight[tid];
+	}
+	
+	if(id !== undefined) {
+	    Code.workspace.highlightBlock(id, true);
+	    Code.highlight[tid] = id;
+	}
+    }
+}
+
 // start the websocket server
 function ws_start(initial) {
     url = "ws://"+document.location.hostname+":9002/";
@@ -999,7 +1052,13 @@ function ws_start(initial) {
 		    }
 		}
 	    }
-	    
+
+	    // target reports that it's not a TXT, so hide all
+	    // TXT related blocks and categories
+	    if(typeof obj.txt !== 'undefined')
+		if(!obj.txt)
+		    toolbox_hide_txt();
+		
 	    // commands from client
 	    if(typeof obj.gui_cmd !== 'undefined') {
 		if(obj.gui_cmd == "clear") display_text_clr();
@@ -1035,12 +1094,20 @@ function ws_start(initial) {
 			     html_escape(obj.stderr)+"</b></tt></font>");
 
 	    if(typeof obj.highlight !== 'undefined') {
+		// check if a thread id has been sent with highlight
+		var tid = undefined;
+		if (typeof obj.thread !== 'undefined')
+		    tid = obj.thread;
+
 		if(obj.highlight == "none") {
-		    display_state(MSG['stateProgramEnded']);
-		    Code.workspace.highlightBlock();
-		    button_set('run', true);
+		    highlight(tid);
+
+		    if(typeof obj.thread === 'undefined') {
+			display_state(MSG['stateProgramEnded']);
+			button_set('run', true);
+		    }
 		} else
-		    Code.workspace.highlightBlock(obj.highlight);
+		    highlight(tid, obj.highlight);
 	    }
 	}
     };
@@ -1078,7 +1145,7 @@ function ws_start(initial) {
             Code.connected = false;
             // button_set('run', false);
             button_set('connect', true);
-	    Code.workspace.highlightBlock();
+	    highlight();
 	    menu_disable(true);
 	    delete Code.ws;
         }
@@ -1275,7 +1342,7 @@ function program_run() {
     // will run on any python setup. If highlighting is wanted these lines
     // need to be uncommented on server side
     Blockly.Python.STATEMENT_PREFIX = '# highlightBlock(%1)\n';
-    Blockly.Python.addReservedWords('wrapper');
+    Blockly.Python.addReservedWords('brickly');
 
     // Generate Python code and POST it
     var python_code = Blockly.Python.workspaceToCode(Code.workspace);

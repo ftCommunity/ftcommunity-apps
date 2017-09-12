@@ -8,25 +8,25 @@
         </shadow>
       </value>
     </block>
-    <block type="play_snd"></block>
-    <block type="sound"></block>
+    <block platform="txt" type="play_snd"></block>
+    <block platform="txt" type="sound"></block>
   </category>
   <category name="{catInputs}" colour="200">
-    <block type="simple_input"></block>
+    <block platform="txt" type="simple_input"></block>
   </category>
   <category name="{catOutputs}" colour="220">
-    <block type="output"></block>
+    <block platform="txt" type="output"></block>
     <block type="on_off"></block>
     <sep gap="50"></sep>
-    <block type="mobile_drive">
+    <block platform="txt" type="mobile_drive">
       <value name="dist">
 	<shadow type="math_number">
           <field name="NUM">25</field>
 	</shadow>
       </value>
     </block>
-    <block type="mobile_drive_while"></block>
-    <block type="mobile_turn">
+    <block platform="txt" type="mobile_drive_while"></block>
+    <block platform="txt" type="mobile_turn">
       <value name="angle">
 	<shadow type="simple_angle">
           <field name="angle">90</field>

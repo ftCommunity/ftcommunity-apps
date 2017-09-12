@@ -1,11 +1,15 @@
 // custom block definitions for brickly incl. python code generation
 // https://blockly-demo.appspot.com/static/demos/blockfactory/index.html
 
+// Parallel program:
+// https://developers.google.com/blockly/guides/create-custom-blocks/block-paradigms#parallel_program
+
 CustomBlocksHUE = 180
 InputBlocksHUE = 200
 OutputBlocksHUE = 220
 MobileBlocksHUE = 250
 TextBlocksHUE = 350
+ExecBlocksHUE = 225
 
 // --------------------------------------------------------
 
@@ -17,6 +21,13 @@ var block_wait = {
     "nextStatement": null,
     "colour": CustomBlocksHUE,
     "tooltip": MSG['blockWaitToolTip']
+};
+
+var block_thread = {
+    "message0": MSG['blockThreadMessage'],
+    "args0": [ { "type": "input_dummy" }, { "type": "input_statement", "name": "code" } ],
+    "colour": CustomBlocksHUE,
+    "tooltip": MSG['blockThreadTooltip'],
 };
 
 var block_repeat = {
@@ -621,14 +632,20 @@ var block_text_clear = {
 
 // generate python code for custom blocks
 Blockly.Python['start'] = function(block) {
-  var code = '# program start\n';
-  return code;
+    return '# program start\n';
 };
 
 Blockly.Python['wait'] = function(block) {
     var value_seconds = Blockly.Python.valueToCode(block, 'seconds', Blockly.Python.ORDER_ATOMIC);
     if(!value_seconds) value_seconds = 0;
     return 'wait(%1)\n'.replace('%1', value_seconds);
+};
+
+Blockly.Python['thread'] = function(block) {
+    // this will cause a function block named thread to be created for every
+    // single thread. This needs some special preprocessing to be used
+    var statements = Blockly.Python.statementToCode(block, 'code');
+    return 'def thread():\n' + statements;
 };
 
 Blockly.Python['repeat'] = function(block) {
@@ -801,11 +818,13 @@ function custom_blocks_init() {
 		.appendField(new Blockly.FieldLabel(htmlDecode(Code.program_name[1]), 'program_name'))
 	    
 	    this.setNextStatement(true, null);
-	    this.setColour(225);
+	    this.setColour(ExecBlocksHUE);
 	    this.setTooltip(MSG['blockStartToolTip']);
 	} 
     };
     
+    Blockly.Blocks['thread'] = {
+	init: function() { this.jsonInit(block_thread); } };
     Blockly.Blocks['wait'] = {
 	init: function() { this.jsonInit(block_wait); } };
     Blockly.Blocks['repeat'] = {

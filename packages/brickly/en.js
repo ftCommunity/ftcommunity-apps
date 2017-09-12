@@ -34,6 +34,9 @@ var MSG = {
     blockStartToolTip: "Program execution starts here",
     blockStartToolTipUnsaved: "\n(the program has not been saved yet)",
 
+    blockThreadMessage: "incidentally %1 %2",
+    blockThreadToolTip: "Do something incidentally",
+    
     blockWaitMessage: "wait %1 seconds",
     blockWaitToolTip: "Pause program execution a given time",
     blockRepeatMessage: "repeat %1 %2",

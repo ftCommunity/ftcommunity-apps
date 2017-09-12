@@ -8,19 +8,19 @@
         </shadow>
       </value>
     </block>
-    <block type="play_snd"></block>
-    <block type="sound"></block>
+    <block platform="txt" type="play_snd"></block>
+    <block platform="txt" type="sound"></block>
   </category>
   <category name="{catInputs}" colour="200">
-    <block type="simple_input"></block>
-    <block type="input"></block>
+    <block platform="txt" type="simple_input"></block>
+    <block platform="txt" type="input"></block>
     <block type="input_converter_r2t"></block>
   </category>
   <category name="{catOutputs}" colour="220">
-    <block type="output"></block>
+    <block platform="txt" type="output"></block>
     <block type="on_off"></block>
     <block type="pwm_value"></block>
-    <category name="{catMotors}" colour="220">
+    <category platform="txt" name="{catMotors}" colour="220">
       <block type="motor_set"></block>
       <block type="left_right"></block>
       <block type="gear_ratio"></block>

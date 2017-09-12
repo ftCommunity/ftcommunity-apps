@@ -17,6 +17,7 @@ MAX_HIGHLIGHTS_PER_SEC = 25
 
 import time, sys, asyncio, websockets, queue, pty, json, math, re
 import xml.etree.ElementTree
+import threading
 import ftrobopy
 
 # the websocket server is a seperate tread for handling the websocket
@@ -206,7 +207,7 @@ class RunThread(QThread):
         self.plugins = loader.loadAll()
 
         self.speed = 90  # range 0 .. 100
-
+        self.txt_io_lock = None
         self.joystick = None
 
         self.ws_thread = ws_thread  # websocket server thread
@@ -253,8 +254,11 @@ class RunThread(QThread):
     def setJoystick(self, js):
         self.joystick = js
 
-    def send_highlight(self, id):
-        self.ws_thread.send(json.dumps( { "highlight": id } ))
+    def send_highlight(self, id, thread_id=None):
+        if thread_id != None:
+            self.ws_thread.send(json.dumps( { "highlight": id, "thread": thread_id } ))
+        else:
+            self.ws_thread.send(json.dumps( { "highlight": id } ))
 
     def set_program_name(self, name):
         self.program_name = name
@@ -273,35 +277,119 @@ class RunThread(QThread):
                     # replace global calls by calls into the local class
                     # this could be done on javascript side but this would make
                     # the bare generated python code harder to read
-                    global wrapper
-                    wrapper = self    # make self accessible to all functions of blockly code
+                    global brickly
+                    brickly = self    # make self accessible to all functions of blockly code
                 
                     code_txt = f.read()
-                    code_txt = code_txt.replace("# speed", "wrapper.speed");
-                    code_txt = code_txt.replace("# highlightBlock(", "wrapper.highlightBlock(");
-                    code_txt = code_txt.replace("setOutput(", "wrapper.setOutput(");
-                    code_txt = code_txt.replace("setMotor(", "wrapper.setMotor(");
-                    code_txt = code_txt.replace("setMotorSync(", "wrapper.setMotorSync(");
-                    code_txt = code_txt.replace("setMotorOld(", "wrapper.setMotorOld(");
-                    code_txt = code_txt.replace("mobileConfig(", "wrapper.mobileConfig(");
-                    code_txt = code_txt.replace("mobileDrive(", "wrapper.mobileDrive(");
-                    code_txt = code_txt.replace("mobileDriveWhile(", "wrapper.mobileDriveWhile(");
-                    code_txt = code_txt.replace("mobileTurn(", "wrapper.mobileTurn(");
-                    code_txt = code_txt.replace("wait(", "wrapper.wait(");
-                    code_txt = code_txt.replace("sync(", "wrapper.sync(");
-                    code_txt = code_txt.replace("print(", "wrapper.print(");
-                    code_txt = code_txt.replace("str(", "wrapper.str(");
-                    code_txt = code_txt.replace("setMotorOff(", "wrapper.setMotorOff(");
-                    code_txt = code_txt.replace("motorHasStopped(", "wrapper.motorHasStopped(");
-                    code_txt = code_txt.replace("getInput(", "wrapper.getInput(");
-                    code_txt = code_txt.replace("inputConvR2T(", "wrapper.inputConvR2T(");
-                    code_txt = code_txt.replace("playSound(", "wrapper.playSound(");
-                    code_txt = code_txt.replace("textClear(", "wrapper.textClear(");
-                    code_txt = code_txt.replace("textPrintColor(", "wrapper.textPrintColor(");
 
-                    functions = [ "jsIsPresent", "jsGetButton", "jsGetAxis" ]
+                    code_txt = code_txt.replace("# speed", "brickly.speed");
+                    code_txt = code_txt.replace("# highlightBlock(", "brickly.highlightBlock(0,");
+ 
+                    functions = [ "jsIsPresent", "jsGetButton", "jsGetAxis",
+                                  "setOutput", "setMotor","setMotorSync", "setMotorOld",
+                                  "mobileConfig", "mobileDrive", "mobileDriveWhile",
+                                  "mobileTurn", "wait", "sync", "print", "str", "setMotorOff",
+                                  "motorHasStopped", "getInput", "inputConvR2T",
+                                  "playSound", "textClear", "textPrintColor" ]
                     for func in functions:
-                        code_txt = code_txt.replace(func+"(", "wrapper."+func+"(");
+                        code_txt = code_txt.replace(func+"(", "brickly."+func+"(");
+
+                    # Threading needs a bunch of special support. Mainly we need to detect all
+                    # functions which are supposed to be threads and then add some code to actually
+                    # run these threads. Also the code must be modified to make sure that each thread
+                    # has it's own "highlight" when displaying the execution state in the browser.
+                    # Finally the threads need their own exception handling
+                        
+                    # check for "thread" functions inside the program and extract all thread related code
+                    # into a seperate string
+                    thread = None
+                    threads = []
+                    code_lines = code_txt.split('\n');
+                    code_txt = ""
+                    for l in code_lines:
+                        if not l.strip():
+                            # empty lines go wherever we currently are
+                            if thread:
+                                thread += l+"\n";
+                            else:
+                                code_txt += l + "\n";
+                        else:
+                            # lines containing text either belong to threads
+                            # or to the main program
+
+                            if l == "def thread():":
+                                # a thread starts
+                                
+                                # remove previous "highlight" line as it belonged to
+                                # the thread function itself
+                                code_txt = "\n".join(code_txt.split('\n')[:-2])+"\n"
+                                
+                                thread = ""
+                            else:
+                                # still in thread
+                                if thread != None:
+                                    if l[0] == ' ':
+                                        # line indented -> belongs to thread
+                                        thread += l+"\n";
+                                    else:
+                                        # otherwise thread ends here
+                                        threads.append(thread)
+                                        thread = None
+                                        code_txt += l + "\n";
+                                else:
+                                    code_txt += l + "\n";
+
+                    # append the last thread if there was one
+                    if thread:
+                        threads.append(thread)
+                        # multithreaded programs need a lock on the hardware
+                        self.txt_io_lock = threading.Lock()
+
+                    # create a matching list of highlight timers for all threads and the main thread
+                    self.highlight_timer = [0] * (len(threads)+1)
+                    
+                    if len(threads) > 0:
+                        # prepend code to main code to start the threads and append thread code
+                        code_threads_init = ""
+                        
+                        # add code of all threads
+                        for ti in range(len(threads)):
+                            ts = str(ti+1)  # threads id as a string
+                            
+                            # bind the highlight to the thread so each thread has its own highlight
+                            thread_code_raw = threads[ti].replace("highlightBlock(0,", "highlightBlock("+ts+",");
+
+                            # make sure highlight is disabled when thread ends
+                            thread_code_raw += "  brickly.highlightBlock(" + ts + ",'none')"
+                            
+                            # indent entire thread code an additional level for the surrounding try
+                            thread_code = ""
+                            for line in thread_code_raw.splitlines():
+                                thread_code += "  "+line+"\n"
+
+                            # surround thread with code to catch user interrupt exception
+                            thread_code  = "  try:\n" + thread_code
+                            thread_code += "  except UserInterrupt as e:\n"
+                            thread_code += "    pass\n"
+                            
+                            code_threads_init += "def thread_" + ts + "():\n"
+                            code_threads_init += thread_code
+                            code_threads_init += "\n"
+
+                            # print("T:", code_threads_init)
+                            
+                        for ti in range(len(threads)):
+                            ts = str(ti+1)  # threads id as a string
+                            code_threads_init += "t"+ts+" = threading.Thread(target=thread_"+ts+", args=[])\n"
+                            code_threads_init += "t"+ts+".start()\n"
+
+                        code_txt = code_threads_init + code_txt
+
+                        # this is the end of the main thread, unhighlight it and wait for threads
+                        
+                        code_txt += "brickly.highlightBlock(0,'none')\n"
+                        for ti in range(len(threads)):
+                            code_txt += "t"+str(ti+1)+".join()\n"
 
                     # inform all interested plugins that the program now runs
                     for p in self.plugins:
@@ -314,7 +402,7 @@ class RunThread(QThread):
                 except SyntaxError as e:
                     print("Syntax error: " + str(e), file=sys.stderr)
                 except UserInterrupt as e:
-                    self.send_highlight("interrupted")
+                    pass
                 except:
                     print("Unexpected error: " + str(sys.exc_info()[1]), file=sys.stderr)
 
@@ -322,7 +410,7 @@ class RunThread(QThread):
                 # to be kept open
                 if self.sync_open:
                     if self.txt:
-                        self.txt.SyncDataEnd();            
+                        self.txt.SyncDataEnd();
                     self.sync_open = False
                 
                 # inform all interested plugins that the program has ended
@@ -412,6 +500,8 @@ class RunThread(QThread):
         return (self.joystick != None) and (len(self.joystick.joysticks()) > 0)
 
     def jsGetAxis(self, axis):
+        self.acquire()
+        
         # try ir remote if support present
         if self.txt and float(ftrobopy.version()) >= 1.68:
             if axis == "x":
@@ -427,13 +517,17 @@ class RunThread(QThread):
 
             # ir remote returned something?
             if val:
+                self.release()
                 return 100.0 * val / 15
                 
         val = self.joystick.axis(None, axis)
         if val == None: val = 0
+        self.release()
         return 100.0 * val
 
     def jsGetButton(self, button):
+        self.acquire()
+        
         # try ir remote if support present
         if self.txt and float(ftrobopy.version()) >= 1.68:
             if button == "ir_on":
@@ -445,10 +539,12 @@ class RunThread(QThread):
 
             # ir remote returned something?
             if val:
+                self.release()
                 return val
 
         val = self.joystick.button(None, button)
         if val == None: val = False
+        self.release()
         return val != 0
 
     # ================================== FT IO ================================
@@ -465,6 +561,14 @@ class RunThread(QThread):
                     self.txt.SyncDataEnd();            
                 self.sync_open = False
 
+    def acquire(self):
+        if self.txt_io_lock:
+            self.txt_io_lock.acquire()
+
+    def release(self):
+        if self.txt_io_lock:
+            self.txt_io_lock.release()
+
     # --------------------------------- motors --------------------------------
 
     def createMotor(self, port):
@@ -480,12 +584,15 @@ class RunThread(QThread):
             self.motor[port]['dev'] = None
             
         if self.txt and self.M[port] != self.txt.C_MOTOR:
+            self.acquire()
+            
             # update config
             self.M[port] = self.txt.C_MOTOR
             self.txt.setConfig(self.M, self.I)
             self.txt.updateConfig()
 
             self.motor[port]['dev'] = self.txt.motor(port+1)
+            self.release()
 
     def setMotorSync(self, port_a=0, port_b=0):
         if port_a == port_b: return
@@ -496,14 +603,18 @@ class RunThread(QThread):
         # make sure both motors exist
         self.createMotor(port_a)
         self.createMotor(port_b)
+        self.acquire()
         self.motor[port_a]['syncto'] = self.motor[port_b]['dev']
         self.motor[port_b]['syncto'] = self.motor[port_a]['dev']
+        self.release()
 
     def setMotor(self, port=0, name=None, val=0):
         if not name: return
 
         # print("M"+str(port+1), name, val) 
 
+        self.acquire()
+        
         # make sure motor object already exists
         self.createMotor(port)
 
@@ -541,10 +652,13 @@ class RunThread(QThread):
         else:
             print("Unknown parameter name", name, file=sys.stderr)
 
+        self.release()
         
     def setMotorOld(self,port=0,dir=1,val=0,steps=None):
         # this is for the old all-on-one motor blocks 
 
+        self.acquire()
+        
         # make sure val is in 0..100 range
         val = max(-100, min(100, val))
         # and scale it to 0 ... 512 range
@@ -565,8 +679,11 @@ class RunThread(QThread):
                 
             self.motor[port]['dev'].setSpeed(pwm_val)
 
-            
+        self.release()
+        
     def setMotorOff(self,port=0):
+        self.acquire()
+                                
         if not self.txt:
             # if no TXT could be connected just write to stderr
             print("M" + str(port+1) + "= off", file=sys.stderr)
@@ -575,20 +692,30 @@ class RunThread(QThread):
             if self.M[port] == self.txt.C_MOTOR:
                 self.motor[port]['dev'].stop()
 
+        self.release()
+            
     def motorHasStopped(self,port=0):
+        self.acquire()
+        
         if not self.txt:
             # if no TXT could be connected just write to stderr
             print("M" + str(port+1) + "= off?", file=sys.stderr)
+            self.release()
             return True
 
         # make sure that the port is in motor mode
         if self.M[port] != self.txt.C_MOTOR:
+            self.release()
             return True
 
         # print("M", port, self.motor[port], self.motor[port]['dev'].finished())
-        return self.motor[port]['dev'].finished()
+        retval = self.motor[port]['dev'].finished()
+        self.release()
+        return retval
 
     def setOutput(self,port=0,val=0):
+        self.acquire()
+        
         # make sure val is in 0..100 range
         val = max(0, min(100, val))
         # and scale it to 0 ... 512 range
@@ -607,6 +734,8 @@ class RunThread(QThread):
                 self.motor[int(port/2)] = None                
         
             self.txt.setPwm(port,pwm_val)
+            
+        self.release()
 
     # --------------------------------- mobile robots --------------------------------
 
@@ -653,6 +782,8 @@ class RunThread(QThread):
         if not self.mobile['wheels'][1]: self.mobile['wheels'][1] = 1
 
     def mobileDriveWhile(self, dir, w, val):
+        self.acquire()
+            
         # make sure mobil setup exists
         self.mobileCreate()
 
@@ -689,8 +820,12 @@ class RunThread(QThread):
             self.motor[m0]['dev'].stop()
             self.motor[m1]['dev'].stop()
             self.txt.SyncDataEnd()
+            
+        self.release()
 
     def mobileDrive(self, dir, dist=0):
+        self.acquire()
+        
         # make sure mobil setup exists
         self.mobileCreate()
 
@@ -725,7 +860,11 @@ class RunThread(QThread):
                 if self.stop_requested:
                     raise UserInterrupt(42)
 
+        self.release()
+            
     def mobileTurn(self, dir, angle=0):
+        self.acquire()
+        
         # make sure mobil setup exists
         self.mobileCreate()
 
@@ -757,12 +896,16 @@ class RunThread(QThread):
                        self.motor[m1]['dev'].finished())):
                 self.txt.updateWait()
 
+        self.release()
+        
     # --------------------------------- inputs --------------------------------
 
     def getInput(self,type,port):
+        self.acquire()
         if not self.txt:
             # if no TXT could be connected just write to stderr
             print("I" + str(port+1) + " " + type + " = 0", file=sys.stderr)
+            self.release()
             return 0
         else:
             input_type = {
@@ -781,7 +924,9 @@ class RunThread(QThread):
                 time.sleep(0.1)   # wait some time so the change can take effect
 
             # get value
-            return self.txt.getCurrentInput(port)
+            retval = self.txt.getCurrentInput(port)
+            self.release()
+            return retval
 
     def inputConvR2T(self,sys="degCelsius",val=0):
         K2C = 273.0
@@ -803,6 +948,7 @@ class RunThread(QThread):
     # --------------------------------- sound --------------------------------
 
     def playSound(self,snd):
+        self.acquire()
         if not self.txt:
             # if no TXT could be connected just write to stderr
             print("SND " + str(snd), file=sys.stderr)
@@ -812,6 +958,7 @@ class RunThread(QThread):
             
             self.txt.setSoundIndex(snd)
             self.txt.incrSoundCmdId()
+        self.release()
         
     # --------------------------------- custom text --------------------------------
 
@@ -828,19 +975,27 @@ class RunThread(QThread):
     # this function is called from the blockly code itself. This feature has
     # to be enabled on javascript side in the code generation. The delay 
     # limits the load on the browser/client
-    def highlightBlock(self, str):
+    def highlightBlock(self, id, str=None):
+        # if only one parameter was given, then it's a global highlight (this is
+        # only used for removal)
+        if not str:
+            str = id
+            id = None
+        
         if self.stop_requested:
             raise UserInterrupt(42)
-            
-        if not hasattr(self, 'last'):
-            self.last = 0
 
-        now = time.time()*1000.0
-        if now > self.last + (1000/MAX_HIGHLIGHTS_PER_SEC):
-            self.last = now
+        # remove any timer list if all highlights are removed
+        # and always send this regardless of timer
+        if not id and str == None:
+            self.send_highlight(str, id)
+        else:
+            now = time.time()*1000.0
+            if now > self.highlight_timer[id] + (1000/MAX_HIGHLIGHTS_PER_SEC):
+                self.highlight_timer[id] = now
 
-            time.sleep((100-self.speed)/100)
-            self.send_highlight(str)
+                time.sleep((100-self.speed)/100)  # some max speed limit
+                self.send_highlight(str, id)
 
 class ProgramListWidget(QListWidget):
     selected = pyqtSignal(list)
@@ -912,7 +1067,8 @@ class BricklyTextEdit(QPlainTextEdit):
         QTextEdit.__init__(self, parent)
         self.installEventFilter(self)
         self.setMaximumBlockCount(MAX_TEXT_LINES)
-
+        self.setStyleSheet("QPlainTextEdit { font: 12px; }")
+ 
         self.run_but = BricklyPushButton(QCoreApplication.translate("Menu","Run"), self)
         self.run_but.clicked.connect(self.on_run_clicked)
         self.run_but.resize.connect(self.pos_button)
@@ -1016,8 +1172,12 @@ class Application(TouchApplication):
 
     def on_client_connected(self, connected):
         # on connection tell browser whether code is being executed
+        # and whether we are connected to TXT hardware so it can update
+        # the toolbox if not
         if connected:
             self.ws.send(json.dumps( { "running": self.thread.isRunning() } ))
+            self.ws.send(json.dumps( { "txt": self.thread.txt != None } )) 
+#            self.ws.send(json.dumps( { "txt": True } ))   # always report to be a TXT
 
         # disable local program selection while connected
         self.menu_select.setEnabled(not connected);

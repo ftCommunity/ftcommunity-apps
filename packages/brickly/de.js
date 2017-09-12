@@ -35,6 +35,9 @@ var MSG = {
     blockStartToolTip: "Hier startet die Programmausführung.",
     blockStartToolTipUnsaved: "\n(das Programm wurde noch nicht gespeichert)",
 
+    blockThreadMessage: "Nebenbei %1 %2",
+    blockThreadToolTip: "Mache etwas nebenbei",
+
     blockWaitMessage: "warte %1 Sekunden",
     blockWaitToolTip: "Programm eine vorgegebene Zeit anhalten.",
     blockRepeatMessage: "wiederhole %1 %2",

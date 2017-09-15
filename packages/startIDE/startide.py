@@ -7,6 +7,7 @@ from TouchStyle import *
 from TouchAuxiliary import *
 from robointerface import *
 import ftrobopy as txt
+import random
 from datetime import datetime
 
 hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
@@ -393,7 +394,7 @@ class execThread(QThread):
                 if d=="l" and self.txt_i[e-1].state(): return
             
             a=self.txt_i[p-1].state()
-            #self.RIF.SetMotor(m,d,s)
+
             if d=="l":
                 s=0-s
             self.txt_m[m-1].setSpeed(s)
@@ -409,6 +410,13 @@ class execThread(QThread):
             
             
     def cmdDelay(self, stack):
+
+        try:
+            if stack[2]=="R":
+                stack[1]=random.randint(0,int(stack[1]))
+        except:
+            pass
+            
         self.sleeping=True
         self.sleeper=thd.Timer(float(stack[1])/1000, self.wake)
         self.sleeper.start()
@@ -1858,11 +1866,16 @@ class FtcGuiApplication(TouchApplication):
             module=json.load(f)
         
         self.codeFromListWidget()
+
+        m=self.proglist.currentRow()
         
         for a in module:
-            self.code.append(a)
+            self.code.insert(self.proglist.currentRow()+1,a)
+            self.proglist.setCurrentRow(self.proglist.currentRow()+1)
+
         self.proglist.clear()
         self.proglist.addItems(self.code)
+        self.proglist.setCurrentRow(m+1)
         
         self.codeSaved=False
 
@@ -2095,7 +2108,10 @@ class FtcGuiApplication(TouchApplication):
         row=self.proglist.currentRow()
         i=self.proglist.item(row).text()
         self.proglist.insertItem(row+1,i)
-    
+        self.proglist.setCurrentRow(row+1)
+        
+        self.codeSaved=False
+        
     def addCodeLine(self):
         fta=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Add line"), self.mainwindow)
         fta.setText(QCoreApplication.translate("addcodeline","Select new:"))
@@ -2399,12 +2415,23 @@ class FtcGuiApplication(TouchApplication):
         return editLoopTo(itm,tagteam,self.mainwindow).exec_()
     
     def ecl_delay(self, itm):
-        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Delay"),itm[6:],self.mainwindow).exec_()
+        if "R" in itm:
+            num=-1*int(itm[6:-2])
+            num=str(num)
+        else:
+            num=itm[6:]
+            
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Delay"),num,self.mainwindow).exec_()
         try:
-            return "Delay "+str(int(t))
+            if int(t)<0:
+                t=str(int(t)*-1)
+                return "Delay "+str(int(t))+" R"
+            else:
+                return "Delay "+str(int(t))
         except:
             pass
-        return "Delay "+itm
+        
+        return "Delay "+itm[6:]
         
     def ecl_stop(self, itm):
         return itm

@@ -33,6 +33,10 @@ except:
     vstring="n/a"    
     
 
+PORTRAIT=1
+LANDSCAPE=0
+
+
 class QDblPushButton(QPushButton):
     doubleClicked = pyqtSignal()
     clicked = pyqtSignal()
@@ -1564,6 +1568,13 @@ class FtcGuiApplication(TouchApplication):
         # create the empty main window
         self.mainwindow = TouchWindow("startIDE")
         
+        # query screen orientation
+        
+        if self.mainwindow.width()>self.mainwindow.height():
+            self.orientation=LANDSCAPE
+        else:
+            self.orientation=PORTRAIT
+        
         # add a menu
         
         self.menu=self.mainwindow.addMenu()
@@ -1592,8 +1603,11 @@ class FtcGuiApplication(TouchApplication):
         self.centralwidget=QWidget()
         
         # the main window layout
-        l=QVBoxLayout()    
+        l=QVBoxLayout() 
         
+        if self.orientation==LANDSCAPE:
+            l2=QHBoxLayout()
+            
         # program list widget
         self.proglist=QListWidget()
         self.proglist.setStyleSheet("font-family: 'Monospace'; font-size: 16px;")
@@ -1604,8 +1618,11 @@ class FtcGuiApplication(TouchApplication):
             self.proglist.addItem(a)
             c=c+1
             
-        l.addWidget(self.proglist)
-        
+        if self.orientation==PORTRAIT:
+            l.addWidget(self.proglist)
+        else:
+            l2.addWidget(self.proglist)
+            
         # alternate output text field
         
         self.output=QListWidget()
@@ -1614,17 +1631,23 @@ class FtcGuiApplication(TouchApplication):
         self.output.setVerticalScrollMode(1)
         self.output.setHorizontalScrollMode(1)
         self.output.mousePressEvent=self.outputClicked.emit
-        #self.output.clicked.connect(self.outputClicked.emit)
-        #self.mainwindow.titlebar. .connect(self.outputClicked.emit)
-        l.addWidget(self.output)
+        
+        if self.orientation==PORTRAIT:
+            l.addWidget(self.output)
+        else:
+            l2.addWidget(self.output)
+            
         self.output.hide()
         
         self.proglist.setCurrentRow(0)
         
         # and the controls
         
-        h=QHBoxLayout()
-        
+        if self.orientation==PORTRAIT:
+            h=QHBoxLayout()
+        else:
+            h=QVBoxLayout()
+            
         self.add = QPushButton("+")
         self.add.setStyleSheet("font-size: 20px;")
         self.add.clicked.connect(self.addCodeLine)
@@ -1651,16 +1674,24 @@ class FtcGuiApplication(TouchApplication):
         h.addWidget(self.upp)
         h.addWidget(self.don)
         
-        l.addLayout(h)
-        
+        if self.orientation==PORTRAIT:
+            l.addLayout(h)
+        else:
+            l2.addLayout(h)
+            
         self.starter = QPushButton(QCoreApplication.translate("main","Start"))
         self.starter.setStyleSheet("font-size: 20px;")
         self.starter.clicked.connect(self.startStop)
         
         self.start=False
         
-        l.addWidget(self.starter)
-        
+        if self.orientation==PORTRAIT:
+            l.addWidget(self.starter)
+        else:
+            l.addLayout(l2)
+            l.addWidget(self.starter)
+
+            
         self.centralwidget.setLayout(l)
         self.mainwindow.setCentralWidget(self.centralwidget)
         

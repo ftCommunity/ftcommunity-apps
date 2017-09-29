@@ -80,6 +80,14 @@ class FtcGuiApplication(TouchApplication):
         
         # create the empty main window
         self.w = TouchWindow("BenoiTxt")
+
+        if self.w.width()>self.w.height(): # Hilfe, Querformat...
+            msgbox = TouchMessageBox("Info",self.w)
+            msgbox.setText(QCoreApplication.translate("startup","BenoiTXT only runs in portrait screen orientation."))
+            msgbox.setPosButton("Okay")
+            void=msgbox.exec_()
+            exit()
+
         
       
         # create central widget

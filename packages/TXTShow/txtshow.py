@@ -19,6 +19,7 @@ icondir = local + "icons/"
 picsdir = local + "pics/"
 ovldir = local + "overlay/"
 
+
 camera_present=TouchAuxFTCamIsPresent()
         
 class FtcGuiApplication(TouchApplication):
@@ -42,6 +43,14 @@ class FtcGuiApplication(TouchApplication):
         self.timerdelay=3000
         
         self.window = TouchWindow("TXTShow")
+        
+        if self.window.width()>self.window.height(): # Hilfe, Querformat...
+            msgbox = TouchMessageBox("Info",self.window)
+            msgbox.setText(QCoreApplication.translate("startup","TXTShow only runs in portrait screen orientation."))
+            msgbox.setPosButton("Okay")
+            void=msgbox.exec_()
+            exit()
+        
         self.setupLayout()
         
         self.timer =QTimer(self)

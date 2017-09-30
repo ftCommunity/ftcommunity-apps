@@ -1607,6 +1607,7 @@ class FtcGuiApplication(TouchApplication):
         
         if self.orientation==LANDSCAPE:
             l2=QHBoxLayout()
+            l3=QVBoxLayout()
             
         # program list widget
         self.proglist=QListWidget()
@@ -1621,7 +1622,7 @@ class FtcGuiApplication(TouchApplication):
         if self.orientation==PORTRAIT:
             l.addWidget(self.proglist)
         else:
-            l2.addWidget(self.proglist)
+            l3.addWidget(self.proglist)
             
         # alternate output text field
         
@@ -1635,7 +1636,7 @@ class FtcGuiApplication(TouchApplication):
         if self.orientation==PORTRAIT:
             l.addWidget(self.output)
         else:
-            l2.addWidget(self.output)
+            l3.addWidget(self.output)
             
         self.output.hide()
         
@@ -1648,7 +1649,7 @@ class FtcGuiApplication(TouchApplication):
         else:
             h=QVBoxLayout()
             
-        self.add = QPushButton("+")
+        self.add = QPushButton("  +  ")
         self.add.setStyleSheet("font-size: 20px;")
         self.add.clicked.connect(self.addCodeLine)
         
@@ -1660,11 +1661,11 @@ class FtcGuiApplication(TouchApplication):
         self.rem.setStyleSheet("font-size: 20px;")
         self.rem.doubleClicked.connect(self.remCodeLine)
         
-        self.upp = QPushButton(QCoreApplication.translate("main","Up"))
+        self.upp = QPushButton("Up") #QCoreApplication.translate("main","/\"))
         self.upp.setStyleSheet("font-size: 20px;")
         self.upp.clicked.connect(self.lineUp)
         
-        self.don = QPushButton(QCoreApplication.translate("main","Dn"))
+        self.don = QPushButton("Dn") #QCoreApplication.translate("main","\/"))
         self.don.setStyleSheet("font-size: 20px;")
         self.don.clicked.connect(self.lineDown)
         
@@ -1677,9 +1678,13 @@ class FtcGuiApplication(TouchApplication):
         if self.orientation==PORTRAIT:
             l.addLayout(h)
         else:
+            l2.addLayout(l3)
             l2.addLayout(h)
             
+        
+
         self.starter = QPushButton(QCoreApplication.translate("main","Start"))
+            
         self.starter.setStyleSheet("font-size: 20px;")
         self.starter.clicked.connect(self.startStop)
         
@@ -1688,8 +1693,10 @@ class FtcGuiApplication(TouchApplication):
         if self.orientation==PORTRAIT:
             l.addWidget(self.starter)
         else:
+            #l2.addWidget(self.starter)
+            l3.addWidget(self.starter)
             l.addLayout(l2)
-            l.addWidget(self.starter)
+            #l.addWidget(self.starter)
 
             
         self.centralwidget.setLayout(l)
@@ -2108,8 +2115,6 @@ class FtcGuiApplication(TouchApplication):
         self.etf=True
         
     def messageBox(self, stack):
-        #msg=stack[:stack[1:].find("'")+1]
-        #btn=stack[len(msg)+3:][1:-1]
         msg=stack.split("'")
         t=TouchMessageBox(QCoreApplication.translate("exec","Message"), self.mainwindow)
         t.setCancelButton()
@@ -2132,8 +2137,10 @@ class FtcGuiApplication(TouchApplication):
         
         self.output.setVisible(not status)
     
-        if status: self.starter.setText(QCoreApplication.translate("main","Start")) 
-        else:      self.starter.setText(QCoreApplication.translate("main","Stop"))
+        if status:
+            self.starter.setText(QCoreApplication.translate("main","Start"))
+        else:
+            self.starter.setText(QCoreApplication.translate("main","Stop"))
 
     def copyCodeLine(self):
         row=self.proglist.currentRow()

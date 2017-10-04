@@ -2151,8 +2151,7 @@ class FtcGuiApplication(TouchApplication):
         self.codeSaved=False
         
     def addCodeLine(self):
-        fta=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Add line"), self.mainwindow)
-        fta.setText(QCoreApplication.translate("addcodeline","Select new:"))
+        fta=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","New cmd:"), self.mainwindow)
         fta.setButtons([ QCoreApplication.translate("addcodeline","Inputs"),
                          QCoreApplication.translate("addcodeline","Outputs"),
                          QCoreApplication.translate("addcodeline","Controls"),
@@ -2160,6 +2159,7 @@ class FtcGuiApplication(TouchApplication):
                          QCoreApplication.translate("addcodeline","Interaction")
                         ]
                       )
+        fta.setColumnSplit(3)
         fta.setTextSize(3)
         fta.setBtnTextSize(3)
         (s,r)=fta.exec_()
@@ -2180,20 +2180,21 @@ class FtcGuiApplication(TouchApplication):
             ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Outputs"), self.mainwindow)
             ftb.setButtons([ QCoreApplication.translate("addcodeline","Output"),
                              QCoreApplication.translate("addcodeline","Motor"),
-                             QCoreApplication.translate("addcodeline","MotorPulsewheel"),
-                             QCoreApplication.translate("addcodeline","MotorEncoder"),
-                             QCoreApplication.translate("addcodeline","MotorEncoderSync")
+                             QCoreApplication.translate("addcodeline","MotorPulsew."),
+                             QCoreApplication.translate("addcodeline","MotorEnc"),
+                             QCoreApplication.translate("addcodeline","MotorEncSync")
                             ]
                           )
             ftb.setTextSize(3)
+            ftb.setColumnSplit(3)
             ftb.setBtnTextSize(3)
             (t,p)=ftb.exec_()
             if t:
                 if   p==QCoreApplication.translate("addcodeline","Output"):  self.acl_output()
                 elif p==QCoreApplication.translate("addcodeline","Motor"):   self.acl_motor()
-                elif p==QCoreApplication.translate("addcodeline","MotorPulsewheel"):   self.acl_motorPulsewheel()
-                elif p==QCoreApplication.translate("addcodeline","MotorEncoder"):   self.acl_motorEncoder()  
-                elif p==QCoreApplication.translate("addcodeline","MotorEncoderSync"): self.acl_motorEncoderSync()
+                elif p==QCoreApplication.translate("addcodeline","MotorPulsew."):   self.acl_motorPulsewheel()
+                elif p==QCoreApplication.translate("addcodeline","MotorEnc"):   self.acl_motorEncoder()  
+                elif p==QCoreApplication.translate("addcodeline","MotorEncSync"): self.acl_motorEncoderSync()
                 
         elif r==QCoreApplication.translate("addcodeline","Controls"):
             ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Controls"), self.mainwindow)

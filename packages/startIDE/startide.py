@@ -2159,7 +2159,10 @@ class FtcGuiApplication(TouchApplication):
                          QCoreApplication.translate("addcodeline","Interaction")
                         ]
                       )
-        fta.setColumnSplit(3)
+        try:
+            fta.setColumnSplit(3)
+        except:
+            pass
         fta.setTextSize(3)
         fta.setBtnTextSize(3)
         (s,r)=fta.exec_()
@@ -2186,7 +2189,10 @@ class FtcGuiApplication(TouchApplication):
                             ]
                           )
             ftb.setTextSize(3)
-            ftb.setColumnSplit(3)
+            try:
+                ftb.setColumnSplit(3)
+            except:
+                pass
             ftb.setBtnTextSize(3)
             (t,p)=ftb.exec_()
             if t:

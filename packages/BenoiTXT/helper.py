@@ -6,7 +6,7 @@ import numpy, cv2
 from subprocess import *
 from TouchStyle import *
 from threading import Timer
-from auxiliaries import *
+from TouchAuxiliary import *
 
 try:
     if TouchStyle_version<1.2:

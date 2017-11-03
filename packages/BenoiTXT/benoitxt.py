@@ -9,7 +9,7 @@
 
 import numpy as np
 import sys, math, time
-from auxiliaries import *
+from TouchAuxiliary import *
 from helper import *
 from TouchStyle import *
 from colormap import *

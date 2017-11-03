@@ -193,9 +193,9 @@ def indexpage():
         # fünfte Spalte
         print('<td>')
         
-        if loc=="de":   print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Soll das Projekt "  + ff + ' wirklich gel&ouml;scht werden?"'+")'><img src='remove.png'></a></center>")
-        elif loc=="fr": print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Voulez-vous vraiment supprimer le projet "  + ff + '?"'+")'><img src='remove.png'></a></center>")
-        else:           print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Do you really want to delete "  + ff + '?"'+")'><img src='remove.png'></a></center>")
+        if loc=="de":   print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Soll das Projekt "  + ff + ' wirklich gel&ouml;scht werden?"'+")'><img src='icons/remove.png'></a></center>")
+        elif loc=="fr": print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Voulez-vous vraiment supprimer le projet "  + ff + '?"'+")'><img src='icons/remove.png'></a></center>")
+        else:           print("<center><a href='index.py?del=" + b[0] + "' onclick='return confirm(" + '"' + "Do you really want to delete "  + ff + '?"'+")'><img src='icons/remove.png'></a></center>")
         
         print('</td>')
         

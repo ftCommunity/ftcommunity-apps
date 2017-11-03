@@ -3,7 +3,7 @@
 #
 import sys,os, shutil
 import zipfile as z
-from auxiliaries import *
+from TouchAuxiliary import *
 from TouchStyle import *
 
 hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"

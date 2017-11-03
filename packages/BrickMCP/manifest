@@ -8,8 +8,8 @@ exec: brickmcp.py
 html: index.py?lang=en
 managed: yes
 uuid: 691061e0-eb93-11e6-9598-0800200c9a66
-version: 0.6
-firmware: >=0.9.2
+version: 0.7
+firmware: >=0.9.3
 [de]
 desc: Das Brickly Master Control Program zum Verwalten von Brickly-Projekten
 html: index.py?lang=de

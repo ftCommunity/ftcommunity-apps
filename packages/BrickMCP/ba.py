@@ -14,7 +14,8 @@ from string import *
 hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
 local = ""
 
-brickdir = hostdir + "../1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
+#brickdir = hostdir + "../1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
+brickdir = hostdir[:-37] + "1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
 
 # für die Entwicklungsumgebung PeH
 if not os.path.exists(brickdir):
@@ -51,7 +52,8 @@ def run_program(rcmd):
             return response_stdout
 
 def send_file(path:str, filename:str):
-    
+
+
     if os.path.exists(path+filename):
         
         g = open(path+filename,'rb')

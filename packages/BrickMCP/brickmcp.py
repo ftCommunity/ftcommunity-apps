@@ -7,7 +7,7 @@ from TouchAuxiliary import *
 from TouchStyle import *
 
 hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
-brickdir = hostdir + "../1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
+brickdir = hostdir[:-37] + "1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
 
 # für die Entwicklungsumgebung PeH
 if not os.path.exists(brickdir):
@@ -64,7 +64,10 @@ class FtcGuiApplication(TouchApplication):
             something.setText(QCoreApplication.translate("unlocked","The Brickly Master Control Program:"))
             something.setButtons([ #QCoreApplication.translate("unlocked","Manage projects"),
                                    QCoreApplication.translate("unlocked","USB Import"),
+                                   QCoreApplication.translate("unlocked","USB Export"),
                                    "",
+                                   #QCoreApplication.translate("unlocked","Manage Workspace"),
+                                   #"",
                                    QCoreApplication.translate("unlocked","Lock BrickMCP")
                                    ])
         
@@ -74,6 +77,8 @@ class FtcGuiApplication(TouchApplication):
                 self.lock()
             elif res==QCoreApplication.translate("unlocked","USB Import"):
                 self.usb_import("unlocked")
+            elif res==QCoreApplication.translate("unlocked","USB Export"):
+                self.usb_export("unlocked")
         return success
     
     def unlock(self):
@@ -82,10 +87,8 @@ class FtcGuiApplication(TouchApplication):
         
         f=open(brickdir+".mcplock","r")
         if t==f.read():
-            f.close()
             os.remove(brickdir+".mcplock")
-        else:
-            f.close()
+        f.close()
     
     def lock(self):
         t=TouchAuxKeyboard("Key","",self.parent()).exec_()
@@ -102,6 +105,15 @@ class FtcGuiApplication(TouchApplication):
         
       
     def usb_import(self, status:str):
+        if status=="locked":
+            t=TouchAuxKeyboard("Key","",self.parent()).exec_()
+            
+            f=open(brickdir+".mcplock","r")
+            if t!=f.read():
+                return
+            f.close()
+        
+        
         idir="/media/usb0/"
         if develop: idir="/home/apdent/Downloads/"
         
@@ -264,6 +276,180 @@ class FtcGuiApplication(TouchApplication):
             os.remove(".bricklyversion")
         if os.path.isfile(".mcpchecksum"):
             os.remove(".mcpchecksum")
+
+    def getkey(self,feed):
+        return feed[1]
+
+    def scan_brickly(self):
+            
+        bricks=[]
+        a=0
+        if os.path.exists(brickdir):
+            stack=os.listdir(brickdir)
+            for l in stack:
+
+                if l[:8]=="brickly-" and l[-4:]==".xml": 
+                    name=""
+
+                    with open(brickdir+l,"r", encoding="utf-8") as f:
+                    
+                        d=f.read()
+                        f.close()
+                    
+                        if "<settings " in d:
+                            d=d[ (d.index("<settings "))+10 : ]
+                            
+                        if 'name="' in d:
+                            d=d[d.index('name="')+6:]
+                            name=d[:d.index('"')]
+                            
+                        elif "name='" in d:
+                            d=d[d.index("name='")+6:]
+                            name=d[:d.index("'")-1]
+                    if name != "": bricks.append((l,name))
+                    
+            return sorted(bricks, key=self.getkey)
+
+    def usb_export(self, status:str):
+        if status=="locked":
+            t=TouchAuxKeyboard("Key","",self.parent()).exec_()
+            
+            f=open(brickdir+".mcplock","r")
+            if t!=f.read():
+                return
+            f.close()
+        
+        
+        idir="/media/usb0/"
+        if develop: idir="/home/apdent/Downloads/"
+        
+        liste=[]
+        bfl=self.scan_brickly()
+        for b in bfl:
+            liste.append(b[1])
+        
+        if len(liste)==0:
+            r=TouchAuxMessageBox(QCoreApplication.translate("usbimport","Info"), self.parent())
+            r.setText(QCoreApplication.translate("usbimport","No Brickly projects found."))
+            r.setPosButton(QCoreApplication.translate("usbimport","Okay"))
+            r.exec_()
+            return
+          
+        (success,result) = TouchAuxListRequester( QCoreApplication.translate("usbimport","Select"),
+                                                  "",
+                                                  liste, liste[0],
+                                                  QCoreApplication.translate("usbimport","Okay"),
+                                                  self.parent()).exec_()
+        if success==False: return
+
+        a=liste.index(result)
+        bf=bfl[a][0]
+
+        path=brickdir
+        m=os.getcwd()
+        os.chdir(path)
+        
+        s1=0
+        if os.path.isfile(os.path.basename(bf)):
+            shutil.copyfile(os.path.basename(bf), ".xml")
+            s1=os.path.getsize(".xml") % 171072
+        if os.path.isfile(os.path.basename(bf)[:-4]+".py"):
+            shutil.copyfile(os.path.basename(bf)[:-4]+".py", ".py")
+            s1=s1+os.path.getsize(".py") % 171072
+        
+        vers="n/a"
+        if os.path.exists("../manifest"):
+            fi=open("../manifest","r")
+            r =fi.readline()
+            while r!="":
+                if "version" in r: vers = r
+                r=fi.readline()
+            fi.close()
+            
+        name=""
+
+        with open(bf,"r", encoding="utf-8") as f:
+        
+            d=f.read()
+            f.close()
+            
+            if "<settings " in d:
+                d=d[ (d.index("<settings "))+10 : ]
+                
+            if 'name="' in d:
+                d=d[d.index('name="')+6:]
+                name=d[:d.index('"')]
+                
+            elif "name='" in d:
+                d=d[d.index("name='")+6:]
+                name=d[:d.index("'")-1]
+        
+        
+        
+        #g=open("Brickly-"+name+".zip","w")#, encoding="UTF-8")
+        bn = asciify(name)
+        fi = z.ZipFile("Brickly-" + bn + ".zip", "w")
+        if os.path.isfile(".xml"):
+            fi.write(".xml")
+            os.remove(".xml")
+            if os.path.isfile(".py"):
+                fi.write(".py")
+                os.remove(".py")
+            fi.writestr(".readme","Brickly ZIP file created by BrickMCP")
+            fi.writestr(".mcpchecksum",str(s1))
+            fi.writestr(".bricklyversion",vers)
+        fi.close()
+        try:
+            s=True
+            if os.path.isfile(idir+"Brickly-"+bn+".zip"):
+                r=TouchAuxMessageBox(QCoreApplication.translate("usbexport","Warning"), self.parent())
+                r.setText(QCoreApplication.translate("usbexport","Overwrite existing file on USB device?"))
+                r.setCancelButton()
+                r.addConfirm()
+                #r.setPosButton(QCoreApplication.translate("usbexport","Okay"))
+                (s,t)=r.exec_() 
+                if s:
+                    os.remove(idir+"Brickly-"+bn+".zip")
+            if s:
+                shutil.move("Brickly-"+bn+".zip",idir+"Brickly-"+bn+".zip")
+            else:
+                r=TouchAuxMessageBox(QCoreApplication.translate("usbexport","Info"), self.parent())
+                r.setText(QCoreApplication.translate("usbexport","File not written to USB device."))
+                r.setPosButton(QCoreApplication.translate("usbexport","Okay"))
+                r.exec_()     
+        except:
+            r=TouchAuxMessageBox(QCoreApplication.translate("usbexport","Error"), self.parent())
+            r.setText(QCoreApplication.translate("usbexport","Export failed."))
+            r.setPosButton(QCoreApplication.translate("usbexport","Okay"))
+            r.exec_()   
+            
+        try:
+            os.remove("Brickly-"+bn+".zip")
+        except:
+            pass
+        
+        os.chdir(m)
+
+def asciify(name):
+    valid=""
+    res=""
+    for y in range(32,128):
+       valid=valid+chr(y)
+    
+    for ch in name:
+        if ch in valid: res=res+ch
+        else: res=res+"-"
+    return res   
+
+def clean(newdir,maxlen):
+    res=""
+    valid="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_-."
+    for ch in newdir:
+        if ch in valid: res=res+ch
+    return res[:maxlen]
+
+
+
             
 if __name__ == "__main__":
     FtcGuiApplication(sys.argv)

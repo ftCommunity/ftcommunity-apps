@@ -5,14 +5,14 @@
 import cgi, shutil
 import sys, os, socket
 import ba
-#import xml.etree.ElementTree as et
 import zipfile as z
 import cgitb
 
 cgitb.enable()
 
 hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
-brickdir = hostdir + "../1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
+#brickdir = hostdir + "../1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
+brickdir = hostdir[:-37] + "1f2d90a3-11e9-4a92-955a-73ffaec0fe71/user/"
 
 # für die Entwicklungsumgebung PeH
 if not os.path.exists(brickdir):

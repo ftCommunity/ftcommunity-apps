@@ -1704,17 +1704,19 @@ class FtcGuiApplication(TouchApplication):
         self.mainwindow.titlebar.close.clicked.connect(self.closed)
         
         self.mainwindow.show()
-        
-        if os.path.isfile(".01_firstrun"):
-            t=TouchMessageBox("first run", self.mainwindow)
-            t.setCancelButton()
-            with open(".01_firstrun", "r", encoding="utf-8") as f:
-                msg=f.read()
-                f.close()
-            t.setText(msg)
-            t.exec_()
-            
-            os.remove(".01_firstrun")
+        try:
+            if os.path.isfile(hostdir+".01_firstrun"):
+                t=TouchMessageBox("first run", self.mainwindow)
+                t.setCancelButton()
+                with open(hostdir+".01_firstrun", "r", encoding="utf-8") as f:
+                    msg=f.read()
+                    f.close()
+                t.setText(msg)
+                t.exec_()
+                
+                os.remove(".01_firstrun")
+        except:
+            pass
         
         self.exec_()
     

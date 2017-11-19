@@ -1714,7 +1714,7 @@ class FtcGuiApplication(TouchApplication):
                 t.setText(msg)
                 t.exec_()
                 
-                os.remove(".01_firstrun")
+                os.remove(hostdir+".01_firstrun")
         except:
             pass
         

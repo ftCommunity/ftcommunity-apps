@@ -315,10 +315,10 @@ class execThread(QThread):
         else: # TXT
             if stack[3]=="s":
                 self.txt_m[int(stack[2])-1].stop()
-            elif stack[3]=="r":
+            elif stack[3]=="l":
                 s=int(stack[4])
                 self.txt_m[int(stack[2])-1].setSpeed(s)
-            elif stack[3]=="l":
+            elif stack[3]=="r":
                 s=0-int(stack[4])
                 self.txt_m[int(stack[2])-1].setSpeed(s)
 
@@ -330,7 +330,7 @@ class execThread(QThread):
         n=int(stack[6]) # pulses
 
 
-        if d=="l":
+        if d=="r":
             s=0-s
         
         self.txt_m[m-1].setDistance(n, syncto=self.txt_m[o-1])
@@ -358,7 +358,7 @@ class execThread(QThread):
         if e>-1:
             if d=="l" and self.txt_i[e-1].state(): return
 
-        if d=="l":
+        if d=="r":
             s=0-s
 
         self.txt_m[m-1].setDistance(n)
@@ -399,8 +399,9 @@ class execThread(QThread):
             
             a=self.txt_i[p-1].state()
 
-            if d=="l":
+            if d=="r":
                 s=0-s
+                
             self.txt_m[m-1].setSpeed(s)
             c=0
             while c<n and not self.halt:
@@ -1693,10 +1694,8 @@ class FtcGuiApplication(TouchApplication):
         if self.orientation==PORTRAIT:
             l.addWidget(self.starter)
         else:
-            #l2.addWidget(self.starter)
             l3.addWidget(self.starter)
             l.addLayout(l2)
-            #l.addWidget(self.starter)
 
             
         self.centralwidget.setLayout(l)
@@ -1705,6 +1704,18 @@ class FtcGuiApplication(TouchApplication):
         self.mainwindow.titlebar.close.clicked.connect(self.closed)
         
         self.mainwindow.show()
+        
+        if os.path.isfile(".01_firstrun"):
+            t=TouchMessageBox("first run", self.mainwindow)
+            t.setCancelButton()
+            with open(".01_firstrun", "r", encoding="utf-8") as f:
+                msg=f.read()
+                f.close()
+            t.setText(msg)
+            t.exec_()
+            
+            os.remove(".01_firstrun")
+        
         self.exec_()
     
     def closed(self):
@@ -1799,6 +1810,7 @@ class FtcGuiApplication(TouchApplication):
     
         with open(projdir+r,"r", encoding="utf-8") as f:
             self.code=json.load(f)
+            f.close()
         
         self.proglist.clear()
         self.proglist.addItems(self.code)

@@ -10,6 +10,8 @@ import ftrobopy as txt
 import random
 from datetime import datetime
 
+import translator
+
 hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
 projdir = hostdir + "projects/"
 moddir  = hostdir + "modules/"
@@ -31,6 +33,17 @@ try:
         f.close()
 except:
     vstring="n/a"    
+
+#
+# set fallback locale information for webinterface
+#
+
+try:
+    with open(hostdir+".locale","w") as f:
+        r=f.write(translator.getActiveLocale())
+        f.close
+except:
+    pass
     
 
 PORTRAIT=1
@@ -1737,12 +1750,26 @@ class FtcGuiApplication(TouchApplication):
     def on_menu_about(self):
         t=TouchMessageBox(QCoreApplication.translate("m_about","About"), self.mainwindow)
         t.setCancelButton()
-        t.setText("<center><h2>startIDE</h2><hr>" + QCoreApplication.translate("m_about","A tiny IDE to control Robo Family Interfaces and TXT Hardware") + "<hr>(c)2017 Peter Habermehl<br>Version: "+vstring)
+        t.setText("<center><h2>startIDE</h2><hr>" + QCoreApplication.translate("m_about","A tiny IDE to control Robo Family Interfaces and TXT Hardware.")
+                  + "<hr>" + QCoreApplication.translate("m_about","The manual is available in the TXT startIDE webinterface under 'Get more app info'.")
+                  + "<hr>(c)2017 Peter Habermehl<br>Version: "+vstring)
         t.setTextSize(1)
         t.setBtnTextSize(2)
-        t.setPosButton(QCoreApplication.translate("m_about","Okay"))
+        t.setNegButton(QCoreApplication.translate("m_about","Okay"))
+        t.setPosButton(QCoreApplication.translate("m_about","News"))
         (v1,v2)=t.exec_() 
-    
+        if v2==QCoreApplication.translate("m_about","News"):
+            t=TouchMessageBox(QCoreApplication.translate("m_about","News"), self.mainwindow)
+            t.setCancelButton()
+            if os.path.isfile(hostdir+".00_news"):
+                with open(hostdir+".00_news","r") as f:
+                    text=f.read()
+                    f.close()
+            else: text="No news found."
+            t.setText(text)
+            t.setTextSize(1)
+            t.exec_()
+            
     def on_menu_project(self):
         fta=TouchAuxMultibutton(QCoreApplication.translate("m_project","Project"), self.mainwindow)
         fta.setButtons([ QCoreApplication.translate("m_project","New"),

@@ -1947,14 +1947,17 @@ class FtcGuiApplication(TouchApplication):
         self.codeFromListWidget()
 
         m=self.proglist.currentRow()
+        n=m
         
         for a in module:
-            self.code.insert(self.proglist.currentRow()+1,a)
-            self.proglist.setCurrentRow(self.proglist.currentRow()+1)
+            self.code.insert(m+1,a)
+            #self.code.insert(self.proglist.currentRow()+1,a)
+            m=m+1
+            #self.proglist.setCurrentRow(self.proglist.currentRow()+1)
 
         self.proglist.clear()
         self.proglist.addItems(self.code)
-        self.proglist.setCurrentRow(m+1)
+        self.proglist.setCurrentRow(n+1)
         
         self.codeSaved=False
 

@@ -66,7 +66,7 @@ def translate(string, locale = LOCAL):
         if locale == "de": return "Projekt"
         if locale == "fr": return "projet"
     elif string == "or a":
-        if locale == "de": return "oder ein"
+        if locale == "de": return "oder"
         if locale == "fr": return "ou un"
     elif string == "module":
         if locale == "de": return "Modul"
@@ -111,8 +111,8 @@ def translate(string, locale = LOCAL):
         if locale == "de": return "<b>Zeige</b> einen"
         if locale == "fr": return "<b>Afficher</b> le code d'un"
     elif string == "code listing.":
-        if locale == "de": return "Programmcode"
-        if locale == "fr": return ""
+        if locale == "de": return "Programmcode."
+        if locale == "fr": return "."
     elif string == "Project file:":
         if locale == "de": return "Projektdatei:"
         if locale == "fr": return "Fichier de projet:"

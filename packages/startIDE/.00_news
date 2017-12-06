@@ -1,4 +1,6 @@
 News<hr>
+v0.91 (20171206):<br>IfIn, WaitIn and Query commands added<hr>
+v0.90 (20171129):<br>ftduino support implemented.<hr>
 v0.83 (20171121):<br>Bugfix on Module import.<hr>
 v0.81 (20171120):<br>German localisation.<hr>
 v0.80 (20171120):<br>Webinterface added.<hr>

@@ -1,1 +1,1 @@
-Attention:<br>The rotation direction of the TXT motor outputs was inverted for RoboPRO compatibility. You might have to swap the plus and ground motor connectors at your model.
+<center><b>New:</b><br><br>IfIn and WaitIn commands to deal with analog inputs!<br>Have fun :-)

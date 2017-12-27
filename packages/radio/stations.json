@@ -1,6 +1,5 @@
 {
-  "SWR3": "http://swr-mp3-s-swr3.akacast.akamaistream.net/7/203/137136/v1/gnl.akacast.akamaistream.net/swr-mp3-s-swr3",
-  "Deutschlandfunk": "http://dradio_mp3_dlf_s.akacast.akamaistream.net/7/251/142684/v1/gnl.akacast.akamaistream.net/dradio_mp3_dlf_s",
-  "1LIVE":"http://1live.akacast.akamaistream.net/7/706/119434/v1/gnl.akacast.akamaistream.net/1live",
-  "SR1": "http://sr1m.akacast.akamaistream.net/7/725/142685/v1/gnl.akacast.akamaistream.net/sr1m"
+  "SWR3": "http://mp3-live.swr3.de/swr3_m.m3u",
+  "Deutschlandfunk": "http://www.deutschlandradio.de/streaming/dlf.m3u",
+  "SR1": "http://streaming01.sr-online.de/sr1_2.m3u"
 }

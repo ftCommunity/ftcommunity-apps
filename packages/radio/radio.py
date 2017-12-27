@@ -13,24 +13,6 @@ from TouchStyle import *
 
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 JSON_PATH = os.path.join(LOCAL_PATH, 'stations.json')
-# currently on TXT the mpg123 tools are stored below the app directory
-if platform.machine() == "armv7l":
-    MPG123 = os.path.join(LOCAL_PATH, "mpg123", "mpg123") + " -q --stdout --encoding u8 --rate 22050 --mono"
-    TXT_PLAY = os.path.join(LOCAL_PATH, "txt_snd_cat")
-    # check if the executables really are executable
-    # as the file came from a zip during installation it
-    # may not have the executable flag set
-    EXECS = [MPG123.split()[0], TXT_PLAY]
-    for e in EXECS:
-        st = os.stat(e)
-        if not (st.st_mode & stat.S_IEXEC):
-            os.chmod(e, st.st_mode | stat.S_IEXEC)
-else:
-    # on a PC play through sox and use the same encoding for
-    # authentic sound (minus the TXTs static noise ...)
-    MPG123 = "mpg123 --stdout --encoding u8 --rate 22050 --mono"
-    TXT_PLAY = "play -q -t raw -b 8 -e unsigned -r 22050 -c 1 -"
-
 
 class StationListWidget(QListWidget):
     play = pyqtSignal(str)
@@ -54,8 +36,6 @@ class StationListWidget(QListWidget):
 
     def stop_player(self):
         # stop all player processes
-        if self.proc_txt_snd_cat:
-            self.proc_txt_snd_cat.terminate()
 
         if self.proc_mpg123:
             self.proc_mpg123.terminate()
@@ -63,14 +43,6 @@ class StationListWidget(QListWidget):
         if self.proc_mpg123:
             self.proc_mpg123.wait()
             self.proc_mpg123 = None
-
-        if self.proc_txt_snd_cat:
-            # kill sox/txt_snd_cat if it's still running
-            if not self.proc_txt_snd_cat.poll():
-                self.proc_txt_snd_cat.kill()
-
-            self.proc_txt_snd_cat.wait()
-            self.proc_txt_snd_cat = None
 
     def stop(self):
         self.stop_player()
@@ -82,14 +54,7 @@ class StationListWidget(QListWidget):
         self.stop_player()
 
         station, url = item.data(Qt.UserRole)
-        mpg123_cmd = MPG123.split() + [url]
-        # make sure the local mpg123/lib directory is being searched
-        # for libraries
-        env = os.environ.copy()
-        env["LD_LIBRARY_PATH"] = os.path.join(LOCAL_PATH, "mpg123", "lib")
-        self.proc_mpg123 = subprocess.Popen(mpg123_cmd, env=env, stdout=subprocess.PIPE)
-        self.proc_txt_snd_cat = subprocess.Popen(TXT_PLAY.split(), stdin=self.proc_mpg123.stdout, stdout=subprocess.PIPE)
-        self.proc_mpg123.stdout.close()  # Allow mpg123 to receive a SIGPIPE if txt_play exits.
+        self.proc_mpg123 = subprocess.Popen(['mpg123', '-@', url])
 
         self.play.emit(station)
 

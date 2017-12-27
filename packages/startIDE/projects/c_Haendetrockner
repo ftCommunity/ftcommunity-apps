@@ -1,1 +1,0 @@
-["# Haendetrockner", "Motor RIF 2 l 7", "Delay 100", "Tag START", "IfInDig RIF 3 False FAN_ON", "WaitInDig RIF 3 Falling 0", "Tag FAN_ON", "Motor RIF 1 r 7", "WaitInDig RIF 3 Raising 0", "Delay 1000", "Motor RIF 1 s 0", "Jump START"]

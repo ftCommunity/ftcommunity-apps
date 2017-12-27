@@ -1,1 +1,0 @@
-["# Ampel Lauflicht", "Tag start", "Output RIF 1 7", "Output RIF 6 0", "Delay 200", "Output RIF 2 7", "Output RIF 1 0", "Delay 200", "Output RIF 3 7", "Output RIF 2 0", "Delay 200", "Output RIF 4 7", "Output RIF 3 0", "Delay 200", "Output RIF 5 7", "Output RIF 4 0", "Delay 200", "Output RIF 6 7", "Output RIF 5 0", "Delay 200", "IfInDig RIF 2 False start"]

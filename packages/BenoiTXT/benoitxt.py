@@ -69,11 +69,16 @@ class FtcGuiApplication(TouchApplication):
         self.coffset=0
         self.ccset=""
         
+        self.SWIDTH=240
+        self.SHEIGHT=320
+        
         #create backdrop window for TXT
         if TXT:
           self.b=TouchWindow("")
+          self.SWIDTH=self.b.width()
+          self.SHEIGHT=self.b.height()
           bb = QLabel(self.b)
-          bb.setGeometry(0, 0, 240, 320)
+          bb.setGeometry(0, 0, self.SWIDTH, self.SHEIGHT)
           bb.setPixmap(QPixmap(hostdir+"blank.png"))
           self.center(self.b)
           self.b.show()
@@ -81,6 +86,10 @@ class FtcGuiApplication(TouchApplication):
         # create the empty main window
         self.w = TouchWindow("BenoiTxt")
 
+        self.SWIDTH=self.w.width()
+        self.SHEIGHT=self.w.height()        
+
+        
         if self.w.width()>self.w.height(): # Hilfe, Querformat...
             msgbox = TouchMessageBox("Info",self.w)
             msgbox.setText(QCoreApplication.translate("startup","BenoiTXT only runs in portrait screen orientation."))
@@ -136,8 +145,8 @@ class FtcGuiApplication(TouchApplication):
         # create an overlay pixmap:
   
         self.bild = QLabel(self.w)
-        self.bild.setGeometry(0, 0, 240, 320)
-        self.bild.setPixmap(QPixmap(240,320))
+        self.bild.setGeometry(0, 0, self.SWIDTH, self.SHEIGHT)
+        self.bild.setPixmap(QPixmap(self.SWIDTH,self.SHEIGHT))
 
         self.bild.mousePressEvent=self.on_bild_clicked
         
@@ -449,7 +458,7 @@ class FtcGuiApplication(TouchApplication):
             self.knopf.setEnabled(False)
             self.text.setText(QCoreApplication.translate("main","...colormapping"))
             self.processEvents()
-            self.mand2pixmap(320,240,self.m,int(math.pow(2,(self.maxiter+3))),self.bild.pixmap(), self.progress, self)
+            self.mand2pixmap(self.SHEIGHT,self.SWIDTH,self.m,int(math.pow(2,(self.maxiter+3))),self.bild.pixmap(), self.progress, self)
             self.bild.update()
             self.text.setText(QCoreApplication.translate("main","...ready"))
             self.processEvents()
@@ -492,8 +501,8 @@ class FtcGuiApplication(TouchApplication):
     def on_zoom_clicked(self, event):
         z=1/self.zoomfac
         
-        ky = 1-(event.pos().x())/240
-        kx = 1-(event.pos().y())/320 
+        ky = 1-(event.pos().x())/self.SWIDTH
+        kx = 1-(event.pos().y())/self.SHEIGHT 
                
         dx = (self.xmax - self.xmin)
         dy = (self.ymax - self.ymin)
@@ -513,8 +522,8 @@ class FtcGuiApplication(TouchApplication):
         self.bild.mousePressEvent=None
         
     def on_zoom_out_clicked(self, event):
-        ky = 1-(event.pos().x())/240
-        kx = 1-(event.pos().y())/320
+        ky = 1-(event.pos().x())/self.SWIDTH
+        kx = 1-(event.pos().y())/self.SHEIGHT
         
         dx = (self.xmax - self.xmin)
         dy = (self.ymax - self.ymin)
@@ -535,8 +544,8 @@ class FtcGuiApplication(TouchApplication):
         self.bild.mousePressEvent=None
         
     def on_move_clicked(self, event):
-        ky = 1-(event.pos().x())/240
-        kx = 1-(event.pos().y())/320 
+        ky = 1-(event.pos().x())/self.SWIDTH
+        kx = 1-(event.pos().y())/self.SHEIGHT 
                
         dx = (self.xmax - self.xmin)
         dy = (self.ymax - self.ymin)
@@ -553,12 +562,12 @@ class FtcGuiApplication(TouchApplication):
         self.knopf.setDisabled(True)
         self.text.setText(QCoreApplication.translate("main","...computing"))
         self.progress.setValue(0)
-        (xv,yv,self.m)=mandelbrot_set2(self.xmin, self.xmax, self.ymin, self.ymax, 320, 240, int(math.pow(2,(self.maxiter+3))), self.precision, self.progress, self)      
+        (xv,yv,self.m)=mandelbrot_set2(self.xmin, self.xmax, self.ymin, self.ymax, self.SHEIGHT, self.SWIDTH, int(math.pow(2,(self.maxiter+3))), self.precision, self.progress, self)      
         
         self.text.setText(QCoreApplication.translate("main","...colormapping"))
         self.progress.setValue(100)
         self.processEvents()
-        self.mand2pixmap(320,240,self.m,int(math.pow(2,(self.maxiter+3))),self.bild.pixmap(), self.progress, self)
+        self.mand2pixmap(self.SHEIGHT,self.SWIDTH,self.m,int(math.pow(2,(self.maxiter+3))),self.bild.pixmap(), self.progress, self)
         self.bild.show()
         self.text.setText(QCoreApplication.translate("main","...ready"))
         

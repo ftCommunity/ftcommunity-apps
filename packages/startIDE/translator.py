@@ -27,7 +27,6 @@ else:
             f.close
         if r in LANGLIST:
             LOCAL=r
-            print("logal:",LOCAL)
         else: LOCAL="en"
     except:
         pass
@@ -125,6 +124,42 @@ def translate(string, locale = LOCAL):
     elif string == "Download!":
         if locale == "de": return "Herunterladen!"
         if locale == "fr": return "T&eacute;l&eacute;charger!"
+    elif string == "Download a log file from your TXT":
+        if locale == "de": return "Lade eine Logdatei vom TXT herunter:"
+        if locale == "fr": return "T&eacute;l&eacute;charger un fichier journal depuis le TXT"
+    elif string == "logfile":
+        if locale == "de": return "Log File"
+        if locale == "fr": return "fichier journal"
+    elif string == "Please select log file:":
+        if locale == "de": return "Bitte Log File ausw&auml;hlen:"
+        if locale == "fr": return "Veuillez s&eacute;lectionner le fichier journal:"
+    elif string == "<b>Convert</b> a":
+        if locale == "de": return "<b>Konvertiere</b> ein"
+        if locale == "fr": return "<b>Convertir</b> un"
+    elif string == "to .CSV":
+        if locale == "de": return "in .CSV-Format"
+        if locale == "fr": return "en .CSV"
+    elif string == "<b><u>Experts corner</b></u>":
+        if locale == "de": return "<b><u>Experten-Ecke</b></u>"
+        if locale == "fr": return "<b><u>Paroles d'experts</b></u>"
+    elif string == "and convert it to plain text.":
+        if locale == "de": return "als Textdatei herunter."
+        if locale == "fr": return "comme un fichier texte."
+    elif string == "from a plain text file.":
+        if locale == "de": return "aus einer Textdatei."
+        if locale == "fr": return "&agrave; partir d'un fichier texte."
+    elif string == "Upload a project text file to your TXT":
+        if locale == "de": return "Lade ein Projekt aus einer Textdatei auf den TXT"
+        if locale == "fr": return "T&eacute;l&eacute;charger un fichier texte projet sur le TXT"
+    elif string == "Upload a module text file to your TXT":
+        if locale == "de": return "Lade ein Modul aus einer Textdatei auf den TXT"
+        if locale == "fr": return "T&eacute;l&eacute;charger un fichier texte module sur le TXT"
+    elif string == "Download a project as a text file":
+        if locale == "de": return "Lade ein Projekt als Textdatei herunter"
+        if locale == "fr": return "T&eacute;l&eacute;charger un projet comme un fichier texte"
+    elif string == "Download a module as a text file":
+        if locale == "de": return "Lade ein Modul als Textdatei herunter"
+        if locale == "fr": return "T&eacute;l&eacute;charger un module comme un fichier texte"
     elif string == "":
         if locale == "de": return ""
         if locale == "fr": return ""

@@ -1,0 +1,141 @@
+# Hanoi
+# 
+Output TXT 7 512
+Clear
+Print Fahre Referenzpunkte an...
+Call grundstellung 1
+Tag START
+Message  Turm von Hanoi:<br>Bitte Tonnen in Startstellung bringen!'Start
+# 
+Clear
+Print Programm laeuft...
+# A
+Print Schritt A
+Call auf 2
+Call greifen 1
+Call auf 1
+Call dreh_rechts 2
+Call ab 3
+Call loslassen 1
+# B
+Print Schritt B
+Call auf 2
+Call dreh_links 2
+Call ab 1
+Call greifen 1
+Call auf 1
+Call dreh_rechts 1
+Call ab 2
+Call loslassen 1
+# C
+Print Schritt C
+Call auf 1
+Call dreh_rechts 1
+Call ab 1
+Call greifen 1
+Call auf 2 
+Call dreh_links 1
+Call ab 1
+Call loslassen 1
+# D
+Print Schritt D
+Call auf 1
+Call dreh_links 1
+Call ab 2
+Call greifen 1
+Call auf 3
+Call dreh_rechts 2
+Call ab 3
+Call loslassen 1
+# E
+Print Schritt E
+Call auf 2
+Call dreh_links 1
+Call ab 1
+Call greifen 1
+Call auf 1
+Call dreh_links 1
+Call ab 2
+Call loslassen 1
+# F
+Print Schritt F
+Call auf 1
+Call dreh_rechts 1
+Call ab 1
+Call greifen 1
+Call auf 2
+Call dreh_rechts 1
+Call ab 1
+Call loslassen 1
+# G
+Print Schritt G
+Call auf 1
+Call dreh_links 2
+Call ab 2
+Call greifen 1
+Call auf 3
+Call dreh_rechts 2 
+Call ab 1
+Call loslassen 1
+# 
+Call ab 3
+Call freiheben 1
+Message  Ablauf beendet.'Okay
+Print ...und zurueck!
+Call greifen 1
+Call auf 1
+Call dreh_links 2
+Call ab 1
+Call loslassen 1
+# 
+Print Hoehenreferenzierung
+Call g2 1
+Jump START
+# 
+# Ende
+# 
+Module grundstellung
+Call loslassen
+MotorP TXT 3 2 3 l 512 9999
+MotorE TXT 2 4 l 512 9999
+MotorE TXT 2 4 r 512 1150
+MotorE TXT 1 1 l 512 9999
+Call g2 1
+MEnd
+Module g2
+MotorE TXT 2 4 l 512 9999
+Call freiheben 1
+MEnd
+# Arm
+Module vor
+MotorP TXT 3 2 3 r 512 10
+MEnd
+Module zurueck
+MotorP TXT 3 2 3 r 512 10
+MEnd
+# Heben
+Module ab
+MotorE TXT 2 4 l 512 350
+MEnd
+Module auf
+MotorE TXT 2 4 r 512 350
+MEnd
+Module freiheben
+MotorE TXT 2 4 r 512 85
+MEnd
+# Drehen
+Module dreh_rechts
+MotorE TXT 1 1 r 512 375
+MEnd
+Module dreh_links
+MotorE TXT 1 1 l 512 375
+MEnd
+# Greifer
+Module loslassen
+Output TXT 8 0
+Delay 100
+MEnd
+Module greifen
+Output TXT 8 512
+Delay 100
+MEnd

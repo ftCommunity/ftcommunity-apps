@@ -1,4 +1,18 @@
 News<hr>
+v1.0.0(20171231):<br>Celebrate New Year's Eve with the first release<hr>
+v0.99.3-debug:<br>Synchronized on-screen logging<hr>
+v0.99.0-debug:<br>Introduction of runtime watchdog<hr>
+v0.94.3:<br> &ldquo;&lt;=&ldquo; and &ldquo;&gt;=&ldquo; implemented<hr>
+v0.94.1:<br>QueryNow to get current date/time<hr>
+v0.93.11:<br> Plain Text up/download in web interface<hr>
+v0.93.10:<br> FromButtons input<hr>
+v0.93.9:<br> FromKeypad, FromDial to get input<hr>
+v0.93.1:<br> FromIn function to read input into a variable<hr>
+v0.93 (20171210):<br> Integer variables and arithmetics<hr>
+v0.92.6:<br>added Timer Interrupt <hr>
+v0.92.3:<br>Introducing log files<hr>
+v0.92.2:<br>IfTimer added, Call and CallExt now have a counter<hr>
+v0.92 (20171207):<br>CallExt, TimerQuery and TimerClear commands added<hr>
 v0.91 (20171206):<br>IfIn, WaitIn and Query commands added<hr>
 v0.90 (20171129):<br>ftduino support implemented.<hr>
 v0.83 (20171121):<br>Bugfix on Module import.<hr>

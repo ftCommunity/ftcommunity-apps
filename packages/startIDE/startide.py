@@ -1385,6 +1385,7 @@ class execThread(QThread):
                         b=a
                         a=self.RIF.Digital(int(stack[2]))
                         self.parent.processEvents()
+                        time.sleep(0.001)
                 elif stack[3]=="Falling":
                     a=self.RIF.Digital(int(stack[2]))
                     b=a
@@ -1392,6 +1393,7 @@ class execThread(QThread):
                         b=a
                         a=self.RIF.Digital(int(stack[2]))
                         self.parent.processEvents()
+                        time.sleep(0.001)
             elif stack[1]=="TXT": # TXT
                 if stack[3]=="Raising":
                     self.TXT.updateWait()
@@ -1402,6 +1404,7 @@ class execThread(QThread):
                         self.TXT.updateWait()
                         a=self.txt_i[int(stack[2])-1].state()
                         self.parent.processEvents()
+                        time.sleep(0.001)
                 elif stack[3]=="Falling":
                     self.TXT.updateWait()
                     a=self.txt_i[int(stack[2])-1].state()
@@ -1411,6 +1414,7 @@ class execThread(QThread):
                         self.TXT.updateWait()
                         a=self.txt_i[int(stack[2])-1].state()
                         self.parent.processEvents()
+                        time.sleep(0.001)
             elif stack[1]=="FTD": # FTD
                 if stack[3]=="Raising":
                     a=int(self.FTD.comm("input_get i"+stack[2]))
@@ -1419,6 +1423,7 @@ class execThread(QThread):
                         b=a
                         a=int(self.FTD.comm("input_get i"+stack[2]))
                         self.parent.processEvents()
+                        time.sleep(0.001)
                 elif stack[3]=="Falling":
                     a=int(self.FTD.comm("input_get i"+stack[2]))
                     b=a
@@ -1426,6 +1431,7 @@ class execThread(QThread):
                         b=a
                         a=int(self.FTD.comm("input_get i"+stack[2]))
                         self.parent.processEvents()
+                        time.sleep(0.001)
                         
             if self.tAct:
                 self.timer.stop()
@@ -1514,6 +1520,7 @@ class execThread(QThread):
                 elif stack[4]==">=" and (v>=val): j=True
                 elif stack[4]=="<=" and (v<=val): j=True
                 self.parent.processEvents()
+                time.sleep(0.001)
             # stop gedrueckt?    
             if self.tAct:
                 self.timer.stop()

@@ -1,4 +1,5 @@
 News<hr>
+v1.0.1:<br>reduced CPU load during wait commands<hr>
 v1.0.0(20171231):<br>Celebrate New Year's Eve with the first release<hr>
 v0.99.3-debug:<br>Synchronized on-screen logging<hr>
 v0.99.0-debug:<br>Introduction of runtime watchdog<hr>

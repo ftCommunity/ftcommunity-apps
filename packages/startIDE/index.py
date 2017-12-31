@@ -59,6 +59,7 @@ def download(obj:str):
     elif obj=="PC": hth.htmlhead("startIDE", tr.translate("Download a project as a text file"))
     elif obj=="MC": hth.htmlhead("startIDE", tr.translate("Download a module as a text file"))
     elif obj=="L": hth.htmlhead("startIDE", tr.translate("Download a log file from your TXT"))
+    elif obj=="C": hth.htmlhead("startIDE", tr.translate("Download a log file from your TXT"))
     hth.separator()
     hth.lf()
     

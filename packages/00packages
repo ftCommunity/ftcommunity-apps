@@ -114,7 +114,7 @@ exec: ftduinio.py
 html: index.py
 managed: yes
 uuid: 0990bda0-f222-11e7-8f1a-0800200c9a66
-version: 1.0.2
+version: 1.0.3
 firmware: >=0.9.4
 desc_de: ftDuino I/O-Test und Flashtool
 html_de: index.py

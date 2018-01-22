@@ -450,6 +450,40 @@ class FtcGuiApplication(TouchApplication):
                     pass
             self.act_duino=None
             
+            self.fCon.write("C:> ")
+            self.fWidget.repaint()
+            for i in "del c:*.*":
+                self.fCon.write(i)
+                self.processEvents()
+                self.fWidget.repaint()
+                self.processEvents()
+                time.sleep(0.25)
+            time.sleep(2)
+            self.fCon.write("\nC:> ")
+            for i in "avrdude "+self.flashFile+".s19":
+                self.fCon.write(i)
+                self.processEvents()
+                self.fWidget.repaint()
+                self.processEvents()
+                time.sleep(0.25)    
+            self.fCon.write('\nUnknown command "avrdude.com"')
+            self.processEvents()
+            self.fWidget.repaint()
+            self.processEvents()
+            time.sleep(2) 
+            self.fCon.write("\nC:> ")
+            for i in "dir ":
+                self.fCon.write(i)
+                self.processEvents()
+                self.fWidget.repaint()
+                self.processEvents()
+                time.sleep(0.25)                   
+            self.fCon.write('\nUnknown command "dir.com"')
+            self.processEvents()
+            self.fWidget.repaint()
+            self.processEvents()
+            time.sleep(2)        
+            
             try:
                 ser = serial.Serial()
                 ser.port = duino

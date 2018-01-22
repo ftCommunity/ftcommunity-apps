@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 import sys, time, os, json, shutil
+sys.settrace
 import threading as thd
 from TouchStyle import *
 from TouchAuxiliary import *
@@ -11,6 +12,7 @@ import random, math
 from datetime import datetime
 
 import translator
+from PyQt4 import QtCore, QtGui
 
 try:
     import ftduino_direct as ftd
@@ -28,6 +30,7 @@ hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
 projdir = hostdir + "projects/"
 moddir  = hostdir + "modules/"
 logdir  = hostdir + "logfiles/"
+pixdir  = hostdir + "pixmaps/"
 
 if not os.path.exists(projdir):
     os.mkdir(projdir)
@@ -37,7 +40,7 @@ if not os.path.exists(logdir):
     os.mkdir(logdir)
     
 try:
-    with open(hostdir+"manifest","r") as f:
+    with open(hostdir+"manifest","r", encoding="utf-8") as f:
         r=f.readline()
         while not "version" in r:
           r=f.readline()
@@ -130,6 +133,7 @@ class execThread(QThread):
     requestKeyboard=pyqtSignal(int, str)
     requestDial=pyqtSignal(str, int, int, int, str)
     requestBtn=pyqtSignal(str, str, list)
+    canvasSig=pyqtSignal(str)
     
     def __init__(self, codeList, output, starter, RIF,TXT,FTD, parent):
         QThread.__init__(self, parent)
@@ -468,22 +472,26 @@ class execThread(QThread):
         self.interrupt=-1
         self.timestamp=time.time()
         
-        while not self.halt and self.count<len(self.codeList):
-            line=self.codeList[self.count]
-            if self.trace: self.cmdPrint(str(self.count)+":"+line)
-            self.parseLine(line)
-            if self.singlestep:
-                while not self.nextStep and not self.halt:
-                    self.parent.processEvents()
-                    time.sleep(0.005)
-                self.nextStep=False
-                
-            self.count=self.count+1
-            self.parent.processEvents()
+        try:
+            while not self.halt and self.count<len(self.codeList):
+                line=self.codeList[self.count]
+                if self.trace: self.cmdPrint(str(self.count)+":"+line)
+                self.parseLine(line)
+                if self.singlestep:
+                    while not self.nextStep and not self.halt:
+                        self.parent.processEvents()
+                        time.sleep(0.005)
+                    self.nextStep=False
+                    
+                self.count=self.count+1
+                self.parent.processEvents()
+        except:
+            self.cce=True
+            self.halt=True
         
         if not self.halt: self.msgOut("<End>")
         else: 
-            if self.cce: self.msgOut("CompleteConfusionError\nin line "+str(self.count-1)+":\n"+self.codeList[self.count-1])
+            if self.cce: self.msgOut("CompleteConfusionError\nin line "+str(self.count)+":\n"+self.codeList[self.count])
             self.msgOut("<Break>")
         
         try:
@@ -500,7 +508,7 @@ class execThread(QThread):
                 self.TXT.setPwm(i,0)
         
         if self.FTD!=None:
-            for i in range(0,8):
+            for i in range(1,9):
                 self.FTD.comm("output_set O"+str(i)+" 1 0")
         
         self.execThreadFinished.emit()
@@ -581,6 +589,8 @@ class execThread(QThread):
         elif stack[0]== "Calc":     self.cmdCalc(stack)
         elif stack[0]== "IfVar":    self.cmdIfVar(stack)
         elif stack[0]== "Tag":      pass
+        elif stack[0]== "Canvas":   self.cmdCanvas(stack)
+        
         else:
             self.cmdPrint("DontKnowWhatToDo\nin line:\n"+line)
             self.halt=True
@@ -597,48 +607,41 @@ class execThread(QThread):
             self.interrupt=time.time()+self.interruptTime
             
     def getVal(self,var):
-        for i in self.memory:
-            if i[0]==var: return int(i[1])
         try:
             return int(var)
         except:
-            pass
-    
+            for i in self.memory:
+                if i[0]==var: return int(i[1])
         self.halt=True
         self.cmdPrint("Variable '"+var+"'\nreferenced without\nInit!\nProgram terminated")
         return 0
     
     def cmdInterrupt(self,stack):
-        try:
-            if stack[1]=="Off":
-                self.interrupt=-1
-                self.interruptTime=0
-            elif stack[1]=="After":
-                self.interruptTime=0
-                self.interrupt=time.time()+float(stack[2])/1000
-                self.interruptCommand="Call "+stack[3]+" 1"
-            elif stack[1]=="Every":
-                self.interruptTime=float(stack[2])/1000
-                self.interrupt=time.time()+self.interruptTime
-                self.interruptCommand="Call "+stack[3]+" 1"
-        except:
-            self.halt=True
-            self.cce=True
+        if stack[1]=="Off":
+            self.interrupt=-1
+            self.interruptTime=0
+        elif stack[1]=="After":
+            self.interruptTime=0
+            self.interrupt=time.time()+float(stack[2])/1000
+            self.interruptCommand="Call "+stack[3]+" 1"
+        elif stack[1]=="Every":
+            self.interruptTime=float(stack[2])/1000
+            self.interrupt=time.time()+self.interruptTime
+            self.interruptCommand="Call "+stack[3]+" 1"
              
+    def cmdCanvas(self, stack):
+       self.canvasSig.emit(stack[1]) 
+    
     def cmdInit(self,a):
-        try:
-            if len(a)<3: a.append("0")
-            cc=0
-            for i in self.memory:
-                if i[0]==a[1]:
-                    self.memory[cc][1] = self.getVal(a[2])
-                    break
-                cc=cc+1
-            if cc==len(self.memory):
-                self.memory.append([a[1], self.getVal(a[2])])
-        except:
-            self.halt=True
-            self.cce=True
+        if len(a)<3: a.append("0")
+        cc=0
+        for i in self.memory:
+            if i[0]==a[1]:
+                self.memory[cc][1] = self.getVal(a[2])
+                break
+            cc=cc+1
+        if cc==len(self.memory):
+            self.memory.append([a[1], self.getVal(a[2])])
             
     def cmdFromKeypad(self, stack):
         v=self.getVal(stack[1])   # Variable
@@ -647,29 +650,25 @@ class execThread(QThread):
         
         if self.halt: return
         
+        self.msg=0
+        self.requestKeyboard.emit(v, stack[1])
+        while self.msg==0:
+            time.sleep(0.01)
+        
         try:
-            self.msg=0
-            self.requestKeyboard.emit(v, stack[1])
-            while self.msg==0:
-                time.sleep(0.01)
-            
-            try:
-                t=int(max(min(int(self.imesg),v2),v1))
-            except:
-                t=int(v)
-            
-            cc=0
-            for i in self.memory:
-                if i[0]==stack[1]:
-                    self.memory[cc][1] = t
-                    break
-                cc=cc+1
-            if cc==len(self.memory):        
-                self.halt=True
-                self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated")                 
+            t=int(max(min(int(self.imesg),v2),v1))
         except:
+            t=int(v)
+        
+        cc=0
+        for i in self.memory:
+            if i[0]==stack[1]:
+                self.memory[cc][1] = t
+                break
+            cc=cc+1
+        if cc==len(self.memory):        
             self.halt=True
-            self.cce=True
+            self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated")                 
 
     def cmdFromDial(self, stack):
         v=self.getVal(stack[1])   # Variable
@@ -682,50 +681,41 @@ class execThread(QThread):
         
         if self.halt: return
         
+        self.msg=0
+        self.requestDial.emit(v3,v,v1,v2, stack[1])
+        while self.msg==0:
+            time.sleep(0.01)
+        
         try:
-            self.msg=0
-            self.requestDial.emit(v3,v,v1,v2, stack[1])
-            while self.msg==0:
-                time.sleep(0.01)
-            
-            try:
-                t=max(min(int(self.imesg),v2),v1)
-            except:
-                t=v
-            
-            cc=0
-            for i in self.memory:
-                if i[0]==stack[1]:
-                    self.memory[cc][1] = t
-                    break
-                cc=cc+1
-            if cc==len(self.memory):        
-                self.halt=True
-                self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated")  
+            t=max(min(int(self.imesg),v2),v1)
         except:
+            t=v
+        
+        cc=0
+        for i in self.memory:
+            if i[0]==stack[1]:
+                self.memory[cc][1] = t
+                break
+            cc=cc+1
+        if cc==len(self.memory):        
             self.halt=True
-            self.cce=True
-            
+            self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated")  
+        
     def cmdFromRIIR(self, stack):        
         try:
             t=self.RIF.GetIR()
         except:
             t=-1
         
-        
-        try:
-            cc=0
-            for i in self.memory:
-                if i[0]==stack[1]:
-                    self.memory[cc][1] = t
-                    break
-                cc=cc+1
-            if cc==len(self.memory):        
-                self.halt=True
-                self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated")      
-        except:
+        cc=0
+        for i in self.memory:
+            if i[0]==stack[1]:
+                self.memory[cc][1] = t
+                break
+            cc=cc+1
+        if cc==len(self.memory):        
             self.halt=True
-            self.cce=True
+            self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated")      
 
     def cmdQueryVar(self, stack):
         v=self.getVal(stack[1])
@@ -737,305 +727,270 @@ class execThread(QThread):
         v2=float(self.getVal(stack[4]))
         if self.halt: return
     
+        op=stack[3]
+        res=0
+        if op=="+": res=int(v1+v2)
+        elif op=="-": res=int(v1-v2)
+        elif op=="*": res=int(v1*v2)
+        elif op=="/": res=int(round(v1/v2))
+        elif op=="mod": res=int(v1 % v2)
+        elif op=="exp": res=int(v1 ** v2)
+        elif op=="root": res=int(v2 ** (1/v1))
+        elif op=="min": res=int(min(v1,v2))
+        elif op=="max": res=int(max(v1,v2))
+        elif op=="sin": res=int(v1*math.sin(math.radians(v2)))
+        elif op=="cos": res=int(v1*math.cos(math.radians(v2)))  
+        elif op=="random": res=random.randint(min(v1,v2),max(v1,v2))
+        elif op=="&&" and (v1!=0) and (v2!=0): res=1 
+        elif op=="||" and ((v1!=0) or (v2!=0)): res=1
+        elif op=="<"  and (v1<v2): res=1  
+        elif op=="==" and (v1==v2): res=1 
+        elif op=="!=" and (v1!=v2): res=1 
+        elif op==">"  and (v1>v2): res=1 
+        elif op==">=" and (v1>=v2): res=1 
+        elif op=="<=" and (v1<=v2): res=1 
         
-        try:
-            op=stack[3]
-            res=0
-            if op=="+": res=int(v1+v2)
-            elif op=="-": res=int(v1-v2)
-            elif op=="*": res=int(v1*v2)
-            elif op=="/": res=int(round(v1/v2))
-            elif op=="mod": res=int(v1 % v2)
-            elif op=="exp": res=int(v1 ** v2)
-            elif op=="root": res=int(v2 ** (1/v1))
-            elif op=="min": res=int(min(v1,v2))
-            elif op=="max": res=int(max(v1,v2))
-            elif op=="sin": res=int(v1*math.sin(math.radians(v2)))
-            elif op=="cos": res=int(v1*math.cos(math.radians(v2)))        
-            elif op=="&&" and (v1!=0) and (v2!=0): res=1 
-            elif op=="||" and ((v1!=0) or (v2!=0)): res=1
-            elif op=="<"  and (v1<v2): res=1  
-            elif op=="==" and (v1==v2): res=1 
-            elif op=="!=" and (v1!=v2): res=1 
-            elif op==">"  and (v1>v2): res=1 
-            elif op==">=" and (v1>=v2): res=1 
-            elif op=="<=" and (v1<=v2): res=1 
-            
-            cc=0
-            for i in self.memory:
-                if i[0]==stack[1]:
-                    self.memory[cc][1] = res
-                    break
-                cc=cc+1
-            if cc==len(self.memory):        
-                self.halt=True
-                self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated") 
-        except:
+        cc=0
+        for i in self.memory:
+            if i[0]==stack[1]:
+                self.memory[cc][1] = res
+                break
+            cc=cc+1
+        if cc==len(self.memory):        
             self.halt=True
-            self.cce=True
+            self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated") 
 
     def cmdFromButtons(self, stack):
         v=stack[1]  # Variable
 
         if self.halt: return
       
+        self.msg=0
+        self.requestBtn.emit(v,"",stack[2:])
+        while self.msg==0:
+            time.sleep(0.01)
+        
         try:
-            self.msg=0
-            self.requestBtn.emit(v,"",stack[2:])
-            while self.msg==0:
-                time.sleep(0.01)
-            
-            try:
-                t=int(self.imesg)
-            except:
-                t=-1
-            
-            cc=0
-            for i in self.memory:
-                if i[0]==stack[1]:
-                    self.memory[cc][1] = t
-                    break
-                cc=cc+1
-            if cc==len(self.memory):        
-                self.halt=True
-                self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated") 
+            t=int(self.imesg)
         except:
+            t=-1
+        
+        cc=0
+        for i in self.memory:
+            if i[0]==stack[1]:
+                self.memory[cc][1] = t
+                break
+            cc=cc+1
+        if cc==len(self.memory):        
             self.halt=True
-            self.cce=True
+            self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated") 
     
     def cmdIfVar(self,stack):
         v1=self.getVal(stack[1])
         v2=self.getVal(stack[3])
         if self.halt: return
         
-        try:
-            res=False
-            op=stack[2]
-            if      (op=="<") and (v1<v2): res=True
-            elif    (op==">") and (v1>v2): res=True
-            elif    (op=="==") and (v1==v2): res=True
-            elif    (op=="!=") and (v1!=v2): res=True
-            elif    (op=="<=") and (v1<=v2): res=True
-            elif    (op==">=") and (v1>=v2): res=True
-            
-            if res:
-                n=-1
-                for line in self.jmpTable:
-                    if stack[4]==line[0]: n=line[1]-1
+        res=False
+        op=stack[2]
+        if      (op=="<") and (v1<v2): res=True
+        elif    (op==">") and (v1>v2): res=True
+        elif    (op=="==") and (v1==v2): res=True
+        elif    (op=="!=") and (v1!=v2): res=True
+        elif    (op=="<=") and (v1<=v2): res=True
+        elif    (op==">=") and (v1>=v2): res=True
+        
+        if res:
+            n=-1
+            for line in self.jmpTable:
+                if stack[4]==line[0]: n=line[1]-1
 
-                if n==-1:
-                    self.msgOut("IfVar jump tag not found!")
-                    self.halt=True
-                else:
-                    self.count=n             
-        except:
-            self.halt=True
-            self.cce=True
+            if n==-1:
+                self.msgOut("IfVar jump tag not found!")
+                self.halt=True
+            else:
+                self.count=n             
     
     def cmdFromIn(self, stack):
-        try:
-            v = ""
-            var=stack[4]
-            
-            if stack[1] == "RIF":
-                if stack[3]=="S":
-                    v=str(self.RIF.Digital(int(stack[2])))
-                elif stack[3]=="V":
-                    if stack[2]=="1":
-                        tx=str(self.RIF.GetA1())*10
-                    elif stack[2]=="2":
-                        tx=str(self.RIF.GetA2())*10
-                elif stack[3]=="R":
-                    if stack[2]=="X":
-                        tx=str(self.RIF.GetAX())
-                    elif stack[2]=="Y":
-                        tx=str(self.RIF.GetAY())
-                elif stack[3]=="D":
-                    if stack[2]=="1":
-                        tx=str(self.RIF.GetD1())
-                    elif stack[2]=="2":
-                        tx=str(self.RIF.GetD2())
-                elif stack[3]=="C":
-                    tx="Not yet implemented"                
-            elif stack[1]== "TXT":
-                self.TXT.updateWait()
-                if stack[3]=="S":
-                    v=str(self.txt_i[int(stack[2])-1].state())
-                elif stack[3]=="V":
-                    v=str(self.txt_i[int(stack[2])-1].voltage())
-                elif stack[3]=="R":
-                    v=str(self.txt_i[int(stack[2])-1].value())
-                elif stack[3]=="D":
-                    v=str(self.txt_i[int(stack[2])-1].distance())
-                elif stack[3]=="C":
-                    tx="Not yet implemented"
-            elif stack[1]== "FTD":
-                if stack[3]=="S":
-                    v=self.FTD.comm("input_get i"+stack[2])
-                elif stack[3]=="V":
-                    v=self.FTD.comm("input_get i"+stack[2])
-                elif stack[3]=="R":
-                    v=self.FTD.comm("input_get i"+stack[2])
-                elif stack[3]=="D":
-                    v=self.FTD.comm("ultrasonic_get")
-                elif stack[3]=="C":
-                    tx="Not yet implemented"
-            ### und noch der variable zuweisen...         
-            cc=0
-            for i in self.memory:
-                if i[0]==stack[4]:
-                    self.memory[cc][1] = v
-                    break
-                cc=cc+1
-            if cc==len(self.memory):        
-                self.halt=True
-                self.cmdPrint("Variable '"+stack[4]+"'\nreferenced without\nInit!\nProgram terminated") 
-        except:
+        v = ""
+        var=stack[4]
+        
+        if stack[1] == "RIF":
+            if stack[3]=="S":
+                v=str(self.RIF.Digital(int(stack[2])))
+            elif stack[3]=="V":
+                if stack[2]=="1":
+                    tx=str(self.RIF.GetA1())*10
+                elif stack[2]=="2":
+                    tx=str(self.RIF.GetA2())*10
+            elif stack[3]=="R":
+                if stack[2]=="X":
+                    tx=str(self.RIF.GetAX())
+                elif stack[2]=="Y":
+                    tx=str(self.RIF.GetAY())
+            elif stack[3]=="D":
+                if stack[2]=="1":
+                    tx=str(self.RIF.GetD1())
+                elif stack[2]=="2":
+                    tx=str(self.RIF.GetD2())
+            elif stack[3]=="C":
+                tx="Not yet implemented"                
+        elif stack[1]== "TXT":
+            self.TXT.updateWait()
+            if stack[3]=="S":
+                v=str(self.txt_i[int(stack[2])-1].state())
+            elif stack[3]=="V":
+                v=str(self.txt_i[int(stack[2])-1].voltage())
+            elif stack[3]=="R":
+                v=str(self.txt_i[int(stack[2])-1].value())
+            elif stack[3]=="D":
+                v=str(self.txt_i[int(stack[2])-1].distance())
+            elif stack[3]=="C":
+                tx="Not yet implemented"
+        elif stack[1]== "FTD":
+            if stack[3]=="S":
+                v=self.FTD.comm("input_get i"+stack[2])
+            elif stack[3]=="V":
+                v=self.FTD.comm("input_get i"+stack[2])
+            elif stack[3]=="R":
+                v=self.FTD.comm("input_get i"+stack[2])
+            elif stack[3]=="D":
+                v=self.FTD.comm("ultrasonic_get")
+            elif stack[3]=="C":
+                tx="Not yet implemented"
+        ### und noch der variable zuweisen...         
+        cc=0
+        for i in self.memory:
+            if i[0]==stack[4]:
+                self.memory[cc][1] = v
+                break
+            cc=cc+1
+        if cc==len(self.memory):        
             self.halt=True
-            self.cce=True
-
+            self.cmdPrint("Variable '"+stack[4]+"'\nreferenced without\nInit!\nProgram terminated") 
             
     def cmdLog(self, stack):
-        try:
-            if stack[1]=="1" and not self.logging:
-                self.logging=True
-                try:
-                    self.logfile.close()
-                except:
-                    pass
-                
-                try:
-                    lfn=logdir+"log"+time.strftime("%Y%m%d-%H%M%S")+".txt"
-                    while os.path.exists(lfn):
-                        lfn=lfn+"-"
-                    self.logfile=open(lfn,"w",encoding="utf-8")
-                except:
-                    self.cmdPrint("Could not write logfile.")
-                    self.logging=False
-                    
-            elif stack[1]=="0":
+        if stack[1]=="1" and not self.logging:
+            self.logging=True
+            try:
+                self.logfile.close()
+            except:
+                pass
+            
+            try:
+                lfn=logdir+"log"+time.strftime("%Y%m%d-%H%M%S")+".txt"
+                while os.path.exists(lfn):
+                    lfn=lfn+"-"
+                self.logfile=open(lfn,"w",encoding="utf-8")
+            except:
+                self.cmdPrint("Could not write logfile.")
                 self.logging=False
-                try:
-                    self.logfile.close()
-                except:
-                    pass
-            elif stack[1][0]=="C":
-                try:
-                    shutil.rmtree(logdir, ignore_errors=True)
-                    if not os.path.exists(logdir):
-                        os.mkdir(logdir)
-                except:
-                    self.cmdPrint("Failed to remove\nall logfiles.")
-        except:
-            self.halt=True
-            self.cce=True
+                
+        elif stack[1]=="0":
+            self.logging=False
+            try:
+                self.logfile.close()
+            except:
+                pass
+        elif stack[1][0]=="C":
+            try:
+                shutil.rmtree(logdir, ignore_errors=True)
+                if not os.path.exists(logdir):
+                    os.mkdir(logdir)
+            except:
+                self.cmdPrint("Failed to remove\nall logfiles.")
                 
     def cmdSound(self, stack):
         snd=TXTsndStack.index(stack[1])
         loop=min(max(self.getVal(stack[2]),1),29)
-        vol= min(max(self.getVal(stack[3]),0),100)
-        print("sound", snd,loop,vol)        
+        vol= min(max(self.getVal(stack[3]),0),100)       
         if self.TXT:
             self.TXT.play_sound(snd,loop,vol)
 
-
     def cmdQueryIn(self, stack):
-        try:
-            tx = "" 
-            v = ""
-            
-            for a in range(4,len(stack)):
-                tx=tx+(stack[a])+" "
-            tx=tx[:-1]
-            
-            if stack[1] == "RIF":
-                if stack[3]=="S":
-                    v=str(self.RIF.Digital(int(stack[2])))
-                elif stack[3]=="V":
-                    if stack[2]=="1":
-                        tx=str(self.RIF.GetA1())*10
-                    elif stack[2]=="2":
-                        tx=str(self.RIF.GetA2())*10
-                elif stack[3]=="R":
-                    if stack[2]=="X":
-                        tx=str(self.RIF.GetAX())
-                    elif stack[2]=="Y":
-                        tx=str(self.RIF.GetAY())
-                elif stack[3]=="D":
-                    if stack[2]=="1":
-                        tx=str(self.RIF.GetD1())
-                    elif stack[2]=="2":
-                        tx=str(self.RIF.GetD2())
-                elif stack[3]=="C":
-                    tx="Not yet implemented"                
-            elif stack[1]== "TXT":
-                self.TXT.updateWait()
-                if stack[3]=="S":
-                    v=str(self.txt_i[int(stack[2])-1].state())
-                elif stack[3]=="V":
-                    v=str(self.txt_i[int(stack[2])-1].voltage())
-                elif stack[3]=="R":
-                    v=str(self.txt_i[int(stack[2])-1].value())
-                elif stack[3]=="D":
-                    v=str(self.txt_i[int(stack[2])-1].distance())
-                elif stack[3]=="C":
-                    tx="Not yet implemented"
-            elif stack[1]== "FTD":
-                if stack[3]=="S":
-                    v=self.FTD.comm("input_get i"+stack[2])
-                elif stack[3]=="V":
-                    v=self.FTD.comm("input_get i"+stack[2])
-                elif stack[3]=="R":
-                    v=self.FTD.comm("input_get i"+stack[2])
-                elif stack[3]=="D":
-                    v=self.FTD.comm("ultrasonic_get")
-                elif stack[3]=="C":
-                    tx="Not yet implemented"
-            
-            self.cmdPrint(tx+" "+v)
-        except:
-            self.halt=True
-            self.cce=True            
+        tx = "" 
+        v = ""
+        
+        for a in range(4,len(stack)):
+            tx=tx+(stack[a])+" "
+        tx=tx[:-1]
+        
+        if stack[1] == "RIF":
+            if stack[3]=="S":
+                v=str(self.RIF.Digital(int(stack[2])))
+            elif stack[3]=="V":
+                if stack[2]=="1":
+                    tx=str(self.RIF.GetA1())*10
+                elif stack[2]=="2":
+                    tx=str(self.RIF.GetA2())*10
+            elif stack[3]=="R":
+                if stack[2]=="X":
+                    tx=str(self.RIF.GetAX())
+                elif stack[2]=="Y":
+                    tx=str(self.RIF.GetAY())
+            elif stack[3]=="D":
+                if stack[2]=="1":
+                    tx=str(self.RIF.GetD1())
+                elif stack[2]=="2":
+                    tx=str(self.RIF.GetD2())
+            elif stack[3]=="C":
+                tx="Not yet implemented"                
+        elif stack[1]== "TXT":
+            self.TXT.updateWait()
+            if stack[3]=="S":
+                v=str(self.txt_i[int(stack[2])-1].state())
+            elif stack[3]=="V":
+                v=str(self.txt_i[int(stack[2])-1].voltage())
+            elif stack[3]=="R":
+                v=str(self.txt_i[int(stack[2])-1].value())
+            elif stack[3]=="D":
+                v=str(self.txt_i[int(stack[2])-1].distance())
+            elif stack[3]=="C":
+                tx="Not yet implemented"
+        elif stack[1]== "FTD":
+            if stack[3]=="S":
+                v=self.FTD.comm("input_get i"+stack[2])
+            elif stack[3]=="V":
+                v=self.FTD.comm("input_get i"+stack[2])
+            elif stack[3]=="R":
+                v=self.FTD.comm("input_get i"+stack[2])
+            elif stack[3]=="D":
+                v=self.FTD.comm("ultrasonic_get")
+            elif stack[3]=="C":
+                tx="Not yet implemented"
+        
+        self.cmdPrint(tx+" "+v)
     
     def cmdOutput(self, stack):
         v=self.getVal(stack[3])
         if self.halt: return
         
-        try:
-            if stack[1]=="RIF":
-                self.RIF.SetOutput(int(stack[2]),v)
-            elif stack[1]=="TXT":
-                self.txt_o[int(stack[2])-1].setLevel(v)
-            elif stack[1]=="FTD":
-                self.FTD.comm("output_set O"+stack[2]+" 1 "+str(v))   
-        except:
-            self.halt=True
-            self.cce=True 
+        if stack[1]=="RIF":
+            self.RIF.SetOutput(int(stack[2]),v)
+        elif stack[1]=="TXT":
+            self.txt_o[int(stack[2])-1].setLevel(v)
+        elif stack[1]=="FTD":
+                self.FTD.comm("output_set O"+stack[2]+" 1 "+str(v)) 
             
     def cmdMotor(self, stack):
         v=self.getVal(stack[4])
         if self.halt: return
         
-        try:
-            if stack[1]=="RIF":
-                self.RIF.SetMotor(int(stack[2]),stack[3], v)
-            elif stack[1]=="TXT": # TXT
-                if stack[3]=="s":
-                    self.txt_m[int(stack[2])-1].stop()
-                elif stack[3]=="l":
-                    self.txt_m[int(stack[2])-1].setSpeed(v)
-                elif stack[3]=="r":
-                    self.txt_m[int(stack[2])-1].setSpeed(0-v)
-            elif stack[1]=="FTD": # FTD
-                if stack[3]=="s":
-                    self.FTD.comm("motor_set M"+stack[2]+" brake 0")
-                elif stack[3]=="l":
-                    self.FTD.comm("motor_set M"+stack[2]+" left "+str(v))
-                elif stack[3]=="r":
-                    self.FTD.comm("motor_set M"+stack[2]+" right "+str(v))             
-        except:
-            self.halt=True
-            self.cce=True 
+        if stack[1]=="RIF":
+            self.RIF.SetMotor(int(stack[2]),stack[3], v)
+        elif stack[1]=="TXT": # TXT
+            if stack[3]=="s":
+                self.txt_m[int(stack[2])-1].stop()
+            elif stack[3]=="l":
+                self.txt_m[int(stack[2])-1].setSpeed(v)
+            elif stack[3]=="r":
+                self.txt_m[int(stack[2])-1].setSpeed(0-v)
+        elif stack[1]=="FTD": # FTD
+            if stack[3]=="s":
+                self.FTD.comm("motor_set M"+stack[2]+" brake 0")
+            elif stack[3]=="l":
+                self.FTD.comm("motor_set M"+stack[2]+" left "+str(v))
+            elif stack[3]=="r":
+                self.FTD.comm("motor_set M"+stack[2]+" right "+str(v))             
             
     def cmdMotorEncoderSync(self, stack):
         m=int(stack[2])      # Output No.
@@ -1046,26 +1001,22 @@ class execThread(QThread):
         
         if self.halt: return
 
-        try:
-            if d=="r":
-                s=0-s
+        if d=="r":
+            s=0-s
+        
+        self.txt_m[m-1].setDistance(n, syncto=self.txt_m[o-1])
+        self.txt_m[o-1].setDistance(n, syncto=self.txt_m[m-1])
             
-            self.txt_m[m-1].setDistance(n, syncto=self.txt_m[o-1])
-            self.txt_m[o-1].setDistance(n, syncto=self.txt_m[m-1])
-                
-            self.txt_m[o-1].setSpeed(s)
-            self.txt_m[m-1].setSpeed(s)
+        self.txt_m[o-1].setSpeed(s)
+        self.txt_m[m-1].setSpeed(s)
 
-            if d!="s":
-                while not ((self.txt_m[m-1].finished() and self.txt_m[o-1].finished()) or self.halt):
-                    self.TXT.updateWait()
-            
-            if n>0 or d=="s":
-                self.txt_m[m-1].stop()     
-                self.txt_m[o-1].stop()
-        except:
-            self.halt=True
-            self.cce=True
+        if d!="s":
+            while not ((self.txt_m[m-1].finished() and self.txt_m[o-1].finished()) or self.halt):
+                self.TXT.updateWait()
+        
+        if n>0 or d=="s":
+            self.txt_m[m-1].stop()     
+            self.txt_m[o-1].stop()
             
     def cmdMotorEncoder(self, stack):
         m=int(stack[2])      # Output No.
@@ -1077,26 +1028,22 @@ class execThread(QThread):
         
         if self.halt: return        
         
-        try:
-            if e >-1:
-                self.TXT.updateWait()
-                if d=="l" and self.txt_i[e-1].state(): return
+        if e >-1:
+            self.TXT.updateWait()
+            if d=="l" and self.txt_i[e-1].state(): return
 
-            if d=="r":
-                s=0-s
+        if d=="r":
+            s=0-s
 
-            self.txt_m[m-1].setDistance(n)
-            self.txt_m[m-1].setSpeed(s)
+        self.txt_m[m-1].setDistance(n)
+        self.txt_m[m-1].setSpeed(s)
 
-            while not (self.txt_m[m-1].finished() or self.halt):
-                self.TXT.updateWait()
-                if e>-1:
-                    if d=="l" and self.txt_i[e-1].state(): break
-            
-            self.txt_m[int(stack[2])-1].stop()  
-        except:
-            self.halt=True
-            self.cce=True
+        while not (self.txt_m[m-1].finished() or self.halt):
+            self.TXT.updateWait()
+            if e>-1:
+                if d=="l" and self.txt_i[e-1].state(): break
+        
+        self.txt_m[int(stack[2])-1].stop()  
     
     def cmdMotorPulsewheel(self, stack):
         m=int(stack[2])      # Output No.
@@ -1109,68 +1056,64 @@ class execThread(QThread):
         
         if self.halt: return
         
-        try:
-            if stack[1]=="RIF":
+        if stack[1]=="RIF":
+            if e>-1:
+                if d=="l" and self.RIF.Digital(e): return
+            
+            a=self.RIF.Digital(p)
+            self.RIF.SetMotor(m,d,s)
+            c=0
+            while c<n and not self.halt:
                 if e>-1:
-                    if d=="l" and self.RIF.Digital(e): return
-                
+                    if d=="l" and self.RIF.Digital(e): break
+                b=a
                 a=self.RIF.Digital(p)
-                self.RIF.SetMotor(m,d,s)
-                c=0
-                while c<n and not self.halt:
-                    if e>-1:
-                        if d=="l" and self.RIF.Digital(e): break
-                    b=a
-                    a=self.RIF.Digital(p)
-                    if not a==b: c=c+1
+                if not a==b: c=c+1
+            
+            self.RIF.SetMotor(m,"s",0)
+        elif stack[1]=="TXT": # TXT
+            if e>-1:
+                self.TXT.updateWait()
+                if d=="l" and self.txt_i[e-1].state(): return
+            
+            self.TXT.updateWait()
+            a=self.txt_i[p-1].state()
+
+            if d=="r":
+                s=0-s
                 
-                self.RIF.SetMotor(m,"s",0)
-            elif stack[1]=="TXT": # TXT
+            self.txt_m[m-1].setSpeed(s)
+            c=0
+            while c<n and not self.halt:
                 if e>-1:
                     self.TXT.updateWait()
-                    if d=="l" and self.txt_i[e-1].state(): return
-                
+                    if d=="l" and self.txt_i[e-1].state(): break
+                b=a
                 self.TXT.updateWait()
                 a=self.txt_i[p-1].state()
+                if not a==b: c=c+1
+            
+            self.txt_m[int(stack[2])-1].stop()  
+        elif stack[1]=="FTD": # FTD
+            if e>-1:
+                if d=="l" and (self.FTD.comm("input_get i"+str(e))=="1"): return
+            
+            a=int(self.FTD.comm("input_get i"+str(p)))
 
-                if d=="r":
-                    s=0-s
-                    
-                self.txt_m[m-1].setSpeed(s)
-                c=0
-                while c<n and not self.halt:
-                    if e>-1:
-                        self.TXT.updateWait()
-                        if d=="l" and self.txt_i[e-1].state(): break
-                    b=a
-                    self.TXT.updateWait()
-                    a=self.txt_i[p-1].state()
-                    if not a==b: c=c+1
-                
-                self.txt_m[int(stack[2])-1].stop()  
-            elif stack[1]=="FTD": # FTD
+            if d=="r":
+                self.FTD.comm("motor_set M"+str(m)+" right "+str(s)) 
+            else:
+                self.FTD.comm("motor_set M"+str(m)+" left "+str(s))             
+            
+            c=0
+            while c<n and not self.halt:
                 if e>-1:
-                    if d=="l" and (self.FTD.comm("input_get i"+str(e))=="1"): return
-                
+                    if d=="l" and (self.FTD.comm("input_get i"+str(e))=="1"): break
+                b=a
                 a=int(self.FTD.comm("input_get i"+str(p)))
-
-                if d=="r":
-                    self.FTD.comm("motor_set M"+str(m)+" right "+str(s)) 
-                else:
-                    self.FTD.comm("motor_set M"+str(m)+" left "+str(s))             
-                
-                c=0
-                while c<n and not self.halt:
-                    if e>-1:
-                        if d=="l" and (self.FTD.comm("input_get i"+str(e))=="1"): break
-                    b=a
-                    a=int(self.FTD.comm("input_get i"+str(p)))
-                    if not a==b: c=c+1
-                
-                self.FTD.comm("motor_set M"+str(m)+" brake 0")      
-        except:
-            self.halt=True
-            self.cce=True
+                if not a==b: c=c+1
+            
+            self.FTD.comm("motor_set M"+str(m)+" brake 0")
             
     def cmdDelay(self, stack):
         v=self.getVal(stack[1])
@@ -1178,7 +1121,7 @@ class execThread(QThread):
         
         try:
             if stack[2]=="R":
-                stack[1]=random.randint(0,v)
+                v=random.randint(0,v)
         except:
             pass
             
@@ -1203,20 +1146,16 @@ class execThread(QThread):
         
         diff=(time.time()-self.timestamp)*1000
         
-        try:
-            if (stack[1]=="<" and diff<v) or (stack[1]==">" and diff>v):
-                n=-1
-                for line in self.jmpTable:
-                    if stack[3]==line[0]: n=line[1]-1
+        if (stack[1]=="<" and diff<v) or (stack[1]==">" and diff>v):
+            n=-1
+            for line in self.jmpTable:
+                if stack[3]==line[0]: n=line[1]-1
 
-                if n==-1:
-                    self.msgOut("IfTimer jump tag not found!")
-                    self.halt=True
-                else:
-                    self.count=n
-        except:
-            self.cce=True
-            self.halt=True
+            if n==-1:
+                self.msgOut("IfTimer jump tag not found!")
+                self.halt=True
+            else:
+                self.count=n
             
     def cmdIfTime(self, stack):
         day=time.strftime("%H %M %S").split()
@@ -1332,113 +1271,105 @@ class execThread(QThread):
         v=self.getVal(stack[2])
         if self.halt: return
     
-        try:
-            found=False
-            for n in range(0,len(self.LoopStack)):
-                if self.count==self.LoopStack[n][0]:
-                    self.LoopStack[n][1]=self.LoopStack[n][1]-1
-                    if self.LoopStack[n][1]>0:
-                        self.count=self.LoopStack[n][2]
-                    else:
-                        if self.LoopStack[n][2]<self.count:
-                            self.LoopStack.pop(n)
-                    found=True
-                    break
-            if not found:
-                tgt=-1
-                for line in self.jmpTable:
-                    if stack[1]==line[0]: tgt=line[1]-1
-                if tgt==-1:
-                    self.msgOut("LoopTo tag not found!")
-                    self.halt=True
+        found=False
+        for n in range(0,len(self.LoopStack)):
+            if self.count==self.LoopStack[n][0]:
+                self.LoopStack[n][1]=self.LoopStack[n][1]-1
+                if self.LoopStack[n][1]>0:
+                    self.count=self.LoopStack[n][2]
                 else:
-                    if v>1:
-                        if tgt>self.count:
-                            self.LoopStack.append([self.count, v, tgt])
-                        else:
-                            self.LoopStack.append([self.count, v-1, tgt])
-                        self.count=tgt
-        except:
-            self.halt=True
-            self.cce=True
-            
+                    if self.LoopStack[n][2]<self.count:
+                        self.LoopStack.pop(n)
+                found=True
+                break
+        if not found:
+            tgt=-1
+            for line in self.jmpTable:
+                if stack[1]==line[0]: tgt=line[1]-1
+            if tgt==-1:
+                self.msgOut("LoopTo tag not found!")
+                self.halt=True
+            else:
+                if v>1:
+                    if tgt>self.count:
+                        self.LoopStack.append([self.count, v, tgt])
+                    else:
+                        self.LoopStack.append([self.count, v-1, tgt])
+                    self.count=tgt
+        
     def cmdWaitForInputDig(self,stack):
         self.tOut=False
         self.tAct=False
         
-        try:
-            if len(stack)>4:
-                v=self.getVal(stack[4])
-                if self.halt: return
-                if v>0:
-                    self.timer = QTimer()
-                    self.timer.setSingleShot(True)
-                    self.timer.timeout.connect(self.timerstop)
-                    self.timer.start(v)  
-                    self.tAct=True
+        if len(stack)>4:
+            v=self.getVal(stack[4])
+            if self.halt: return
+            if v>0:
+                self.timer = QTimer()
+                self.timer.setSingleShot(True)
+                self.timer.timeout.connect(self.timerstop)
+                self.timer.start(v)  
+                self.tAct=True
 
-            if stack[1]=="RIF":
-                if stack[3]=="Raising":
-                    a=self.RIF.Digital(int(stack[2]))
+        if stack[1]=="RIF":
+            if stack[3]=="Raising":
+                a=self.RIF.Digital(int(stack[2]))
+                b=a
+                while not (b<a or self.halt or self.tOut ): 
                     b=a
-                    while not (b<a or self.halt or self.tOut ): 
-                        b=a
-                        a=self.RIF.Digital(int(stack[2]))
-                        self.parent.processEvents()
-                        time.sleep(0.001)
-                elif stack[3]=="Falling":
                     a=self.RIF.Digital(int(stack[2]))
+                    self.parent.processEvents()
+                    time.sleep(0.001)
+            elif stack[3]=="Falling":
+                a=self.RIF.Digital(int(stack[2]))
+                b=a
+                while not (b>a or self.halt or self.tOut ): 
                     b=a
-                    while not (b>a or self.halt or self.tOut ): 
-                        b=a
-                        a=self.RIF.Digital(int(stack[2]))
-                        self.parent.processEvents()
-                        time.sleep(0.001)
-            elif stack[1]=="TXT": # TXT
-                if stack[3]=="Raising":
+                    a=self.RIF.Digital(int(stack[2]))
+                    self.parent.processEvents()
+                    time.sleep(0.001)
+        elif stack[1]=="TXT": # TXT
+            if stack[3]=="Raising":
+                self.TXT.updateWait()
+                a=self.txt_i[int(stack[2])-1].state()
+                b=a
+                while not (b<a or self.halt or self.tOut ): 
+                    b=a
                     self.TXT.updateWait()
                     a=self.txt_i[int(stack[2])-1].state()
+                    self.parent.processEvents()
+                    time.sleep(0.001)
+            elif stack[3]=="Falling":
+                self.TXT.updateWait()
+                a=self.txt_i[int(stack[2])-1].state()
+                b=a
+                while not (b>a or self.halt or self.tOut ): 
                     b=a
-                    while not (b<a or self.halt or self.tOut ): 
-                        b=a
-                        self.TXT.updateWait()
-                        a=self.txt_i[int(stack[2])-1].state()
-                        self.parent.processEvents()
-                        time.sleep(0.001)
-                elif stack[3]=="Falling":
                     self.TXT.updateWait()
                     a=self.txt_i[int(stack[2])-1].state()
+                    self.parent.processEvents()
+                    time.sleep(0.001)
+        elif stack[1]=="FTD": # FTD
+            if stack[3]=="Raising":
+                a=int(self.FTD.comm("input_get i"+stack[2]))
+                b=a
+                while not (b<a or self.halt or self.tOut ): 
                     b=a
-                    while not (b>a or self.halt or self.tOut ): 
-                        b=a
-                        self.TXT.updateWait()
-                        a=self.txt_i[int(stack[2])-1].state()
-                        self.parent.processEvents()
-                        time.sleep(0.001)
-            elif stack[1]=="FTD": # FTD
-                if stack[3]=="Raising":
                     a=int(self.FTD.comm("input_get i"+stack[2]))
+                    self.parent.processEvents()
+                    time.sleep(0.001)
+            elif stack[3]=="Falling":
+                a=int(self.FTD.comm("input_get i"+stack[2]))
+                b=a
+                while not (b>a or self.halt or self.tOut ): 
                     b=a
-                    while not (b<a or self.halt or self.tOut ): 
-                        b=a
-                        a=int(self.FTD.comm("input_get i"+stack[2]))
-                        self.parent.processEvents()
-                        time.sleep(0.001)
-                elif stack[3]=="Falling":
                     a=int(self.FTD.comm("input_get i"+stack[2]))
-                    b=a
-                    while not (b>a or self.halt or self.tOut ): 
-                        b=a
-                        a=int(self.FTD.comm("input_get i"+stack[2]))
-                        self.parent.processEvents()
-                        time.sleep(0.001)
-                        
-            if self.tAct:
-                self.timer.stop()
-        except:
-            self.halt=True
-            self.cce=True
-            
+                    self.parent.processEvents()
+                    time.sleep(0.001)
+                    
+        if self.tAct:
+            self.timer.stop()
+        
     def timerstop(self):
         self.tOut=True            
     
@@ -1449,132 +1380,20 @@ class execThread(QThread):
         self.tOut=False
         self.tAct=False
         
-        try:
-            if len(stack)>6:
-                v=self.getVal(stack[6])
-                if self.halt: return
-                if v>0:
-                    self.timer = QTimer()
-                    self.timer.setSingleShot(True)
-                    self.timer.timeout.connect(self.timerstop)
-                    self.timer.start(v)  
-                    self.tAct=True
+        if len(stack)>6:
+            v=self.getVal(stack[6])
+            if self.halt: return
+            if v>0:
+                self.timer = QTimer()
+                self.timer.setSingleShot(True)
+                self.timer.timeout.connect(self.timerstop)
+                self.timer.start(v)  
+                self.tAct=True
 
-            
-            j=False
-            while not (j or self.halt or self.tOut):
-                self.parent.processEvents()
-                if stack[1] == "RIF":
-                    if stack[3]=="S":
-                        v=float(self.RIF.Digital(int(stack[2])))
-                    elif stack[3]=="V":
-                        if stack[2]=="1":
-                            v=float(self.RIF.GetA1())*10
-                        elif stack[2]=="2":
-                            v=float(self.RIF.GetA2())*10
-                    elif stack[3]=="R":
-                        if stack[2]=="X":
-                            v=float(self.RIF.GetAX())
-                        elif stack[2]=="Y":
-                            v=float(self.RIF.GetAY())
-                    elif stack[3]=="D":
-                        if stack[2]=="1":
-                            v=float(self.RIF.GetD1())
-                        elif stack[2]=="2":
-                            v=float(self.RIF.GetD2())
-                    elif stack[3]=="C":
-                        tx="Not yet implemented"                
-                elif stack[1]== "TXT":
-                    self.TXT.updateWait()
-                    if stack[3]=="S":
-                        v=float(self.txt_i[int(stack[2])-1].state())
-                    elif stack[3]=="V":
-                        v=float(self.txt_i[int(stack[2])-1].voltage())
-                    elif stack[3]=="R":
-                        v=float(self.txt_i[int(stack[2])-1].value())
-                    elif stack[3]=="D":
-                        v=float(self.txt_i[int(stack[2])-1].distance())
-                    elif stack[3]=="C":
-                        tx="Not yet implemented"
-                elif stack[1]== "FTD":
-                    if stack[3]=="S":
-                        v=float(self.FTD.comm("input_get i"+stack[2]))
-                    elif stack[3]=="V":
-                        v=float(self.FTD.comm("input_get i"+stack[2]))
-                    elif stack[3]=="R":
-                        v=float(self.FTD.comm("input_get i"+stack[2]))
-                    elif stack[3]=="D":
-                        v=float(self.FTD.comm("ultrasonic_get"))
-                    elif stack[3]=="C":
-                        tx="Not yet implemented"
-            
-                val=float(self.getVal(stack[5]))
-                if self.halt: return
-
-                j=False
-
-                if stack[4]=="<" and (v<val): j=True
-                elif stack[4]=="==" and (v==val): j=True
-                elif stack[4]=="!=" and (v!=val): j=True
-                elif stack[4]==">" and (v>val): j=True
-                elif stack[4]==">=" and (v>=val): j=True
-                elif stack[4]=="<=" and (v<=val): j=True
-                self.parent.processEvents()
-                time.sleep(0.001)
-            # stop gedrueckt?    
-            if self.tAct:
-                self.timer.stop()
-            self.parent.processEvents()
-        except:
-            self.halt=True
-            self.cce=True
-    
-    def cmdIfInputDig(self,stack):
-        try:
-            if stack[1]=="RIF":
-                if (stack[3]=="True" and self.RIF.Digital(int(stack[2]))) or (stack[3]=="False" and not self.RIF.Digital(int(stack[2]))):
-                    n=-1
-                    for line in self.jmpTable:
-                        if stack[4]==line[0]: n=line[1]-1
-
-                    if n==-1:
-                        self.msgOut("IfInputDig jump tag not found!")
-                        self.halt=True
-                    else:
-                        self.count=n        
-            elif stack[1]=="TXT":
-                self.TXT.updateWait()
-                if (stack[3]=="True" and self.txt_i[int(stack[2])-1].state()) or (stack[3]=="False" and not self.txt_i[int(stack[2])-1].state()):
-                    n=-1
-                    for line in self.jmpTable:
-                        if stack[4]==line[0]: n=line[1]-1
-
-                    if n==-1:
-                        self.msgOut("IfInputDig jump tag not found!")
-                        self.halt=True
-                    else:
-                        self.count=n
-            elif stack[1]=="FTD":
-                v=(self.FTD.comm("input_get i"+stack[2]))
-                if (stack[3]=="True" and (v=="1")) or (stack[3]=="False" and (v!="1")):
-                    n=-1
-                    for line in self.jmpTable:
-                        if stack[4]==line[0]: n=line[1]-1
-
-                    if n==-1:
-                        self.msgOut("IfInputDig jump tag not found!")
-                        self.halt=True
-                    else:
-                        self.count=n
-        except:
-            self.halt=True
-            self.cce=True
-            
-    def cmdIfInput(self,stack):
-        tx = ""
-        v=-1
         
-        try:
+        j=False
+        while not (j or self.halt or self.tOut):
+            self.parent.processEvents()
             if stack[1] == "RIF":
                 if stack[3]=="S":
                     v=float(self.RIF.Digital(int(stack[2])))
@@ -1630,21 +1449,121 @@ class execThread(QThread):
             elif stack[4]==">" and (v>val): j=True
             elif stack[4]==">=" and (v>=val): j=True
             elif stack[4]=="<=" and (v<=val): j=True
-            
-            if j:
+            self.parent.processEvents()
+            time.sleep(0.001)
+        # stop gedrueckt?    
+        if self.tAct:
+            self.timer.stop()
+        self.parent.processEvents()
+    
+    def cmdIfInputDig(self,stack):
+        if stack[1]=="RIF":
+            if (stack[3]=="True" and self.RIF.Digital(int(stack[2]))) or (stack[3]=="False" and not self.RIF.Digital(int(stack[2]))):
                 n=-1
                 for line in self.jmpTable:
-                    if stack[6]==line[0]: n=line[1]-1
+                    if stack[4]==line[0]: n=line[1]-1
 
                 if n==-1:
-                    self.msgOut("IfInput jump tag not found!")
+                    self.msgOut("IfInputDig jump tag not found!")
                     self.halt=True
                 else:
                     self.count=n        
-        except:
-            self.halt=True
-            self.cce=True
-                    
+        elif stack[1]=="TXT":
+            self.TXT.updateWait()
+            if (stack[3]=="True" and self.txt_i[int(stack[2])-1].state()) or (stack[3]=="False" and not self.txt_i[int(stack[2])-1].state()):
+                n=-1
+                for line in self.jmpTable:
+                    if stack[4]==line[0]: n=line[1]-1
+
+                if n==-1:
+                    self.msgOut("IfInputDig jump tag not found!")
+                    self.halt=True
+                else:
+                    self.count=n
+        elif stack[1]=="FTD":
+            v=(self.FTD.comm("input_get i"+stack[2]))
+            if (stack[3]=="True" and (v=="1")) or (stack[3]=="False" and (v!="1")):
+                n=-1
+                for line in self.jmpTable:
+                    if stack[4]==line[0]: n=line[1]-1
+
+                if n==-1:
+                    self.msgOut("IfInputDig jump tag not found!")
+                    self.halt=True
+                else:
+                    self.count=n
+            
+    def cmdIfInput(self,stack):
+        tx = ""
+        v=-1
+        
+        if stack[1] == "RIF":
+            if stack[3]=="S":
+                v=float(self.RIF.Digital(int(stack[2])))
+            elif stack[3]=="V":
+                if stack[2]=="1":
+                    v=float(self.RIF.GetA1())*10
+                elif stack[2]=="2":
+                    v=float(self.RIF.GetA2())*10
+            elif stack[3]=="R":
+                if stack[2]=="X":
+                    v=float(self.RIF.GetAX())
+                elif stack[2]=="Y":
+                    v=float(self.RIF.GetAY())
+            elif stack[3]=="D":
+                if stack[2]=="1":
+                    v=float(self.RIF.GetD1())
+                elif stack[2]=="2":
+                    v=float(self.RIF.GetD2())
+            elif stack[3]=="C":
+                tx="Not yet implemented"                
+        elif stack[1]== "TXT":
+            self.TXT.updateWait()
+            if stack[3]=="S":
+                v=float(self.txt_i[int(stack[2])-1].state())
+            elif stack[3]=="V":
+                v=float(self.txt_i[int(stack[2])-1].voltage())
+            elif stack[3]=="R":
+                v=float(self.txt_i[int(stack[2])-1].value())
+            elif stack[3]=="D":
+                v=float(self.txt_i[int(stack[2])-1].distance())
+            elif stack[3]=="C":
+                tx="Not yet implemented"
+        elif stack[1]== "FTD":
+            if stack[3]=="S":
+                v=float(self.FTD.comm("input_get i"+stack[2]))
+            elif stack[3]=="V":
+                v=float(self.FTD.comm("input_get i"+stack[2]))
+            elif stack[3]=="R":
+                v=float(self.FTD.comm("input_get i"+stack[2]))
+            elif stack[3]=="D":
+                v=float(self.FTD.comm("ultrasonic_get"))
+            elif stack[3]=="C":
+                tx="Not yet implemented"
+    
+        val=float(self.getVal(stack[5]))
+        if self.halt: return
+
+        j=False
+
+        if stack[4]=="<" and (v<val): j=True
+        elif stack[4]=="==" and (v==val): j=True
+        elif stack[4]=="!=" and (v!=val): j=True
+        elif stack[4]==">" and (v>val): j=True
+        elif stack[4]==">=" and (v>=val): j=True
+        elif stack[4]=="<=" and (v<=val): j=True
+        
+        if j:
+            n=-1
+            for line in self.jmpTable:
+                if stack[6]==line[0]: n=line[1]-1
+
+            if n==-1:
+                self.msgOut("IfInput jump tag not found!")
+                self.halt=True
+            else:
+                self.count=n        
+                
     def cmdCall(self, stack):
         n=-1
         for line in self.modTable:
@@ -1664,18 +1583,14 @@ class execThread(QThread):
             self.count=n
         
     def cmdReturn(self):
-        try:
-            if self.modLStack[len(self.modLStack)-1]==0:
-                self.modLStack.pop()
-                self.modMStack.pop()
-                self.count=self.modStack.pop()#[1]
-            else:
-                self.count=self.modMStack[len(self.modLStack)-1]
-                self.modLStack[len(self.modLStack)-1]=self.modLStack[len(self.modLStack)-1]-1
-        except:
-            self.msgOut("Return without Call!")
-            self.halt=True
-            
+        if self.modLStack[len(self.modLStack)-1]==0:
+            self.modLStack.pop()
+            self.modMStack.pop()
+            self.count=self.modStack.pop()#[1]
+        else:
+            self.count=self.modMStack[len(self.modLStack)-1]
+            self.modLStack[len(self.modLStack)-1]=self.modLStack[len(self.modLStack)-1]-1
+
     def cmdMEnd(self):
         try:
             if self.modLStack[len(self.modLStack)-1]==0:
@@ -1707,8 +1622,6 @@ class execThread(QThread):
         self.updateText.emit(message)
         while self.msg==0:
             pass
-            #time.sleep(0.001)
-            #self.parent.processEvents()  
         self.msg=0
         
     def clrOut(self):
@@ -1716,8 +1629,6 @@ class execThread(QThread):
         self.clearText.emit()
         while self.msg==0:
             pass
-            #time.sleep(0.001)
-            #self.parent.processEvents()   
         self.msg=0
 #
 #
@@ -4396,7 +4307,7 @@ class editCalc(TouchDialog):
         
         self.operator=QComboBox()
         self.operator.setStyleSheet("font-size: 18px;")
-        oplist=["+", "-", "*", "/", "mod", "exp", "root", "min", "max", "sin", "cos","&&","||","<","<=","==","!=",">=",">"]
+        oplist=["+", "-", "*", "/", "mod", "exp", "root", "min", "max", "sin", "cos", "random", "&&","||","<","<=","==","!=",">=",">"]
         self.operator.addItems(oplist)
         if self.cmdline.split()[3] in oplist:
             self.operator.setCurrentIndex(oplist.index(self.cmdline.split()[3]))
@@ -5105,12 +5016,19 @@ class FtcGuiApplication(TouchApplication):
         else:
             l3.addWidget(self.starter)
             l.addLayout(l2)
-
+ 
             
         self.centralwidget.setLayout(l)
         self.mainwindow.setCentralWidget(self.centralwidget)
         
         self.mainwindow.titlebar.close.clicked.connect(self.closed)
+
+        canvasSize=min(self.mainwindow.width(),self.mainwindow.height())
+        self.canvas=QLabel(self.mainwindow)
+        self.canvas.setGeometry(0, 0, canvasSize, canvasSize)        
+        #self.canvas.setPixmap(QPixmap(pixdir+"pixmap.png"))
+        self.canvas.setPixmap(QPixmap(canvasSize, canvasSize))
+        self.canvas.hide()
         
         self.mainwindow.show()
         try:
@@ -5527,12 +5445,15 @@ class FtcGuiApplication(TouchApplication):
         self.starter.setEnabled(False)
         self.menu.setEnabled(False)
         self.mainwindow.titlebar.menubut.hide()
+        #self.mainwindow.titlebar.hide()
         self.starter.setDisabled(True)
         self.processEvents()
         
         if self.etf:
+            self.canvas.hide()
             self.setMainWindow(True)
             self.mainwindow.titlebar.menubut.show()
+            #self.mainwindow.titlebar.show()
             self.menu.setEnabled(True)
             self.etf=False
             self.start=False
@@ -5550,6 +5471,7 @@ class FtcGuiApplication(TouchApplication):
                 self.et.requestKeyboard.connect(self.requestKeyboard)
                 self.et.requestDial.connect(self.requestDial)
                 self.et.requestBtn.connect(self.requestButton)
+                self.et.canvasSig.connect(self.canvasSig)
                 self.et.start() 
             else:
                 self.stop.emit()
@@ -5574,6 +5496,34 @@ class FtcGuiApplication(TouchApplication):
         self.starter.setText(QCoreApplication.translate("main","Close log"))
         self.etf=True
         
+    def canvasSig(self, stack):
+        if stack=="show": self.canvas.show()
+        elif stack=="hide": self.canvas.hide()
+        elif stack=="square":
+            canvasSize=min(self.mainwindow.width(),self.mainwindow.height())
+            self.canvas.setGeometry(0, 0, canvasSize, canvasSize)
+            self.canvas.setPixmap(QPixmap(canvasSize, canvasSize))
+        elif stack=="full":
+            self.canvas.setGeometry(0, 0, self.mainwindow.width(), self.mainwindow.height())
+            self.canvas.setPixmap(self.mainwindow.width(), self.mainwindow.height())
+        elif stack=="clear":
+            self.canvas.setPixmap(QPixmap(self.mainwindow.width(), self.mainwindow.height()))
+            pm=self.canvas.pixmap() #QPixmap(self.canvas.width(), self.canvas.height())
+            p=QPainter()
+            p.begin(pm)
+            p.setPen(QtGui.QColor(255, 0, 0, 0))
+            p.setBackgroundMode(0)
+            p.eraseRect(0,0,pm.width(),pm.height())
+            p.end()
+        elif stack=="plot":
+            pm=self.canvas.pixmap() #QPixmap(self.canvas.width(), self.canvas.height())
+            p=QPainter()
+            p.begin(pm)
+            p.setPen(QtGui.QColor(255, 0, 0, 127))
+            p.drawEllipse(120,120,60,30)
+            p.end()
+            #self.canvas.setPixmap(pm)
+            
     def messageBox(self, stack):
         msg=stack.split("'")
         t=TouchMessageBox(QCoreApplication.translate("exec","Message"),self.mainwindow)

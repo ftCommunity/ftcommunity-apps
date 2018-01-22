@@ -4,6 +4,7 @@
 import translator as tr
 import htmlhelper as hth
 import cgi, os, json, sys
+from codecs import *
 
 def mainpage():
     hth.htmlhead("startIDE", tr.translate("Control your model with a finger touch"))
@@ -179,22 +180,22 @@ def uploader(obj:str, fileitem):
     
     if filename[-4:-3]==".": filename=filename[:-4]
     
-    if 1: #try:
+    try:
         if len(obj)<2:
-            open(filename, 'wb').write(fileitem.file.read())
+            open(filename, 'wb', encoding="utf-8").write(fileitem.file.read())
             os.chmod(filename,0o666)
         else:
             stack=[]
             for line in fileitem.file:
                 stack.append(line[:-1].decode())
                 
-            with open(filename, 'w') as f:
+            with open(filename, 'w', encoding="utf-8") as f:
                 json.dump(stack,f)
             f.close()
             os.chmod(filename,0o666)
         
         mainpage()
-    else: #except:
+    except:
         hth.htmlhead("startIDE", tr.translate("Upload failed"))
         hth.htmlfoot("","index.py",tr.translate("Back"))
 
@@ -214,16 +215,16 @@ def filelister(name:str):
     f.close()
     
 def cconvert(name:str):
+    sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf8', buffering=1)
     print("Content-Type: text/plain; charset=UTF-8")
     print("Content-Disposition: attachment; filename=%s" % os.path.basename(name+".txt"))
     print('')
-
     with open(name,"r", encoding="utf-8") as f:
         code=json.load(f)
         a=0
         for i in code:
             a=a+1
-            print(i)
+            sys.stdout.write(i+"\n")
     f.close()
 
 def csvconvert(name:str):
@@ -272,7 +273,7 @@ def csvconvert(name:str):
         for i in range(0, len(varlist)):
             ln=""
             if not varlist[i][1].closed: ln=varlist[i][1].readline()
-            if ln: sys.stdout.write(ln[:-1]+";")   #ef.write(ln[:-1]+";") 
+            if ln: sys.stdout.write(ln[:-1]+";") 
             elif not varlist[i][1].closed:
                 varlist[i][1].close()
                 ofs=ofs-1 

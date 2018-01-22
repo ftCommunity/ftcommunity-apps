@@ -1,0 +1,1 @@
+["# new", "Init integer 0", "Tag A", "Delay 3000 R", "Clear", "TimerQuery", "Calc integer 1 random 6", "QueryVar integer", "IfVar integer != 6 A"]

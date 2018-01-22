@@ -104,6 +104,21 @@ uuid: 443dd03b-d671-4103-b035-924c175e4e1c
 version: 1
 firmware: >=0.9.0
 
+[ftDuinIO]
+name: ftDuinIO
+category: Tools
+author: Peter Habermehl
+icon: icon.png
+desc: ftDuino I/O test and flash tool
+exec: ftduinio.py
+html: index.py
+managed: yes
+uuid: 0990bda0-f222-11e7-8f1a-0800200c9a66
+version: 1.0.2
+firmware: >=0.9.4
+desc_de: ftDuino I/O-Test und Flashtool
+html_de: index.py
+
 [ftdb]
 name: ft:db
 category: Tools
@@ -153,7 +168,7 @@ url: https://github.com/PeterDHabermehl/startIDE/raw/master/ddoc/Manual_100_de.p
 exec: startide.py
 managed: yes
 uuid: 0e500e10-33ee-11e7-9598-0800200c9a66
-version: 1.0.1
+version: 1.0.7
 firmware: >=0.9.3
 desc_de: Einsteiger-IDE für einfache Modelle
 desc_fr: IDE d'entrée de gamme pour les modèles simples

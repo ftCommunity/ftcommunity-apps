@@ -11,9 +11,12 @@ var MSG = {
     stateProgramEnded: "ended",
 
     confirm_delete: "Really delete the entire program '%1'?",
-    delete_not_connected: "The TXT has to be connected to be able to delete the entire program",
+    delete_not_connected: "The TXT/TX-Pi has to be connected to be able to delete the entire program",
 
     missingPlugins: "The program cannot be loaded as it uses plugins '%1' which are not installed on this system.",
+    installPlugin: "Install plugin",
+    install_plugin_not_connected: "The TXT/TX-Pi has to be connected to be able to install a plugin",
+    install_plugin_overwrite: "Replace installed version %1 with version %2?",
     
     // the menu
     dropdown_new: "New",

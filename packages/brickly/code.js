@@ -423,9 +423,83 @@ function plugin_selected(name) {
     toolbox_update_plugins();
 }
 
+function cmp_version(a, b) {
+    var pa = a.split('.');
+    var pb = b.split('.');
+    for (var i = 0; i < 3; i++) {
+        var na = Number(pa[i]);
+        var nb = Number(pb[i]);
+        if (na > nb) return 1;
+        if (nb > na) return -1;
+        if (!isNaN(na) && isNaN(nb)) return 1;
+        if (isNaN(na) && !isNaN(nb)) return -1;
+    }
+    return 0;
+};
+
+function install_plugin() {
+    var file = document.getElementById('file-input').files[0];
+
+    // check if TXT is connected
+    if(!Code.connected) {
+	alert(MSG['install_plugin_not_connected']);
+	return;
+    }
+    
+    // Only process xml files.
+    if (!file.type.match('xml.*'))
+	return;
+    
+    var reader = new FileReader();
+    reader.onload = (function(reader) {
+        return function(e) {
+	    var contents = e.target.result;
+
+	    // check if the plugin is a newer version
+
+	    // parser the xml
+	    pluginDom = Blockly.Xml.textToDom(contents);
+
+	    var name = null;
+	    var version = null;
+	    if(pluginDom.nodeName.toLowerCase() == 'plugin') {
+		name = pluginDom.getAttribute('name')
+		version = pluginDom.getAttribute('version')
+	    }
+
+	    // a valid plugin mist have a name
+	    if(!name) {
+		alert("Invalid plugin");
+		return;
+	    }
+
+	    var ok2install = true;
+	    for(var p in Code.plugins) {
+		if(Code.plugins[p]["basename"] == name) {
+		    if(cmp_version(version, Code.plugins[p]["version"]) <= 0) {
+			ok2install = false;
+			if(confirm(MSG['install_plugin_overwrite'].replace("%1", Code.plugins[p]["version"]).replace("%2", version)))
+			    ok2install = true;
+		    }
+		}
+	    }
+
+	    if(ok2install) {
+		// send plugin to TXT
+		Code.ws.send(JSON.stringify( { plugin: { name: name, code: contents } } ));
+		location.reload();
+	    }
+        };
+    })(reader);
+
+    // read the data file
+    reader.readAsText(file);
+}
+
 function select_plugins() {
     // plugins
-    var plugin_list_html = "";
+    var plugin_list_html = "<tr><td align=\"center\"><button onclick=\"document.getElementById('file-input').click();\">"+MSG['installPlugin']+"</button><input id=\"file-input\" onchange=\"install_plugin();\" accept=\".xml\" type=\"file\" name=\"name\" style=\"display: none;\"\"/></td></tr>";
+
     for(var i in Code.plugins) {
 	var plugin = Code.plugins[i];
 	plugin_list_html += '<tr><td><input onclick="plugin_selected(\''+i+'\');" type="checkbox"';
@@ -443,9 +517,11 @@ function plugin_list_close() {
 }
 
 function pluginsDone() {
-    // no plugins present at all? Hide plugin menu icon
-    if(Object.keys(Code.plugins).length == 0)
-	document.getElementById("plugins").style.display = "none";
+    // since there's now always an "install" button the menu is always there
+    
+//    // no plugins present at all? Hide plugin menu icon
+//    if(Object.keys(Code.plugins).length == 0)
+//	document.getElementById("plugins").style.display = "none";
     
     // fixme: this must not happen before screen resizing is done
     setTimeout(function() { program_load( USER_FILES + Code.program_name[0] ) }, 100); 
@@ -597,8 +673,12 @@ function loadPlugin(plugin) {
 		    
 		    // use file name as name by default
 		    Code.plugins[plugin]["name"] = plugin;
-		    if(dom.getAttribute('name'))
+		    if(dom.getAttribute('name')) {
+			Code.plugins[plugin]["basename"] = dom.getAttribute('name');
 			Code.plugins[plugin]["name"] = dom.getAttribute('name');
+		    }
+		    if(dom.getAttribute('version'))
+			Code.plugins[plugin]["version"] = dom.getAttribute('version');
 		    
 		    // try to get translations for current language
 		    translations = null

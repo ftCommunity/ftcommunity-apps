@@ -12,10 +12,13 @@ var MSG = {
 
     // messages
     confirm_delete: "Wirklich das ganze Programm '%1' löschen?",
-    delete_not_connected: "Zum Löschen des ganzen Programms muss der TXT verbunden sein",
+    delete_not_connected: "Zum Löschen des ganzen Programms muss der TXT/TX-Pi verbunden sein",
 
     missingPlugins: "Das Programm kann nicht geladen werden, da es die Plugins '%1' verwendet, die auf diesem System nicht vorhanden sind.",
-    
+    installPlugin: "Installiere Plugin",
+    install_plugin_not_connected: "Zum Upload eines Plugins muss der TXT/TX-Pi verbunden sein",
+    install_plugin_overwrite: "Bereits installierte Version %1 durch Version %2 ersetzen?",
+ 
     // the menu
     dropdown_new: "Neu",
     dropdown_del: "Löschen",

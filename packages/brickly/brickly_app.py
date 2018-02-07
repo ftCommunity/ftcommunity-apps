@@ -30,6 +30,7 @@ class WebsocketServerThread(QThread):
     client_connected = pyqtSignal(bool)
     speed_changed = pyqtSignal(int)
     plugin_cmd = pyqtSignal(str, str, str)
+    plugin = pyqtSignal(str, str)
     
     def __init__(self): 
         super(WebsocketServerThread,self).__init__()
@@ -83,6 +84,8 @@ class WebsocketServerThread(QThread):
                     self.python_code.emit(msg['python_code'])
                 if 'blockly_code' in msg:
                     self.blockly_code.emit(msg['blockly_code'])
+                if 'plugin' in msg:
+                    self.plugin.emit(msg['plugin']['name'], msg['plugin']['code'])
 
                 # check if one entry begins with "plugin:"
                 for i in msg:
@@ -167,6 +170,10 @@ class PluginLoader:
         if root.tag != "plugin": 
             return None
 
+        # report plugin version number
+        if 'version' in root.attrib:
+            print("Plugin", name, "version", root.attrib['version'])
+        
         # only the first "exec" element is executed
         for child in root:
             if child.tag == "exec":
@@ -1111,6 +1118,7 @@ class Application(TouchApplication):
         self.ws.python_code.connect(self.on_python_code)        # received python code
         self.ws.blockly_code.connect(self.on_blockly_code)      # received blockly code
         self.ws.program_name.connect(self.on_program_name)
+        self.ws.plugin.connect(self.on_plugin)
 
         # start joystick monitoring
         self.joystick = QJoystick(self)
@@ -1190,6 +1198,41 @@ class Application(TouchApplication):
     def on_blockly_code(self, str):
         self.write_to_file(self.program_name[0], str)
 
+    def on_plugin(self, name, data):
+        # plugin installtion is solved really trivial: The plugin is being written
+        # to the sd card and the program is being stopped. It's up to the browser
+        # to restart it afterwards. Not a nice solution but useful ...
+        print("Installing plugin ...", name)
+        path = os.path.dirname(os.path.realpath(__file__))
+        fname = os.path.join(path, "plugins", name + ".xml")
+        with open(fname, 'w', encoding="UTF-8") as f:
+            f.write(data)
+            f.close()
+
+        # and make sure the plugin appears in the plugins.list
+        
+        # read the plugins file
+        path = os.path.dirname(os.path.realpath(__file__))
+        fname = os.path.join(path, "plugins", "plugins.list")
+        plugin_names = [ ]
+        try:
+            with open(fname) as f:
+                for line in f:
+                    l = line.split(';')[0].strip()
+                    if(len(l) > 0):
+                        plugin_names.append(l)
+                f.close()
+        except:
+            return
+
+        if not name in plugin_names:
+            with open(fname, 'a', encoding="UTF-8") as f:
+                print(name, file=f)
+                f.close()
+
+        # close app
+        self.w.close()
+        
     def on_setting(self, setting):
         # received settings from web browser
         for i in setting.keys():

@@ -4,678 +4,693 @@
 <context>
     <name>addcodeline</name>
     <message>
-        <location filename="startide.py" line="5632"/>
+        <location filename="startide.py" line="5743"/>
         <source>New cmd:</source>
         <translation>Neuer Befehl:</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5649"/>
+        <location filename="startide.py" line="5760"/>
         <source>Inputs</source>
         <translation>Eingänge</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5672"/>
+        <location filename="startide.py" line="5786"/>
         <source>Outputs</source>
         <translation>Ausgänge</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5741"/>
+        <location filename="startide.py" line="5855"/>
         <source>Controls</source>
         <translation>Steuerung</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5786"/>
+        <location filename="startide.py" line="5900"/>
         <source>Modules</source>
         <translation>Module</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5804"/>
+        <location filename="startide.py" line="5918"/>
         <source>Interaction</source>
         <translation>Interaktion</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5661"/>
+        <location filename="startide.py" line="5773"/>
         <source>WaitForInputDig</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5663"/>
+        <location filename="startide.py" line="5775"/>
         <source>IfInputDig</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5688"/>
+        <location filename="startide.py" line="5802"/>
         <source>Output</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5689"/>
+        <location filename="startide.py" line="5803"/>
         <source>Motor</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5690"/>
+        <location filename="startide.py" line="5804"/>
         <source>MotorPulsew.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5691"/>
+        <location filename="startide.py" line="5805"/>
         <source>MotorEnc</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5692"/>
+        <location filename="startide.py" line="5806"/>
         <source>MotorEncSync</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5754"/>
+        <location filename="startide.py" line="5868"/>
         <source># comment</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5755"/>
+        <location filename="startide.py" line="5869"/>
         <source>Tag</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5756"/>
+        <location filename="startide.py" line="5870"/>
         <source>Jump</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5757"/>
+        <location filename="startide.py" line="5871"/>
         <source>LoopTo</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5772"/>
+        <location filename="startide.py" line="5886"/>
         <source>Delay</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5783"/>
+        <location filename="startide.py" line="5897"/>
         <source>Stop</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5798"/>
+        <location filename="startide.py" line="5912"/>
         <source>Call</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5800"/>
+        <location filename="startide.py" line="5914"/>
         <source>Return</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5801"/>
+        <location filename="startide.py" line="5915"/>
         <source>Module</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5802"/>
+        <location filename="startide.py" line="5916"/>
         <source>MEnd</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5805"/>
+        <location filename="startide.py" line="5919"/>
         <source>Interact</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5816"/>
+        <location filename="startide.py" line="5930"/>
         <source>Print</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5817"/>
+        <location filename="startide.py" line="5931"/>
         <source>Clear</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5818"/>
+        <location filename="startide.py" line="5932"/>
         <source>Message</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5715"/>
+        <location filename="startide.py" line="5829"/>
         <source>Variables</source>
         <translation>Variable</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5665"/>
+        <location filename="startide.py" line="5777"/>
         <source>WaitForInput</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5667"/>
+        <location filename="startide.py" line="5779"/>
         <source>IfInput</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5669"/>
+        <location filename="startide.py" line="5781"/>
         <source>QueryInput</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5713"/>
+        <location filename="startide.py" line="5827"/>
         <source>Init</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5714"/>
+        <location filename="startide.py" line="5828"/>
         <source>From...</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5736"/>
+        <location filename="startide.py" line="5850"/>
         <source>QueryVar</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5737"/>
+        <location filename="startide.py" line="5851"/>
         <source>IfVar</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5738"/>
+        <location filename="startide.py" line="5852"/>
         <source>Calc</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5730"/>
+        <location filename="startide.py" line="5844"/>
         <source>FromIn</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5731"/>
+        <location filename="startide.py" line="5845"/>
         <source>FromKeypad</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5732"/>
+        <location filename="startide.py" line="5846"/>
         <source>FromDial</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5733"/>
+        <location filename="startide.py" line="5847"/>
         <source>FromButtons</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5735"/>
+        <location filename="startide.py" line="5849"/>
         <source>Shelf</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5759"/>
+        <location filename="startide.py" line="5873"/>
         <source>Time</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5773"/>
+        <location filename="startide.py" line="5887"/>
         <source>TimerQuery</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5775"/>
+        <location filename="startide.py" line="5889"/>
         <source>TimerClear</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5777"/>
+        <location filename="startide.py" line="5891"/>
         <source>IfTimer</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5779"/>
+        <location filename="startide.py" line="5893"/>
         <source>Interrupt</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5781"/>
+        <location filename="startide.py" line="5895"/>
         <source>QueryNow</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5799"/>
+        <location filename="startide.py" line="5913"/>
         <source>CallExt</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5940"/>
+        <location filename="startide.py" line="6057"/>
         <source>Logfile</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5950"/>
+        <location filename="startide.py" line="6067"/>
         <source>Log On</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5951"/>
+        <location filename="startide.py" line="6068"/>
         <source>Log Off</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5952"/>
+        <location filename="startide.py" line="6069"/>
         <source>Log Clear</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="startide.py" line="5783"/>
+        <source>CounterClear</source>
         <translation></translation>
     </message>
 </context>
 <context>
     <name>ecl</name>
     <message>
-        <location filename="startide.py" line="1890"/>
+        <location filename="startide.py" line="1837"/>
         <source>Condition</source>
         <translation>Bedingung</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4339"/>
+        <location filename="startide.py" line="4348"/>
         <source>Value</source>
         <translation>Wert</translation>
     </message>
     <message>
-        <location filename="startide.py" line="2705"/>
+        <location filename="startide.py" line="2714"/>
         <source>Direction</source>
         <translation>Drehrichtung</translation>
     </message>
     <message>
-        <location filename="startide.py" line="2711"/>
+        <location filename="startide.py" line="2720"/>
         <source>right</source>
         <translation>rechts</translation>
     </message>
     <message>
-        <location filename="startide.py" line="2711"/>
+        <location filename="startide.py" line="2720"/>
         <source>left</source>
         <translation>links</translation>
     </message>
     <message>
-        <location filename="startide.py" line="2711"/>
+        <location filename="startide.py" line="2720"/>
         <source>stop</source>
         <translation>stop</translation>
     </message>
     <message>
-        <location filename="startide.py" line="2517"/>
+        <location filename="startide.py" line="2526"/>
         <source>End Sw.</source>
         <translation>Endschalter</translation>
     </message>
     <message>
-        <location filename="startide.py" line="2305"/>
+        <location filename="startide.py" line="2314"/>
         <source>Pulse Inp.</source>
         <translation>Impulseingang</translation>
     </message>
     <message>
-        <location filename="startide.py" line="2839"/>
+        <location filename="startide.py" line="2848"/>
         <source>Pulses</source>
         <translation>Impulse</translation>
     </message>
     <message>
-        <location filename="startide.py" line="2727"/>
+        <location filename="startide.py" line="2736"/>
         <source>Sync to</source>
         <translation>Sync mit</translation>
     </message>
     <message>
-        <location filename="startide.py" line="2870"/>
+        <location filename="startide.py" line="2879"/>
         <source>Loop target</source>
         <translation>Sprungziel</translation>
     </message>
     <message>
-        <location filename="startide.py" line="2983"/>
+        <location filename="startide.py" line="2992"/>
         <source>Count</source>
         <translation>Anzahl</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5275"/>
+        <location filename="startide.py" line="5294"/>
         <source>Project</source>
         <translation>Projekt</translation>
     </message>
     <message>
-        <location filename="startide.py" line="6311"/>
+        <location filename="startide.py" line="6432"/>
         <source>Module</source>
         <translation>Modul</translation>
     </message>
     <message>
-        <location filename="startide.py" line="6280"/>
+        <location filename="startide.py" line="6401"/>
         <source>No Tags defined!</source>
         <translation>Keine Tags definiert!</translation>
     </message>
     <message>
-        <location filename="startide.py" line="6325"/>
+        <location filename="startide.py" line="6446"/>
         <source>No Modules defined!</source>
         <translation>Keine Module definiert!</translation>
     </message>
     <message>
-        <location filename="startide.py" line="6347"/>
+        <location filename="startide.py" line="6468"/>
         <source>Message</source>
         <translation>Nachricht</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4096"/>
+        <location filename="startide.py" line="4105"/>
         <source>Inp. type</source>
         <translation>Eing.-Art</translation>
     </message>
     <message>
-        <location filename="startide.py" line="3101"/>
+        <location filename="startide.py" line="3110"/>
         <source>Text</source>
         <translation>Text</translation>
     </message>
     <message>
-        <location filename="startide.py" line="1721"/>
+        <location filename="startide.py" line="1668"/>
         <source>WaitInDig</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4059"/>
+        <location filename="startide.py" line="4068"/>
         <source>Device</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4077"/>
+        <location filename="startide.py" line="4086"/>
         <source>Port</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="3817"/>
+        <location filename="startide.py" line="3826"/>
         <source>Timeout</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="1830"/>
+        <location filename="startide.py" line="1777"/>
         <source>TOut</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6064"/>
+        <location filename="startide.py" line="6185"/>
         <source>IfInDig</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="1931"/>
+        <location filename="startide.py" line="1940"/>
         <source>Output</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="2050"/>
+        <location filename="startide.py" line="2059"/>
         <source>Motor</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="2199"/>
+        <location filename="startide.py" line="2208"/>
         <source>MotorP</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="2429"/>
+        <location filename="startide.py" line="2438"/>
         <source>MotorE</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="2639"/>
+        <location filename="startide.py" line="2648"/>
         <source>MotorES</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6239"/>
+        <location filename="startide.py" line="6360"/>
         <source>LoopTo</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4170"/>
+        <location filename="startide.py" line="4179"/>
         <source>switch</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4170"/>
+        <location filename="startide.py" line="4179"/>
         <source>voltage</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4170"/>
+        <location filename="startide.py" line="4179"/>
         <source>resistance</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4170"/>
+        <location filename="startide.py" line="4179"/>
         <source>distance</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6328"/>
+        <location filename="startide.py" line="6449"/>
         <source>Okay</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6206"/>
+        <location filename="startide.py" line="6327"/>
         <source>Comment</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6209"/>
+        <location filename="startide.py" line="6330"/>
         <source>Tag</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6228"/>
+        <location filename="startide.py" line="6349"/>
         <source>Jump</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6228"/>
+        <location filename="startide.py" line="6349"/>
         <source>Target</source>
         <translation>Sprungziel</translation>
     </message>
     <message>
-        <location filename="startide.py" line="6260"/>
+        <location filename="startide.py" line="6381"/>
         <source>Delay</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6323"/>
+        <location filename="startide.py" line="6444"/>
         <source>Call</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6340"/>
+        <location filename="startide.py" line="6461"/>
         <source>Print</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6347"/>
+        <location filename="startide.py" line="6468"/>
         <source>BtnTxt</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="99"/>
+        <location filename="startide.py" line="106"/>
         <source>Variables</source>
         <translation>Variable</translation>
     </message>
     <message>
-        <location filename="startide.py" line="86"/>
+        <location filename="startide.py" line="93"/>
         <source>No Variables defined!</source>
         <translation>Keine Variablen definiert!</translation>
     </message>
     <message>
-        <location filename="startide.py" line="99"/>
+        <location filename="startide.py" line="106"/>
         <source>Select variable</source>
         <translation>Variable wählen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="3688"/>
+        <location filename="startide.py" line="3697"/>
         <source>Number</source>
         <translation>Zahl</translation>
     </message>
     <message>
-        <location filename="startide.py" line="3038"/>
+        <location filename="startide.py" line="3047"/>
         <source>QueryIn</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="3208"/>
+        <location filename="startide.py" line="3217"/>
         <source>IfInput</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4383"/>
+        <location filename="startide.py" line="4392"/>
         <source>Operator</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="3454"/>
+        <location filename="startide.py" line="3463"/>
         <source>WaitIn</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6278"/>
+        <location filename="startide.py" line="6399"/>
         <source>IfTimer</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6194"/>
+        <location filename="startide.py" line="6315"/>
         <source>Calc</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6296"/>
+        <location filename="startide.py" line="6417"/>
         <source>Interrupt</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="3912"/>
+        <location filename="startide.py" line="3921"/>
         <source>Time</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="3880"/>
+        <location filename="startide.py" line="3889"/>
         <source>Target module</source>
         <translation>Zielmodul</translation>
     </message>
     <message>
-        <location filename="startide.py" line="6160"/>
+        <location filename="startide.py" line="6281"/>
         <source>Variable</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="3941"/>
+        <location filename="startide.py" line="3950"/>
         <source>Variable name</source>
         <translation>Variablenname</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4011"/>
+        <location filename="startide.py" line="4020"/>
         <source>Name</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4043"/>
+        <location filename="startide.py" line="4052"/>
         <source>FromIn</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6181"/>
+        <location filename="startide.py" line="6302"/>
         <source>IfVar</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4366"/>
+        <location filename="startide.py" line="4375"/>
         <source>First Operand</source>
         <translation>Erster Operand</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4400"/>
+        <location filename="startide.py" line="4409"/>
         <source>Second Operand</source>
         <translation>Zweiter Operand</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4416"/>
+        <location filename="startide.py" line="4425"/>
         <source>Target variable</source>
         <translation>Zielvariable</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4469"/>
+        <location filename="startide.py" line="4478"/>
         <source>1st Op.</source>
         <translation>1. Operand</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4492"/>
+        <location filename="startide.py" line="4501"/>
         <source>2nd Op.</source>
         <translation>2. Operand</translation>
     </message>
     <message>
-        <location filename="startide.py" line="6123"/>
+        <location filename="startide.py" line="6244"/>
         <source>FromKeypad</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4676"/>
+        <location filename="startide.py" line="4685"/>
         <source>Min value</source>
         <translation>Minimum</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4693"/>
+        <location filename="startide.py" line="4702"/>
         <source>Max value</source>
         <translation>Maximum</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4764"/>
+        <location filename="startide.py" line="4773"/>
         <source>Min</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4796"/>
+        <location filename="startide.py" line="4805"/>
         <source>Max</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4639"/>
+        <location filename="startide.py" line="4648"/>
         <source>FromDial</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6136"/>
+        <location filename="startide.py" line="6257"/>
         <source>FromButtons</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4815"/>
+        <location filename="startide.py" line="4824"/>
         <source>Buttons</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="4845"/>
+        <location filename="startide.py" line="4854"/>
         <source>Up</source>
         <translation>Auf</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4852"/>
+        <location filename="startide.py" line="4861"/>
         <source>Dn</source>
         <translation>Ab</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4911"/>
+        <location filename="startide.py" line="4920"/>
         <source>Btn. Text</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6081"/>
+        <location filename="startide.py" line="6202"/>
         <source>IfIn</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6160"/>
+        <location filename="startide.py" line="6281"/>
         <source>QueryVar</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="6196"/>
+        <location filename="startide.py" line="6317"/>
         <source>No variables defined!</source>
         <translation>Keine Variablen definiert!</translation>
+    </message>
+    <message>
+        <location filename="startide.py" line="1880"/>
+        <source>CounterClear</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="startide.py" line="4179"/>
+        <source>counter</source>
+        <translation></translation>
     </message>
 </context>
 <context>
     <name>exec</name>
     <message>
-        <location filename="startide.py" line="339"/>
+        <location filename="startide.py" line="351"/>
         <source>TXT not found!
 Program terminated
 </source>
@@ -683,7 +698,7 @@ Program terminated
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="342"/>
+        <location filename="startide.py" line="354"/>
         <source>RoboIF not found!
 Program terminated
 </source>
@@ -691,7 +706,7 @@ Program terminated
 Programm abgebochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="360"/>
+        <location filename="startide.py" line="372"/>
         <source>MEnd found with-
 out Module!
 Program terminated
@@ -700,7 +715,7 @@ Program terminated
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="363"/>
+        <location filename="startide.py" line="375"/>
         <source>MEnd missing!
 Program terminated
 </source>
@@ -708,7 +723,7 @@ Program terminated
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="366"/>
+        <location filename="startide.py" line="378"/>
         <source>TXT M1 and O1/O2
 used in parallel!
 Program terminated
@@ -718,7 +733,7 @@ gleichtzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="369"/>
+        <location filename="startide.py" line="381"/>
         <source>TXT M2 and O3/O4
 used in parallel!
 Program terminated
@@ -728,7 +743,7 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="372"/>
+        <location filename="startide.py" line="384"/>
         <source>TXT M3 and O5/O6
 used in parallel!
 Program terminated
@@ -748,7 +763,7 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="378"/>
+        <location filename="startide.py" line="390"/>
         <source>RIF M1 and O1/O2
 used in parallel!
 Program terminated
@@ -758,7 +773,7 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="381"/>
+        <location filename="startide.py" line="393"/>
         <source>RIF M2 and O3/O4
 used in parallel!
 Program terminated
@@ -768,7 +783,7 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="384"/>
+        <location filename="startide.py" line="396"/>
         <source>RIF M3 and O5/O6
 used in parallel!
 Program terminated
@@ -788,7 +803,7 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="406"/>
+        <location filename="startide.py" line="418"/>
         <source>M3 and M4 not available
 on Robo LT!
 Program terminated
@@ -798,7 +813,7 @@ handen am Robo LT!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="409"/>
+        <location filename="startide.py" line="421"/>
         <source>O5 to O8 not available
 on Robo LT!
 Program terminated
@@ -808,7 +823,7 @@ handen am Robo LT!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="412"/>
+        <location filename="startide.py" line="424"/>
         <source>I4 to I8 not available
 on Robo LT!
 Program terminated
@@ -818,12 +833,12 @@ handen am Robo LT!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5567"/>
+        <location filename="startide.py" line="5678"/>
         <source>Message</source>
         <translation>Nachricht</translation>
     </message>
     <message>
-        <location filename="startide.py" line="345"/>
+        <location filename="startide.py" line="357"/>
         <source>ftduino not found!
 Program terminated
 </source>
@@ -831,7 +846,7 @@ Program terminated
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="390"/>
+        <location filename="startide.py" line="402"/>
         <source>FTD M1 and O1/O2
 used in parallel!
 Program terminated
@@ -841,7 +856,7 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="393"/>
+        <location filename="startide.py" line="405"/>
         <source>FTD M2 and O3/O4
 used in parallel!
 Program terminated
@@ -851,7 +866,7 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="396"/>
+        <location filename="startide.py" line="408"/>
         <source>FTD M3 and O5/O6
 used in parallel!
 Program terminated
@@ -871,7 +886,7 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="375"/>
+        <location filename="startide.py" line="387"/>
         <source>TXT M4 and O7/O8
 used in parallel!
 Program terminated
@@ -881,7 +896,7 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="387"/>
+        <location filename="startide.py" line="399"/>
         <source>RIF M4 and O7/O8
 used in parallel!
 Program terminated
@@ -891,7 +906,7 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="399"/>
+        <location filename="startide.py" line="411"/>
         <source>FTD M4 and O7/O8
 used in parallel!
 Program terminated
@@ -901,12 +916,12 @@ gleichzeitig belegt!
 Programm abgebrochen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="351"/>
+        <location filename="startide.py" line="363"/>
         <source>TXT analog I</source>
         <translation>TXT Eingang I</translation>
     </message>
     <message>
-        <location filename="startide.py" line="354"/>
+        <location filename="startide.py" line="366"/>
         <source>
 types inconsistent!
 Program terminated
@@ -916,12 +931,12 @@ Programm abgebrochen
 </translation>
     </message>
     <message>
-        <location filename="startide.py" line="348"/>
+        <location filename="startide.py" line="360"/>
         <source>External Module</source>
         <translation>Externes Modul</translation>
     </message>
     <message>
-        <location filename="startide.py" line="348"/>
+        <location filename="startide.py" line="360"/>
         <source>not found.
 Program terminated
 </source>
@@ -930,17 +945,17 @@ Programm abgebrochen
 </translation>
     </message>
     <message>
-        <location filename="startide.py" line="354"/>
+        <location filename="startide.py" line="366"/>
         <source>FTD analog I</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="357"/>
+        <location filename="startide.py" line="369"/>
         <source>FTD counter C</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="357"/>
+        <location filename="startide.py" line="369"/>
         <source>
 counter/distance mismatch!
 Program terminated
@@ -954,12 +969,12 @@ Programm abgebrochen
 <context>
     <name>m_about</name>
     <message>
-        <location filename="startide.py" line="5141"/>
+        <location filename="startide.py" line="5160"/>
         <source>About</source>
         <translation>Über</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5143"/>
+        <location filename="startide.py" line="5162"/>
         <source>A tiny IDE to control Robo Family Interfaces and TXT Hardware.</source>
         <translation>Eine Mini-IDE zum Steuern von Robo Interfaces und TXT Hardware.</translation>
     </message>
@@ -969,17 +984,17 @@ Programm abgebrochen
         <translation type="obsolete">Das Handbuch liegt im Webinterface unter &apos;Get more app info&apos;. </translation>
     </message>
     <message>
-        <location filename="startide.py" line="5143"/>
+        <location filename="startide.py" line="5162"/>
         <source>The manual is available in the TXT startIDE webinterface under &apos;Get more app info&apos;.</source>
         <translation>Das Handbuch ist im TXT startIDE webinterface unter &apos;Get more app info&apos; verfügbar.</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5152"/>
+        <location filename="startide.py" line="5171"/>
         <source>News</source>
         <translation>News</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5148"/>
+        <location filename="startide.py" line="5167"/>
         <source>Okay</source>
         <translation></translation>
     </message>
@@ -987,70 +1002,86 @@ Programm abgebrochen
 <context>
     <name>m_interfaces</name>
     <message>
-        <location filename="startide.py" line="5464"/>
+        <location filename="startide.py" line="5484"/>
         <source>No Robo device</source>
         <translation>Kein Robo Gerät</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5467"/>
+        <location filename="startide.py" line="5487"/>
         <source>No TXT device</source>
         <translation>Kein TXT Gerät</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5468"/>
+        <location filename="startide.py" line="5488"/>
         <source>TXT found</source>
         <translation>TXT gefunden</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5473"/>
+        <location filename="startide.py" line="5493"/>
         <source>Hardware found:</source>
         <translation>Gefundene Hardware:</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5475"/>
+        <location filename="startide.py" line="5495"/>
         <source>Interfaces</source>
         <translation>Interfaces</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5470"/>
+        <location filename="startide.py" line="5490"/>
         <source>No ftduino device</source>
         <translation>Kein ftduino</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5471"/>
+        <location filename="startide.py" line="5491"/>
         <source>found</source>
         <translation>gefunden</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5480"/>
+        <location filename="startide.py" line="5500"/>
         <source>Okay</source>
         <translation></translation>
+    </message>
+    <message>
+        <location filename="startide.py" line="5516"/>
+        <source>Enable IIF</source>
+        <translation>IIf aktivieren</translation>
+    </message>
+    <message>
+        <location filename="startide.py" line="5507"/>
+        <source>Enabling IIF with any device other than an Intelligent Interface connected to &apos;/dev/ttyUSB0&apos; will crash startIDE.</source>
+        <translation>Aktivieren des IIf ohne angeschlossenes Interface an /dev/ttyUSB0 führt zum Programmabsturz.</translation>
+    </message>
+    <message>
+        <location filename="startide.py" line="5513"/>
+        <source>Cancel</source>
+        <translation>Abbrechen
+</translation>
     </message>
 </context>
 <context>
     <name>m_modules</name>
     <message>
-        <location filename="startide.py" line="5324"/>
+        <location filename="startide.py" line="5343"/>
         <source>Import</source>
         <translation>Importieren</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5389"/>
+        <location filename="startide.py" line="5408"/>
         <source>Module</source>
         <translation>Modul</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5439"/>
+        <location filename="startide.py" line="5458"/>
         <source>No saved modules found.</source>
         <translation>Keine gespeicherten Module gefunden.</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5379"/>
+        <location filename="startide.py" line="5398"/>
         <source>Modules</source>
         <translation>Module</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5372"/>
+        <location filename="startide.py" line="5391"/>
         <source>MEnd found with-
 out Module!
 Please fix before export!
@@ -1059,7 +1090,7 @@ Please fix before export!
 Bitte vor Export reparieren!</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5381"/>
+        <location filename="startide.py" line="5400"/>
         <source>MEnd missing!
 Please fix before export!
 </source>
@@ -1067,42 +1098,42 @@ Please fix before export!
 Bitte vor Export reparieren!</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5408"/>
+        <location filename="startide.py" line="5427"/>
         <source>Export</source>
         <translation>Exportieren</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5393"/>
+        <location filename="startide.py" line="5412"/>
         <source>No modules found.</source>
         <translation>Keine Module gefunden.</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5410"/>
+        <location filename="startide.py" line="5429"/>
         <source>A module file with this name already exists. Do you want to overwrite it?</source>
         <translation>Ein Modul mit diesem Namen existiert schon. Überschreiben?</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5455"/>
+        <location filename="startide.py" line="5474"/>
         <source>Yes</source>
         <translation>Ja</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5452"/>
+        <location filename="startide.py" line="5471"/>
         <source>No</source>
         <translation>Nein</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5447"/>
+        <location filename="startide.py" line="5466"/>
         <source>Delete</source>
         <translation>Löschen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5449"/>
+        <location filename="startide.py" line="5468"/>
         <source>Do you really want to permanently delete this module?</source>
         <translation>Soll das Modul wirklich für immer gelöscht werden?</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5441"/>
+        <location filename="startide.py" line="5460"/>
         <source>Okay</source>
         <translation></translation>
     </message>
@@ -1110,82 +1141,82 @@ Bitte vor Export reparieren!</translation>
 <context>
     <name>m_project</name>
     <message>
-        <location filename="startide.py" line="5164"/>
+        <location filename="startide.py" line="5183"/>
         <source>Project</source>
         <translation>Projekt</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5184"/>
+        <location filename="startide.py" line="5203"/>
         <source>New</source>
         <translation>Neu</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5220"/>
+        <location filename="startide.py" line="5239"/>
         <source>Load</source>
         <translation>Laden</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5250"/>
+        <location filename="startide.py" line="5269"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5315"/>
+        <location filename="startide.py" line="5334"/>
         <source>Delete</source>
         <translation>Löschen</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5206"/>
+        <location filename="startide.py" line="5225"/>
         <source>Current project was not saved. Do you want to discard it?</source>
         <translation>Projekt ist nicht gespeichert. Soll es gelöscht werden?</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5295"/>
+        <location filename="startide.py" line="5314"/>
         <source>Yes</source>
         <translation>Ja</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5292"/>
+        <location filename="startide.py" line="5311"/>
         <source>No</source>
         <translation>Nein</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5279"/>
+        <location filename="startide.py" line="5298"/>
         <source>No saved projects found.</source>
         <translation>Keine gespeicherten Projekte.</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5241"/>
+        <location filename="startide.py" line="5260"/>
         <source>Enter project file name:</source>
         <translation>Projektnamen eingeben:</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5252"/>
+        <location filename="startide.py" line="5271"/>
         <source>A file with this name already exists. Do you want to overwrite it?</source>
         <translation>Ein Projekt mit diesem Namen existiert schon. Überschreiben?</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5289"/>
+        <location filename="startide.py" line="5308"/>
         <source>Do you really want to permanently delete this project?</source>
         <translation>Soll das Projekt wirklich für immer gelöscht werden?</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5302"/>
+        <location filename="startide.py" line="5321"/>
         <source>Modules</source>
         <translation>Module</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5313"/>
+        <location filename="startide.py" line="5332"/>
         <source>Import</source>
         <translation>Import</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5314"/>
+        <location filename="startide.py" line="5333"/>
         <source>Export</source>
         <translation>Export</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5281"/>
+        <location filename="startide.py" line="5300"/>
         <source>Okay</source>
         <translation></translation>
     </message>
@@ -1193,27 +1224,27 @@ Bitte vor Export reparieren!</translation>
 <context>
     <name>main</name>
     <message>
-        <location filename="startide.py" line="5562"/>
+        <location filename="startide.py" line="5610"/>
         <source>Close log</source>
         <translation>Schließe Log</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5062"/>
+        <location filename="startide.py" line="5074"/>
         <source>Up</source>
         <translation>Auf</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5066"/>
+        <location filename="startide.py" line="5078"/>
         <source>Dn</source>
         <translation>Ab</translation>
     </message>
     <message>
-        <location filename="startide.py" line="5619"/>
+        <location filename="startide.py" line="5730"/>
         <source>Start</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="startide.py" line="5621"/>
+        <location filename="startide.py" line="5732"/>
         <source>Stop</source>
         <translation></translation>
     </message>
@@ -1221,22 +1252,22 @@ Bitte vor Export reparieren!</translation>
 <context>
     <name>mmain</name>
     <message>
-        <location filename="startide.py" line="4981"/>
+        <location filename="startide.py" line="4993"/>
         <source>Project</source>
         <translation>Projekt</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4986"/>
+        <location filename="startide.py" line="4998"/>
         <source>Modules</source>
         <translation>Module</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4996"/>
+        <location filename="startide.py" line="5008"/>
         <source>About</source>
         <translation>Über</translation>
     </message>
     <message>
-        <location filename="startide.py" line="4991"/>
+        <location filename="startide.py" line="5003"/>
         <source>Interfaces</source>
         <translation></translation>
     </message>

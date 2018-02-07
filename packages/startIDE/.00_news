@@ -1,4 +1,6 @@
 News<hr>
+v1.1.0:(20180207)<br>Intelligent Interface support<hr>
+v1.0.8:<br>added TXT and FTD counters as input<hr>
 v1.0.7:<br>calc -> random added<hr>
 v1.0.5:<br>performance improvement<hr>
 v1.0.1:<br>reduced CPU load during wait commands<hr>

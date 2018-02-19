@@ -1,4 +1,7 @@
 News<hr>
+v1.2.0(20180219):<br>internal cleanup<hr>
+v1.1.3:<br>FromPoly command added<hr>
+v1.1.1:<br>div and digit operators for calc command<hr>
 v1.1.0:(20180207)<br>Intelligent Interface support<hr>
 v1.0.8:<br>added TXT and FTD counters as input<hr>
 v1.0.7:<br>calc -> random added<hr>

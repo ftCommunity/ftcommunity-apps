@@ -1096,35 +1096,35 @@ class FtcGuiApplication(TouchApplication):
         self.oPVal.setText(str(self.oPower.value()))
 
     def mB1_pressed(self):
-        self.act_duino.comm("motor_set M1 left "+str(self.oPower.value()))
+        self.act_duino.comm("motor_set M1 left "+str(self.mPower.value()))
     def mB1_released(self):
         self.act_duino.comm("motor_set M1 brake 0")
     def mB2_pressed(self):
-        self.act_duino.comm("motor_set M1 right "+str(self.oPower.value()))
+        self.act_duino.comm("motor_set M1 right "+str(self.mPower.value()))
     def mB2_released(self):
         self.act_duino.comm("motor_set M1 brake 0")
     def mB3_pressed(self):
-        self.act_duino.comm("motor_set M2 left "+str(self.oPower.value()))
+        self.act_duino.comm("motor_set M2 left "+str(self.mPower.value()))
     def mB3_released(self):
         self.act_duino.comm("motor_set M2 brake 0")
     def mB4_pressed(self):
-        self.act_duino.comm("motor_set M2 right "+str(self.oPower.value()))
+        self.act_duino.comm("motor_set M2 right "+str(self.mPower.value()))
     def mB4_released(self):
         self.act_duino.comm("motor_set M2 brake 0")
     def mB5_pressed(self):
-        self.act_duino.comm("motor_set M3 left "+str(self.oPower.value()))
+        self.act_duino.comm("motor_set M3 left "+str(self.mPower.value()))
     def mB5_released(self):
         self.act_duino.comm("motor_set M3 brake 0")
     def mB6_pressed(self):
-        self.act_duino.comm("motor_set M3 right "+str(self.oPower.value()))
+        self.act_duino.comm("motor_set M3 right "+str(self.mPower.value()))
     def mB6_released(self):
         self.act_duino.comm("motor_set M3 brake 0")
     def mB7_pressed(self):
-        self.act_duino.comm("motor_set M4 left "+str(self.oPower.value()))
+        self.act_duino.comm("motor_set M4 left "+str(self.mPower.value()))
     def mB7_released(self):
         self.act_duino.comm("motor_set M4 brake 0")
     def mB8_pressed(self):
-        self.act_duino.comm("motor_set M4 right "+str(self.oPower.value()))
+        self.act_duino.comm("motor_set M4 right "+str(self.mPower.value()))
     def mB8_released(self):
         self.act_duino.comm("motor_set M4 brake 0")
     def mPower_changed(self):

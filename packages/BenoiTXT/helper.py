@@ -15,7 +15,7 @@ except:
     print("aux: TouchStyle_version not found!")
     TouchStyle_version=0
 
-local = os.path.dirname(os.path.realpath(__file__)) + "/auxicon/"
+local = os.path.dirname(os.path.realpath(__file__)) + "/icons/"
 
 class myColorRequest(TouchDialog):
     """ 
@@ -170,7 +170,7 @@ class colorset(TouchDialog):
                     k.addLayout(c)
                     c=QHBoxLayout()
                 
-            self.b=PicButton(QPixmap(28,28))
+            self.b=TouchAuxPicButton(QPixmap(28,28))
             p=QPainter()
             p.begin(self.b.pixmap)
             if i<colcnt:
@@ -320,22 +320,22 @@ class colorset(TouchDialog):
         self.layout.addWidget(self.gridwidget)
         
         h=QHBoxLayout()
-        pb = PicButton(QPixmap(local+"../icons/palette.png"))
+        pb = TouchAuxPicButton(QPixmap(local+"../icons/palette.png"))
         pb.clicked.connect(self.set_palette)
         h.addWidget(pb)
         h.addStretch()        
         
-        pb = PicButton(QPixmap(local+"../icons/copy.png"))
+        pb = TouchAuxPicButton(QPixmap(local+"../icons/copy.png"))
         pb.clicked.connect(self.color_copy)
         h.addWidget(pb)
         h.addStretch()
  
-        pb = PicButton(QPixmap(local+"../icons/swap.png"))
+        pb = TouchAuxPicButton(QPixmap(local+"../icons/swap.png"))
         pb.clicked.connect(self.color_swap)
         h.addWidget(pb)
         h.addStretch()
         
-        pb = PicButton(QPixmap(local+"../icons/magic.png"))
+        pb = TouchAuxPicButton(QPixmap(local+"../icons/magic.png"))
         pb.clicked.connect(self.color_magic)
         h.addWidget(pb)
 

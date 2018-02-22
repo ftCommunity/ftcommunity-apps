@@ -4650,7 +4650,7 @@ class editFromPoly(TouchDialog):
         if self.cmdline.split()[1] in self.variables:
             self.target.setCurrentIndex(self.variables.index(self.cmdline.split()[1]))
         else:
-            self.operator.setCurrentIndex(0)
+            self.target.setCurrentIndex(0)
 
         h.addWidget(self.target)
 

@@ -457,7 +457,10 @@ class execThread(QThread):
                     self.FTD.comm("input_set_mode I"+str(i+1)+" Resistance")
                 elif ftd_it[i]==3:
                     self.FTD.comm("input_set_mode I"+str(i+1)+" Voltage")
-        
+                if i<4:
+                    if ftd_c[i]==1:
+                        self.FTD.comm("counter_set_mode C"+str(i+1)+" Any")
+                        
             if ftd_c[0]==2:
                 self.FTD.comm("ultrasonic_enable True")
             else:
@@ -748,7 +751,7 @@ class execThread(QThread):
         if stack[1]=="TXT":
             self.TXT.incrCounterCmdId(int(stack[2])-1)
         elif stack[1]=="FTD":
-            self.ftd.comm("counter_clear C"+stack[2])
+            a=self.FTD.comm("counter_clear C"+stack[2])
             
             
     def cmdQueryVar(self, stack):

@@ -1,14 +1,15 @@
 News<hr>
+v1.2.2:<br>bugfix in ftd counter<hr>
 v1.2.1:<br>bugfix in FromPoly GUI<hr>
-v1.2.0(20180219):<br>internal cleanup<hr>
+<b>v1.2.0(20180219):</b><br>internal cleanup<hr>
 v1.1.3:<br>FromPoly command added<hr>
 v1.1.1:<br>div and digit operators for calc command<hr>
-v1.1.0:(20180207)<br>Intelligent Interface support<hr>
+<b>v1.1.0:(20180207):</b><br>Intelligent Interface support<hr>
 v1.0.8:<br>added TXT and FTD counters as input<hr>
 v1.0.7:<br>calc -> random added<hr>
 v1.0.5:<br>performance improvement<hr>
 v1.0.1:<br>reduced CPU load during wait commands<hr>
-v1.0.0(20171231):<br>Celebrate New Year's Eve with the first release<hr>
+<b>v1.0.0(20171231):</b><br>Celebrate New Year's Eve with the first release<hr>
 v0.99.3-debug:<br>Synchronized on-screen logging<hr>
 v0.99.0-debug:<br>Introduction of runtime watchdog<hr>
 v0.94.3:<br> &ldquo;&lt;=&ldquo; and &ldquo;&gt;=&ldquo; implemented<hr>

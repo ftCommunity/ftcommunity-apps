@@ -164,11 +164,11 @@ author: Peter Habermehl
 icon: icon.png
 desc: Beginner IDE for simple models
 html: index.py
-url: https://github.com/PeterDHabermehl/startIDE/raw/master/ddoc/Manual_120_de.pdf
+url: https://github.com/PeterDHabermehl/startIDE/raw/master/ddoc/Manual_130_de.pdf
 exec: startide.py
 managed: yes
 uuid: 0e500e10-33ee-11e7-9598-0800200c9a66
-version: 1.2.2
+version: 1.3.1
 firmware: >=0.9.3
 desc_de: Einsteiger-IDE für einfache Modelle
 desc_fr: IDE d'entrée de gamme pour les modèles simples

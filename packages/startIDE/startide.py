@@ -19,6 +19,16 @@ try:
 except:
     FTDUINO_DIRECT=False
 
+try:
+    import RPi.GPIO as gpio
+    gpio.setmode(gpio.BOARD)
+    gpio.setup(12, gpio.IN, pull_up_down = gpio.PUD_UP)
+    gpio.setup(16, gpio.IN, pull_up_down = gpio.PUD_UP)
+    gpio.setup(18, gpio.IN, pull_up_down = gpio.PUD_UP)
+    GPIO=True
+except:
+    GPIO=False
+
 # set serial path for libroboint (i.e. to use Intelligent Interface on USB-Serial-Adapter)
 #RIFSERIAL="/dev/ttyUSB0"
 RIFSERIAL=""
@@ -165,6 +175,7 @@ class execThread(QThread):
         self.singlestep=False
         self.nextStep=False
         self.logging=False
+        self.silent=False
         
         self.requireTXT=False
         self.requireRIF=False
@@ -591,7 +602,8 @@ class execThread(QThread):
         elif stack[0]== "FromDial": self.cmdFromDial(stack)
         elif stack[0]== "FromButtons": self.cmdFromButtons(stack)
         elif stack[0]== "FromRIIR": self.cmdFromRIIR(stack)
-        elif stack[0]== "FromPoly": self.cmdFromPoly(stack) 
+        elif stack[0]== "FromPoly": self.cmdFromPoly(stack)
+        elif stack[0]== "FromSys":  self.cmdFromSys(stack)
         elif stack[0]== "QueryVar": self.cmdQueryVar(stack)
         elif stack[0]== "Calc":     self.cmdCalc(stack)
         elif stack[0]== "IfVar":    self.cmdIfVar(stack)
@@ -708,6 +720,49 @@ class execThread(QThread):
         if cc==len(self.memory):        
             self.halt=True
             self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated")  
+
+    def cmdFromSys(self, stack):
+        v=self.getVal(stack[1])   # Variable
+        
+        if stack[2]=="timer":
+            t=int((time.time()-self.timestamp)*1000)
+        elif stack[2]=="dispBtn":
+            if GPIO:
+                t=0
+                if(gpio.input(12) == 0): t=1
+                if(gpio.input(16) == 0): t=t + 10
+                if(gpio.input(18) == 0): t=t + 100
+            else:
+                t=-2
+        elif stack[2]=="RIIR":
+            try:
+                t=self.RIF.GetIR()
+            except:
+                t=-1
+        elif stack[2]=="hour":
+            t=int(time.strftime("%H"))
+        elif stack[2]=="minute":
+            t=int(time.strftime("%M"))        
+        elif stack[2]=="second":
+            t=int(time.strftime("%S")) 
+        elif stack[2]=="year":
+            t=int(time.strftime("%Y"))
+        elif stack[2]=="month":
+            t=int(time.strftime("%m"))        
+        elif stack[2]=="day":
+            t=int(time.strftime("%d"))
+        else:
+            t=-1
+        
+        cc=0
+        for i in self.memory:
+            if i[0]==stack[1]:
+                self.memory[cc][1] = t
+                break
+            cc=cc+1
+        if cc==len(self.memory):        
+            self.halt=True
+            self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated") 
         
     def cmdFromRIIR(self, stack):        
         try:
@@ -924,6 +979,10 @@ class execThread(QThread):
             self.cmdPrint("Variable '"+stack[4]+"'\nreferenced without\nInit!\nProgram terminated") 
             
     def cmdLog(self, stack):
+        if stack[1][0]=="S" or stack[1][0]=="s":
+            self.silent=True
+            stack[1]="1"
+            
         if stack[1]=="1" and not self.logging:
             self.logging=True
             try:
@@ -942,6 +1001,7 @@ class execThread(QThread):
                 
         elif stack[1]=="0":
             self.logging=False
+            self.silent=False
             try:
                 self.logfile.close()
             except:
@@ -1661,7 +1721,8 @@ class execThread(QThread):
     
     
     def cmdPrint(self, message):
-        self.msgOut(message)
+        if not self.silent:
+            self.msgOut(message)
         if self.logging:
             self.logfile.write(message+"\n")
          
@@ -4742,6 +4803,73 @@ class editFromPoly(TouchDialog):
         except:
             self.value.setText(a)
 
+class editFromSys(TouchDialog):
+    def __init__(self, cmdline, vari, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","FromSys"), parent)
+        
+        self.cmdline=cmdline
+        self.variables=vari
+    
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+        
+        self.layout=QVBoxLayout()
+        
+        #
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Data:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        f=["timer","hour","minute","second","year","month","day","RIIR","dispBtn"]
+        self.data=QComboBox()
+        self.data.setStyleSheet("font-size: 18px;")
+        self.data.addItems(f)
+
+        if self.cmdline.split()[2] in f:
+            self.data.setCurrentIndex(f.index(self.cmdline.split()[2]))
+        else:
+            self.data.setCurrentIndex(0)        
+
+        h.addWidget(self.data)
+        
+        self.layout.addLayout(h)
+
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Target:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.target=QComboBox()
+        self.target.setStyleSheet("font-size: 18px;")
+        self.target.addItems(self.variables)
+
+        if self.cmdline.split()[1] in self.variables:
+            self.target.setCurrentIndex(self.variables.index(self.cmdline.split()[1]))
+        else:
+            self.target.setCurrentIndex(0)
+
+        h.addWidget(self.target)
+
+        self.layout.addLayout(h)
+        self.layout.addStretch()
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+
+    def on_confirm(self):
+        self.cmdline="FromSys " +self.target.itemText(self.target.currentIndex())
+        self.cmdline=self.cmdline + " " + self.data.itemText(self.data.currentIndex())
+
+        self.close()
+    
 
 class editFromKeypad(TouchDialog):
     def __init__(self, cmdline, vari, parent=None):
@@ -6066,7 +6194,8 @@ class FtcGuiApplication(TouchApplication):
                                         QCoreApplication.translate("addcodeline","FromKeypad"),
                                         QCoreApplication.translate("addcodeline","FromDial"),
                                         QCoreApplication.translate("addcodeline","FromButtons"),
-                                        QCoreApplication.translate("addcodeline","FromPoly")
+                                        QCoreApplication.translate("addcodeline","FromPoly"),
+                                        QCoreApplication.translate("addcodeline","FromSys")
                                     ])
                     ftb.setTextSize(3)
                     try:
@@ -6082,6 +6211,7 @@ class FtcGuiApplication(TouchApplication):
                     elif p2==QCoreApplication.translate("addcodeline","FromDial"): self.acl_fromDial()
                     elif p2==QCoreApplication.translate("addcodeline","FromButtons"): self.acl_fromButtons()
                     elif p2==QCoreApplication.translate("addcodeline","FromPoly"): self.acl_fromPoly()
+                    elif p2==QCoreApplication.translate("addcodeline","FromSys"): self.acl_fromSys()
                     
                 elif p==QCoreApplication.translate("addcodeline","Shelf"):      self.acl_shelf()
                 elif p==QCoreApplication.translate("addcodeline","QueryVar"):   self.acl_queryVar()  
@@ -6226,6 +6356,9 @@ class FtcGuiApplication(TouchApplication):
     
     def acl_fromPoly(self):
         self.acl("FromPoly integer 1 1 1 1 1")
+    
+    def acl_fromSys(self):
+        self.acl("FromSys integer timer")
         
     def acl_queryVar(self):
         self.acl("QueryVar x")
@@ -6297,6 +6430,7 @@ class FtcGuiApplication(TouchApplication):
         ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Logfile"), self.mainwindow)
         ftb.setButtons([ QCoreApplication.translate("addcodeline","Log On"),
                             QCoreApplication.translate("addcodeline","Log Off"),
+                            QCoreApplication.translate("addcodeline","Log Silent"),
                             QCoreApplication.translate("addcodeline","Log Clear")
                         ]
                         )
@@ -6306,6 +6440,7 @@ class FtcGuiApplication(TouchApplication):
         if t:
             if   p == QCoreApplication.translate("addcodeline","Log On"):   self.acl("Log 1")
             elif p == QCoreApplication.translate("addcodeline","Log Off"):  self.acl("Log 0")
+            elif p == QCoreApplication.translate("addcodeline","Log Silent"):  self.acl("Log silent")
             elif p == QCoreApplication.translate("addcodeline","Log Clear"):self.acl("Log Clear")
     
     def acl_clear(self):
@@ -6364,6 +6499,7 @@ class FtcGuiApplication(TouchApplication):
         elif stack[0] == "FromDial":   itm=self.ecl_fromDial(itm, vari)
         elif stack[0] == "FromButtons": itm=self.ecl_fromButtons(itm, vari)
         elif stack[0] == "FromPoly":   itm=self.ecl_fromPoly(itm, vari)
+        elif stack[0] == "FromSys":    itm=self.ecl_fromSys(itm, vari)
         elif stack[0] == "QueryVar":   itm=self.ecl_queryVar(itm, vari)
         elif stack[0] == "IfVar":      itm=self.ecl_ifVar(itm, vari)
         elif stack[0] == "Calc":       itm=self.ecl_calc(itm, vari)
@@ -6479,6 +6615,19 @@ class FtcGuiApplication(TouchApplication):
             return itm
         
         return editFromPoly(itm, varlist, self.mainwindow).exec_()
+
+    def ecl_fromSys(self, itm, varlist):
+        if len(varlist)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","FromSys"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+            return itm
+        
+        return editFromSys(itm, varlist, self.mainwindow).exec_()
 
     def ecl_fromKeypad(self, itm, varlist):
         if len(varlist)==0:

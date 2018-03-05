@@ -1,4 +1,6 @@
 News<hr>
+v1.3.1:<br>Bugfix in FromSys dispBtn<hr>
+<b>v1.3.0(20180227):</b><br>Added FromSys and Log silent<hr>
 v1.2.2:<br>bugfix in ftd counter<hr>
 v1.2.1:<br>bugfix in FromPoly GUI<hr>
 <b>v1.2.0(20180219):</b><br>internal cleanup<hr>

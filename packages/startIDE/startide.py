@@ -215,6 +215,7 @@ class execThread(QThread):
         ftdanaloginputfailure=""
         ftdcounterinputfailure=""
         extmodfailure=False
+        RS=False
         
         for line in self.codeList:
             a=line.split()
@@ -250,10 +251,15 @@ class execThread(QThread):
             #
             # configure i/o of the devices:
             #
-            
+            if a[0]=="RIFShift":
+                if int(a[1])>0:
+                    RS=True
+                else:
+                    RS=False
+                    
             if len(a)>2:
                 if ("Output"==a[0]) or ("WaitIn" in a[0]) or ("IfIn" in a[0]) or ("Motor" in a[0]) or ("QueryIn"==a[0]) or ("FromIn"==a[0]):
-                    if a[1]=="RIF": 
+                    if a[1]=="RIF" and RS==False: 
                         if ("Motor" in a[0]):
                             rif_m[int(a[2])-1]=True
                         elif ("Output" in a[0]):
@@ -480,6 +486,7 @@ class execThread(QThread):
         # und los gehts
         
         self.cce=False #complete confusion error
+        self.RIFShift=0
         
         if not self.halt:
             self.msgOut("<Start>")
@@ -489,7 +496,7 @@ class execThread(QThread):
         self.interrupt=-1
         self.timestamp=time.time()
         
-        try:
+        if 1: #try:
             while not self.halt and self.count<len(self.codeList):
                 line=self.codeList[self.count]
                 if self.trace: self.cmdPrint(str(self.count)+":"+line)
@@ -502,10 +509,10 @@ class execThread(QThread):
                     
                 self.count=self.count+1
                 self.parent.processEvents()
-        except:
+        else: #except:
             self.cce=True
             self.halt=True
-        
+                
         if not self.halt: self.msgOut("<End>")
         else: 
             if self.cce: self.msgOut("CompleteConfusionError\nin line "+str(self.count)+":\n"+self.codeList[self.count])
@@ -516,10 +523,15 @@ class execThread(QThread):
         except:
             pass
         
-        if self.RIF!=None:
-            for i in range(1,9):
-                self.RIF.SetOutput(i,0)
+        self.cmdCanvas("Canvas hide")
         
+        if self.RIF!=None:
+            try:
+                for i in range(1,33):
+                    self.RIF.SetOutput(i,0)
+            except:
+                pass
+            
         if self.TXT!=None:
             for i in range(0,8):
                 self.TXT.setPwm(i,0)
@@ -608,8 +620,9 @@ class execThread(QThread):
         elif stack[0]== "Calc":     self.cmdCalc(stack)
         elif stack[0]== "IfVar":    self.cmdIfVar(stack)
         elif stack[0]== "Tag":      pass
-        elif stack[0]== "Canvas":   self.cmdCanvas(stack)
+        elif stack[0]== "Canvas":   self.cmdCanvas(line)
         elif stack[0]== "CounterClear": self.cmdCounterClear(stack)
+        elif stack[0]== "RIFShift": self.RIFShift=int(stack[1])
         
         else:
             self.cmdPrint("DontKnowWhatToDo\nin line:\n"+line)
@@ -649,8 +662,8 @@ class execThread(QThread):
             self.interrupt=time.time()+self.interruptTime
             self.interruptCommand="Call "+stack[3]+" 1"
              
-    def cmdCanvas(self, stack):
-       self.canvasSig.emit(stack[1]) 
+    def cmdCanvas(self, line):
+       self.canvasSig.emit(line) 
     
     def cmdInit(self,a):
         if len(a)<3: a.append("0")
@@ -926,7 +939,7 @@ class execThread(QThread):
         
         if stack[1] == "RIF":
             if stack[3]=="S":
-                v=str(self.RIF.Digital(int(stack[2])))
+                v=str(self.RIF.Digital(int(stack[2])+self.RIFShift*8))
             elif stack[3]=="V":
                 if stack[2]=="1":
                     v=str(self.RIF.GetA1()*10)
@@ -934,7 +947,14 @@ class execThread(QThread):
                     v=str(self.RIF.GetA2()*10)
             elif stack[3]=="R":
                 if stack[2]=="X":
-                    v=str(self.RIF.GetAX())
+                    if self.RIFShift==0:
+                        v=str(self.RIF.GetAX())
+                    elif self.RIFShift==1:
+                        v=str(self.RIF.GetAX_Slave1())
+                    elif self.RIFShift==2:
+                        v=str(self.RIF.GetAX_Slave2())
+                    elif self.RIFShift==3:
+                        v=str(self.RIF.GetAX_Slave3())
                 elif stack[2]=="Y":
                     v=str(self.RIF.GetAY())
             elif stack[3]=="D":
@@ -1031,7 +1051,7 @@ class execThread(QThread):
         
         if stack[1] == "RIF":
             if stack[3]=="S":
-                v=str(self.RIF.Digital(int(stack[2])))
+                v=str(self.RIF.Digital(int(stack[2])+8*self.RIFShift))
             elif stack[3]=="V":
                 if stack[2]=="1":
                     v=str(self.RIF.GetA1()*10)
@@ -1039,7 +1059,14 @@ class execThread(QThread):
                     v=str(self.RIF.GetA2()*10)
             elif stack[3]=="R":
                 if stack[2]=="X":
-                    v=str(self.RIF.GetAX())
+                    if self.RIFShift==0:
+                        v=str(self.RIF.GetAX())
+                    elif self.RIFShift==1:
+                        v=str(self.RIF.GetAX_Slave1())
+                    elif self.RIFShift==2:
+                        v=str(self.RIF.GetAX_Slave2())
+                    elif self.RIFShift==3:
+                        v=str(self.RIF.GetAX_Slave3())
                 elif stack[2]=="Y":
                     v=str(self.RIF.GetAY())
             elif stack[3]=="D":
@@ -1080,7 +1107,7 @@ class execThread(QThread):
         if self.halt: return
         
         if stack[1]=="RIF":
-            self.RIF.SetOutput(int(stack[2]),v)
+            self.RIF.SetOutput(int(stack[2])+8*self.RIFShift,v)
         elif stack[1]=="TXT":
             self.txt_o[int(stack[2])-1].setLevel(v)
         elif stack[1]=="FTD":
@@ -1091,7 +1118,7 @@ class execThread(QThread):
         if self.halt: return
         
         if stack[1]=="RIF":
-            self.RIF.SetMotor(int(stack[2]),stack[3], v)
+            self.RIF.SetMotor(int(stack[2])+4*self.RIFShift,stack[3], v)
         elif stack[1]=="TXT": # TXT
             if stack[3]=="s":
                 self.txt_m[int(stack[2])-1].stop()
@@ -1172,6 +1199,10 @@ class execThread(QThread):
         if self.halt: return
         
         if stack[1]=="RIF":
+            e=e+8*self.RIFShift
+            p=p+8*self.RIFShift
+            m=m+4*self.RIFShift
+            
             if e>-1:
                 if d=="l" and self.RIF.Digital(e): return
             
@@ -1427,20 +1458,21 @@ class execThread(QThread):
                 self.tAct=True
 
         if stack[1]=="RIF":
+            inp=int(stack[2])+8*self.RIFShift
             if stack[3]=="Raising":
-                a=self.RIF.Digital(int(stack[2]))
+                a=self.RIF.Digital(inp)
                 b=a
                 while not (b<a or self.halt or self.tOut ): 
                     b=a
-                    a=self.RIF.Digital(int(stack[2]))
+                    a=self.RIF.Digital(inp)
                     self.parent.processEvents()
                     time.sleep(0.001)
             elif stack[3]=="Falling":
-                a=self.RIF.Digital(int(stack[2]))
+                a=self.RIF.Digital(inp)
                 b=a
                 while not (b>a or self.halt or self.tOut ): 
                     b=a
-                    a=self.RIF.Digital(int(stack[2]))
+                    a=self.RIF.Digital(inp)
                     self.parent.processEvents()
                     time.sleep(0.001)
         elif stack[1]=="TXT": # TXT
@@ -1511,7 +1543,7 @@ class execThread(QThread):
             self.parent.processEvents()
             if stack[1] == "RIF":
                 if stack[3]=="S":
-                    v=float(self.RIF.Digital(int(stack[2])))
+                    v=float(self.RIF.Digital(int(stack[2])+8*self.RIFShift))
                 elif stack[3]=="V":
                     if stack[2]=="1":
                         v=float(self.RIF.GetA1())*10
@@ -1519,7 +1551,14 @@ class execThread(QThread):
                         v=float(self.RIF.GetA2())*10
                 elif stack[3]=="R":
                     if stack[2]=="X":
-                        v=float(self.RIF.GetAX())
+                        if self.RIFShift==0:
+                            v=float(self.RIF.GetAX())
+                        if self.RIFShift==1:
+                            v=float(self.RIF.GetAX_Slave1())
+                        if self.RIFShift==2:
+                            v=float(self.RIF.GetAX_Slave2())
+                        if self.RIFShift==3:
+                            v=float(self.RIF.GetAX_Slave3())
                     elif stack[2]=="Y":
                         v=float(self.RIF.GetAY())
                 elif stack[3]=="D":
@@ -1551,7 +1590,7 @@ class execThread(QThread):
                 elif stack[3]=="D":
                     v=float(self.FTD.comm("ultrasonic_get"))
                 elif stack[3]=="C":
-                    v=self.FTD.comm("counter_get c"+stack[2])
+                    v=float(self.FTD.comm("counter_get c"+stack[2]))
         
             val=float(self.getVal(stack[5]))
             if self.halt: return
@@ -1573,7 +1612,8 @@ class execThread(QThread):
     
     def cmdIfInputDig(self,stack):
         if stack[1]=="RIF":
-            if (stack[3]=="True" and self.RIF.Digital(int(stack[2]))) or (stack[3]=="False" and not self.RIF.Digital(int(stack[2]))):
+            k=self.RIF.Digital(int(stack[2])+8*self.RIFShift)
+            if (stack[3]=="True" and k) or (stack[3]=="False" and not k):
                 n=-1
                 for line in self.jmpTable:
                     if stack[4]==line[0]: n=line[1]-1
@@ -1614,7 +1654,7 @@ class execThread(QThread):
         
         if stack[1] == "RIF":
             if stack[3]=="S":
-                v=float(self.RIF.Digital(int(stack[2])))
+                v=float(self.RIF.Digital(int(stack[2])+8*self.RIFShift))
             elif stack[3]=="V":
                 if stack[2]=="1":
                     v=float(self.RIF.GetA1())*10
@@ -1622,7 +1662,14 @@ class execThread(QThread):
                     v=float(self.RIF.GetA2())*10
             elif stack[3]=="R":
                 if stack[2]=="X":
-                    v=float(self.RIF.GetAX())
+                    if self.RIFShift==0:
+                        v=float(self.RIF.GetAX())
+                    if self.RIFShift==1:
+                        v=float(self.RIF.GetAX_Slave1())
+                    if self.RIFShift==2:
+                        v=float(self.RIF.GetAX_Slave2())
+                    if self.RIFShift==3:
+                        v=float(self.RIF.GetAX_Slave3())
                 elif stack[2]=="Y":
                     v=float(self.RIF.GetAY())
             elif stack[3]=="D":
@@ -1654,7 +1701,7 @@ class execThread(QThread):
             elif stack[3]=="D":
                 v=float(self.FTD.comm("ultrasonic_get"))
             elif stack[3]=="C":
-                v=self.FTD.comm("counter_get c"+stack[2])
+                v=float(self.FTD.comm("counter_get c"+stack[2]))
     
         val=float(self.getVal(stack[5]))
         if self.halt: return
@@ -5975,64 +6022,67 @@ class FtcGuiApplication(TouchApplication):
         
     def canvasSig(self, stack):
         s=stack.split()
-        if s[0]=="show": self.canvas.show()
-        elif s[0]=="hide": self.canvas.hide()
-        elif s[0]=="square":
+        self.pred=255
+        self.pgreen=255
+        self.pblue=255
+        if s[1]=="show": self.canvas.show()
+        elif s[1]=="hide": self.canvas.hide()
+        elif s[1]=="square":
             canvasSize=min(self.mainwindow.width(),self.mainwindow.height())
             self.canvas.setGeometry(0, 0, canvasSize, canvasSize)
             self.canvas.setPixmap(QPixmap(canvasSize, canvasSize))
-        elif s[0]=="full":
+        elif s[1]=="full":
             self.canvas.setGeometry(0, 0, self.mainwindow.width(), self.mainwindow.height())
             self.canvas.setPixmap(QPixmap(self.mainwindow.width(), self.mainwindow.height()))
-        elif s[0]=="clear":
-            self.canvas.setPixmap(QPixmap(self.mainwindow.width(), self.mainwindow.height()))
+        elif s[1]=="clear":
+            self.canvas.setPixmap(QPixmap(self.canvas.width(), self.canvas.height()))
             pm=self.canvas.pixmap() #QPixmap(self.canvas.width(), self.canvas.height())
             p=QPainter()
             p.begin(pm)
-            p.setPen(QtGui.QColor(255, 0, 0, 0))
-            p.setBackgroundMode(0)
-            p.drawRect(0,0,pm.width(),pm.height())
+            p.setPen(QtGui.QColor(0,0,0,255))
+            p.setBackgroundMode(Qt.TransparentMode)
+            p.fillRect(0,0,pm.width(),pm.height(),QtGui.QColor(50,125,195,255))
             p.end()
-        elif s[0]=="plot":
+        elif s[1]=="plot":
             pm=self.canvas.pixmap()
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
-            self.xpos=int(s[1])
-            self.ypos=int(s[2])
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
             p.drawPoint(self.xpos,self.ypos)
             p.end()
-        elif s[0]=="lineTo":
+        elif s[1]=="lineTo":
             pm=self.canvas.pixmap()
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
             ax=self.xpos
             ay=self.ypos
-            self.xpos=int(s[1])
-            self.ypos=int(s[2])
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
             p.drawLine(ax,ay,self.xpos,self.ypos)
             p.end()  
-        elif s[0]=="rectTo":
+        elif s[1]=="rectTo":
             pm=self.canvas.pixmap()
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
             ax=self.xpos
             ay=self.ypos
-            self.xpos=int(s[1])
-            self.ypos=int(s[2])
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
             p.drawRect(ax,ay,self.xpos-ax,self.ypos-ay)
             p.end() 
-        elif s[0]=="boxTo":
+        elif s[1]=="boxTo":
             pm=self.canvas.pixmap()
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
             ax=self.xpos
             ay=self.ypos
-            self.xpos=int(s[1])
-            self.ypos=int(s[2])
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
             p.fillRect(ax,ay,self.xpos-ax,self.ypos-ay)
             p.end() 
             
@@ -6225,7 +6275,8 @@ class FtcGuiApplication(TouchApplication):
                              QCoreApplication.translate("addcodeline","Jump"),
                              QCoreApplication.translate("addcodeline","LoopTo"),
                              QCoreApplication.translate("addcodeline","Time"),
-                             QCoreApplication.translate("addcodeline","Stop")
+                             QCoreApplication.translate("addcodeline","Stop"),
+                             QCoreApplication.translate("addcodeline","RIFShift")
                             ]
                           )
             ftb.setTextSize(3)
@@ -6262,6 +6313,7 @@ class FtcGuiApplication(TouchApplication):
                         elif p==QCoreApplication.translate("addcodeline","QueryNow"):
                             self.acl_queryNow()
                 elif p==QCoreApplication.translate("addcodeline","Stop"):       self.acl_stop()
+                elif p==QCoreApplication.translate("addcodeline","RIFShift"):   self.acl_rifshift()
         
         elif r==QCoreApplication.translate("addcodeline","Modules"):
             ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Modules"), self.mainwindow)
@@ -6445,6 +6497,9 @@ class FtcGuiApplication(TouchApplication):
     
     def acl_clear(self):
         self.acl("Clear")
+
+    def acl_rifshift(self):
+        self.acl("RIFShift 0")
     
     def remCodeLine(self):
         row=self.proglist.currentRow()
@@ -6518,6 +6573,7 @@ class FtcGuiApplication(TouchApplication):
         elif stack[0] == "QueryIn" or stack[0]=="Query":    itm=self.ecl_queryIn(itm)
         elif stack[0] == "Message":    itm=self.ecl_message(itm)
         elif stack[0] == "Request":    itm=self.ecl_request(itm)
+        elif stack[0] == "RIFShift":   itm=self.ecl_rifshift(itm)
         
         self.proglist.setCurrentRow(crow)
         self.proglist.item(crow).setText(itm)
@@ -6872,6 +6928,18 @@ class FtcGuiApplication(TouchApplication):
     
     def ecl_request(self, itm):
         return itm
+    
+    def ecl_rifshift(self, itm):
+        num=str(itm.split()[1])
+            
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","RIFShift"),num,self.mainwindow).exec_()
+        try:
+            v=max(min(int(t),3),0)
+        except:
+            v=num
+        
+        return "RIFShift "+str(v)
+
 
 #
 # and the initial application launch

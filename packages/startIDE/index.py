@@ -182,8 +182,9 @@ def uploader(obj:str, fileitem):
     
     try:
         if len(obj)<2:
-            open(filename, 'wb', encoding="utf-8").write(fileitem.file.read())
-            os.chmod(filename,0o666)
+            with open(filename, 'w', encoding="utf-8") as f:
+                f.write(fileitem.file.read().decode())
+            f.close()
         else:
             stack=[]
             for line in fileitem.file:
@@ -192,7 +193,7 @@ def uploader(obj:str, fileitem):
             with open(filename, 'w', encoding="utf-8") as f:
                 json.dump(stack,f)
             f.close()
-            os.chmod(filename,0o666)
+        os.chmod(filename,0o666)
         
         mainpage()
     except:

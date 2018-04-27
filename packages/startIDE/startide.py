@@ -164,7 +164,9 @@ class execThread(QThread):
         
         self.parent.msgBack.connect(self.msgBack)
         self.parent.IMsgBack.connect(self.IMsgBack)
+        self.parent.gfxData.connect(self.gfxData)
         self.parent.stop.connect(self.stop)
+        self.parent.canvasReturn.connect(self.onCanvasReturn)
         
     def run(self):
         
@@ -190,6 +192,8 @@ class execThread(QThread):
         self.impmod=[]
         self.memory=[]
         
+        self.getCanvasData()
+
         cnt=0
         mcnt=0
         
@@ -558,6 +562,17 @@ class execThread(QThread):
     
     def IMsgBack(self,var):
         self.imesg=var
+    
+    def gfxData(self, xr, yr, xp, yp, pred, pgreen, pblue):
+        self.CxRes = xr
+        self.CyRes = yr
+        self.CxPos = xp
+        self.CyPos = yp
+        self.CpRed = pred
+        self.CpGreen = pgreen
+        self.CpBlue = pblue
+        self.msg=1
+        self.can=1
         
     def parseLine(self,line):
         stack=line.split()
@@ -621,6 +636,10 @@ class execThread(QThread):
         elif stack[0]== "IfVar":    self.cmdIfVar(stack)
         elif stack[0]== "Tag":      pass
         elif stack[0]== "Canvas":   self.cmdCanvas(line)
+        elif stack[0]== "Pen":      self.cmdPen(line)
+        elif stack[0]== "Color":    self.cmdColor(line)
+        elif stack[0]== "Text":     self.cmdText(line)
+        elif stack[0]== "VarToText": self.cmdVarToText(line)
         elif stack[0]== "CounterClear": self.cmdCounterClear(stack)
         elif stack[0]== "RIFShift": self.RIFShift=int(stack[1])
         
@@ -662,9 +681,45 @@ class execThread(QThread):
             self.interrupt=time.time()+self.interruptTime
             self.interruptCommand="Call "+stack[3]+" 1"
              
-    def cmdCanvas(self, line):
-       self.canvasSig.emit(line) 
+    def waitForCanvasReturn(self):
+        while self.can==0:
+            self.parent.processEvents()
+            #pass
+            
+    def onCanvasReturn(self):
+        self.can=1
     
+    def cmdCanvas(self, line):
+        self.can=0
+        self.canvasSig.emit(line) 
+        self.waitForCanvasReturn()
+    
+    def cmdPen(self, line):
+        self.can=0
+        l=line.split()
+        nl=l[0]+" "+l[1]+" "+str(self.getVal(l[2]))+" "+str(self.getVal(l[3]))
+        self.canvasSig.emit(nl)
+        self.waitForCanvasReturn()
+        
+    def cmdColor(self, line):
+        self.can=0
+        l=line.split()
+        nl=l[0]+" "+l[1]+" "+str(self.getVal(l[2]))+" "+str(self.getVal(l[3]))+" "+str(self.getVal(l[4]))
+        self.canvasSig.emit(nl)
+        self.waitForCanvasReturn()
+        
+    def cmdText(self, line):
+        self.can=0
+        self.canvasSig.emit(line)
+        self.waitForCanvasReturn()
+        
+    def cmdVarToText(self, line):
+        self.can=0
+        l=line.split()
+        nl="Text " + l[1] + " " + l[2] + " " + str(self.getVal(l[3]))
+        self.canvasSig.emit(nl)
+        self.waitForCanvasReturn()
+        
     def cmdInit(self,a):
         if len(a)<3: a.append("0")
         cc=0
@@ -764,6 +819,27 @@ class execThread(QThread):
             t=int(time.strftime("%m"))        
         elif stack[2]=="day":
             t=int(time.strftime("%d"))
+        elif stack[2]=="CxRes":
+            self.getCanvasData()
+            t=self.CxRes
+        elif stack[2]=="CyRes":
+            self.getCanvasData()
+            t=self.CyRes
+        elif stack[2]=="CxPos":
+            self.getCanvasData()
+            t=self.CxPos
+        elif stack[2]=="CyPos":
+            self.getCanvasData()
+            t=self.CyPos
+        elif stack[2]=="CpRed":
+            self.getCanvasData()
+            t=self.CpRed
+        elif stack[2]=="CpGreen":
+            self.getCanvasData()
+            t=self.CpGreen
+        elif stack[2]=="CpBlue":
+            self.getCanvasData()
+            t=self.CpBlue
         else:
             t=-1
         
@@ -776,7 +852,13 @@ class execThread(QThread):
         if cc==len(self.memory):        
             self.halt=True
             self.cmdPrint("Variable '"+stack[1]+"'\nreferenced without\nInit!\nProgram terminated") 
-        
+    
+    def getCanvasData(self):
+        self.msg=0
+        self.canvasSig.emit("requestData")
+        while self.msg==0:
+            self.parent.processEvents()
+    
     def cmdFromRIIR(self, stack):        
         try:
             t=self.RIF.GetIR()
@@ -4872,7 +4954,9 @@ class editFromSys(TouchDialog):
         l.setStyleSheet("font-size: 18px;")
         
         h.addWidget(l)
-        f=["timer","hour","minute","second","year","month","day","RIIR","dispBtn"]
+        f=["timer","hour","minute","second","year","month","day",
+           "RIIR","dispBtn",
+           "CxRes","CyRes","CxPos","CyPos","CpRed","CpGreen","CpBlue"]
         self.data=QComboBox()
         self.data.setStyleSheet("font-size: 18px;")
         self.data.addItems(f)
@@ -4917,7 +5001,6 @@ class editFromSys(TouchDialog):
 
         self.close()
     
-
 class editFromKeypad(TouchDialog):
     def __init__(self, cmdline, vari, parent=None):
         TouchDialog.__init__(self, QCoreApplication.translate("ecl","FromKeypad"), parent)
@@ -5340,6 +5423,647 @@ class editFromButtons(TouchDialog):
         for i in range(0,self.buttons.count()):
             self.cmdline=self.cmdline + " " + self.buttons.item(i).text()
         
+class editPen(TouchDialog):
+    def __init__(self, cmdline, vari, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","Pen"), parent)
+        
+        self.cmdline=cmdline
+        self.variables=vari
+    
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.timedOut)
+        
+        self.layout=QVBoxLayout()
+
+        l=QLabel(QCoreApplication.translate("ecl", "Operation"))
+        l.setStyleSheet("font-size: 18px;")
+        self.layout.addWidget(l)
+        
+        self.operator=QComboBox()
+        self.operator.setStyleSheet("font-size: 18px;")
+        oplist=["move","plot","lineTo","rectTo","boxTo","eraseTo","circleTo","discTo","areaAdd","areaDraw","text"]
+        self.operator.addItems(oplist)
+        if self.cmdline.split()[1] in oplist:
+            self.operator.setCurrentIndex(oplist.index(self.cmdline.split()[1]))
+        else:
+            self.operator.setCurrentIndex(0)
+        
+        self.layout.addWidget(self.operator)
+        
+        self.layout.addStretch()
+        l=QLabel(QCoreApplication.translate("ecl", "x position"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        self.layout.addWidget(l)
+        
+        self.value=QLineEdit()
+        self.value.setReadOnly(True)
+        self.value.setStyleSheet("font-size: 18px;")
+            
+        self.value.setText(self.cmdline.split()[2])
+        
+        self.value.mousePressEvent=self.valPress
+        self.value.mouseReleaseEvent=self.valRelease
+        self.layout.addWidget(self.value)
+        
+        self.layout.addStretch()
+        
+        l=QLabel(QCoreApplication.translate("ecl", "y position"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        self.layout.addWidget(l)
+        
+        self.value2=QLineEdit()
+        self.value2.setReadOnly(True)
+        self.value2.setStyleSheet("font-size: 18px;")
+            
+        self.value2.setText(self.cmdline.split()[3])
+        self.value2.mousePressEvent=self.val2Press
+        self.value2.mouseReleaseEvent=self.val2Release
+        self.layout.addWidget(self.value2)        
+        
+        self.layout.addStretch()
+        
+
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+    
+    def on_confirm(self):
+        self.cmdline="Pen " +self.operator.itemText(self.operator.currentIndex()) + " " + self.value.text()
+        self.cmdline=self.cmdline + " " + self.value2.text()
+        
+        self.close()
+    
+    def ifChanged(self):
+        self.valueChanged()
+    
+    def valPress(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btn=1
+        self.btnTimedOut=False
+        self.timer.start(500)
+    
+    def timedOut(self):
+        self.btnTimedOut=True
+        self.timer.stop()
+        if self.btn==1: self.value.setText(queryVarName(self.variables,self.value.text()))  
+        else:           self.value2.setText(queryVarName(self.variables,self.value2.text())) 
+            
+    def valRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            try:
+                int(self.value.text())
+            except:
+                self.value.setText("0")  
+            self.getValue(1)
+    
+    def getValue(self,m):
+        a=self.value.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","1st Op."),a,self).exec_()
+        try:
+            self.value.setText(str(int(t)))
+        except:
+            self.value.setText(a)
+        
+    def val2Press(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btnTimedOut=False
+        self.btn=2
+        self.timer.start(500)
+     
+    def val2Release(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            try:
+                int(self.value2.text())
+            except:
+                self.value2.setText("0")  
+            self.getValue2(1)
+            
+    def getValue2(self,m):
+        a=self.value2.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","2nd Op."),a,self).exec_()
+        try:
+            t=str(int(t))
+        except:
+            t=a
+        self.value2.setText(t)
+
+class editColor(TouchDialog):
+    def __init__(self, cmdline, vari, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","Color"), parent)
+        
+        self.cmdline=cmdline
+        self.variables=vari
+    
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.timedOut)
+        
+        self.layout=QVBoxLayout()
+        
+        self.target=QComboBox()
+        self.target.addItems(["pen color","paper color"])
+        self.target.setStyleSheet("font-size: 18px;")
+        
+        if self.cmdline.split()[1]=="paper":
+            self.target.setCurrentIndex(1)
+        
+        self.layout.addWidget(self.target)
+        
+        h=QHBoxLayout()
+        
+        l=QLabel(QCoreApplication.translate("ecl", "Red:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.red=QLineEdit()
+        self.red.setReadOnly(True)
+        self.red.setStyleSheet("font-size: 18px;")
+            
+        self.red.setText(self.cmdline.split()[2])
+        
+        self.red.mousePressEvent=self.redPress
+        self.red.mouseReleaseEvent=self.redRelease
+        h.addWidget(self.red)
+        
+        self.layout.addLayout(h)
+        
+        h=QHBoxLayout()
+        
+        l=QLabel(QCoreApplication.translate("ecl", "Green:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.green=QLineEdit()
+        self.green.setReadOnly(True)
+        self.green.setStyleSheet("font-size: 18px;")
+            
+        self.green.setText(self.cmdline.split()[3])
+        
+        self.green.mousePressEvent=self.greenPress
+        self.green.mouseReleaseEvent=self.greenRelease
+        h.addWidget(self.green)
+        
+        self.layout.addLayout(h)
+        
+        h=QHBoxLayout()
+        
+        l=QLabel(QCoreApplication.translate("ecl", "Blue:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.blue=QLineEdit()
+        self.blue.setReadOnly(True)
+        self.blue.setStyleSheet("font-size: 18px;")
+            
+        self.blue.setText(self.cmdline.split()[4])
+        
+        self.blue.mousePressEvent=self.bluePress
+        self.blue.mouseReleaseEvent=self.blueRelease
+        h.addWidget(self.blue)
+        
+        self.layout.addLayout(h)        
+        
+        self.layout.addStretch()
+        
+        self.cbox = QPushButton()
+        self.cbox.setDisabled(True)
+        self.cbox.setAutoFillBackground(True) # This is important!!
+        color  = QtGui.QColor(int(self.red.text()),int(self.green.text()),int(self.blue.text()))
+        alpha  = 255
+        values = "{r}, {g}, {b}, {a}".format(r = color.red(),
+                                            g = color.green(),
+                                            b = color.blue(),
+                                            a = alpha
+                                            )
+        
+        self.cbox.setStyleSheet("QPushButton:disabled { background-color: rgba("+values+"); }")
+        self.layout.addWidget(self.cbox)
+        
+        self.layout.addStretch()
+        
+        self.presets=QPushButton(QCoreApplication.translate("ecl", "Presets"))
+        self.presets.setStyleSheet("font-size: 18px;")
+        
+        self.presets.clicked.connect(self.presets_clicked)
+        
+        self.layout.addWidget(self.presets)
+        
+        self.layout.addStretch()
+
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+    
+    def on_confirm(self):
+        self.cmdline="Color " 
+        if self.target.currentIndex()==0:
+            self.cmdline=self.cmdline + "pen "
+        else:
+            self.cmdline=self.cmdline + "paper "
+        self.cmdline=self.cmdline + self.red.text() + " " +self.green.text() + " "
+        self.cmdline=self.cmdline + self.blue.text()
+        
+        self.close()
+    
+    def ifChanged(self):
+        self.valueChanged()
+    
+    def redPress(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btn=1
+        self.btnTimedOut=False
+        self.timer.start(500)
+    
+    def timedOut(self):
+        self.btnTimedOut=True
+        self.timer.stop()
+        if self.btn==1:     self.red.setText(queryVarName(self.variables,self.red.text()))  
+        elif self.btn==2:   self.green.setText(queryVarName(self.variables,self.green.text())) 
+        elif self.btn==3:   self.blue.setText(queryVarName(self.variables,self.blue.text())) 
+        
+    def redRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            try:
+                int(self.red.text())
+            except:
+                self.red.setText("0")  
+            self.getRed(1)
+    
+    def getRed(self,m):
+        a=self.red.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Red"),a,self).exec_()
+        try:
+            self.red.setText(str(int(t)))
+        except:
+            self.red.setText(a)
+        self.cbox_draw()
+        
+    def greenPress(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btnTimedOut=False
+        self.btn=2
+        self.timer.start(500)
+     
+    def greenRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            try:
+                int(self.green.text())
+            except:
+                self.green.setText("0")  
+            self.getGreen(1)
+            
+    def getGreen(self,m):
+        a=self.green.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Green"),a,self).exec_()
+        try:
+            t=str(int(t))
+        except:
+            t=a
+        self.green.setText(t)
+        self.cbox_draw()
+        
+    def bluePress(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btnTimedOut=False
+        self.btn=3
+        self.timer.start(500)
+     
+    def blueRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            try:
+                int(self.blue.text())
+            except:
+                self.blue.setText("0")  
+            self.getBlue(1)
+            
+    def getBlue(self,m):
+        a=self.blue.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Blue"),a,self).exec_()
+        try:
+            t=str(int(t))
+        except:
+            t=a
+        self.blue.setText(t)
+        self.cbox_draw()
+        
+    def cbox_draw(self):
+        rd=max(min(int(self.red.text()),255),0)
+        gn=max(min(int(self.green.text()),255),0)
+        bl=max(min(int(self.blue.text()),255),0)
+        alpha  = 255
+        values = "{r}, {g}, {b}, {a}".format(r=rd, g=gn, b=bl, a=alpha)
+        self.cbox.setStyleSheet("QPushButton:disabled { background-color: rgba("+values+"); }")
+        self.red.setText(str(rd))
+        self.green.setText(str(gn))
+        self.blue.setText(str(bl))
+        
+    def presets_clicked(self):
+        colorlist=[QCoreApplication.translate("color","red"),
+                   QCoreApplication.translate("color","green"),
+                   QCoreApplication.translate("color","blue"),
+                   QCoreApplication.translate("color","yellow"),
+                   QCoreApplication.translate("color","cyan"),
+                   QCoreApplication.translate("color","magenta"),
+                   QCoreApplication.translate("color","cfw-blue"),
+                   QCoreApplication.translate("color","white"),
+                   QCoreApplication.translate("color","grey"),
+                   QCoreApplication.translate("color","black")]
+                   
+        (s,r)=TouchAuxListRequester(QCoreApplication.translate("color","Colors"),"",colorlist,colorlist[0],"Okay",self).exec_()        
+        if not s: return
+    
+        if r ==   QCoreApplication.translate("color","red"):
+            r=255
+            g=0
+            b=0
+        elif r == QCoreApplication.translate("color","green"):
+            r=0
+            g=255
+            b=0
+        elif r == QCoreApplication.translate("color","blue"):
+            r=0
+            g=0
+            b=255
+        elif r == QCoreApplication.translate("color","yellow"):
+            r=255
+            g=255
+            b=0
+        elif r == QCoreApplication.translate("color","cyan"):
+            r=0
+            g=255
+            b=255
+        elif r == QCoreApplication.translate("color","magenta"):
+            r=255
+            g=0
+            b=255
+        elif r == QCoreApplication.translate("color","cfw-blue"):
+            r=33
+            g=117
+            b=204
+        elif r == QCoreApplication.translate("color","white"):
+            r=255
+            g=255
+            b=255
+        elif r == QCoreApplication.translate("color","grey"):
+            r=127
+            g=127
+            b=127
+        elif r == QCoreApplication.translate("color","black"):
+            r=0
+            g=0
+            b=0
+
+        self.red.setText(str(r))
+        self.green.setText(str(g))
+        self.blue.setText(str(b))
+        self.cbox_draw()
+
+class editText(TouchDialog):
+    def __init__(self, cmdline, varlist, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","Text"), parent)
+        
+        self.cmdline=cmdline
+        self.variables=varlist
+        
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+        
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.timedOut)
+        
+        # Aussenrahmen
+        self.layout=QVBoxLayout()
+        
+        # VBox
+        l=QLabel(QCoreApplication.translate("ecl", "Font type"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        self.layout.addWidget(l)
+        
+        self.font=QComboBox()
+        self.font.setStyleSheet("font-size: 18px;")
+        self.font.addItems(["Times","Helvetica","Courier"])
+
+        if self.cmdline.split()[1] == "Helvetica": self.font.setCurrentIndex(1)
+        elif self.cmdline.split()[1] == "Courier": self.font.setCurrentIndex(2)
+      
+        
+        self.layout.addWidget(self.font)
+        
+        self.layout.addStretch()
+        
+        l=QLabel(QCoreApplication.translate("ecl","Font size"))
+        l.setStyleSheet("font-size: 18px;")
+        self.layout.addWidget(l)     
+        
+        self.value=QLineEdit()
+        self.value.setReadOnly(True)
+        self.value.setStyleSheet("font-size: 18px;")
+            
+        self.value.setText(self.cmdline.split()[2])
+        self.value.mousePressEvent=self.valPress
+        self.value.mouseReleaseEvent=self.valRelease
+        self.layout.addWidget(self.value)
+        
+        self.layout.addStretch()
+        
+        l=QLabel(QCoreApplication.translate("ecl","Text"))
+        l.setStyleSheet("font-size: 18px;")
+        self.layout.addWidget(l)
+        
+        self.text=QLineEdit()
+        self.text.setStyleSheet("font-size: 18px;")
+        s=self.cmdline.split()
+        self.text.setText(" ".join(s[3:]))
+        
+        self.layout.addWidget(self.text)
+        
+        self.layout.addStretch()                
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+    
+    def valPress(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btnTimedOut=False
+        self.timer.start(500)
+    
+    def timedOut(self):
+        self.btnTimedOut=True
+        self.timer.stop()
+        self.value.setText(queryVarName(self.variables,self.value.text()))  
+    
+    def valRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            try:
+                int(self.value.text())
+            except:
+                self.value.setText("0")  
+            self.getValue(1)
+        
+    def on_confirm(self):
+        self.cmdline="Text " +self.font.currentText() + " " + self.value.text()
+        self.cmdline=self.cmdline + " " + self.text.text()
+        self.close()
+    
+    def ifChanged(self):
+        pass        
+    
+    def getValue(self,m):
+        a=self.value.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Value"),a,self).exec_()
+        try:
+            int(t)
+        except:
+            t=a
+        self.value.setText(str(int(t)))
+
+class editVarToText(TouchDialog):
+    def __init__(self, cmdline, varlist, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","VarToText"), parent)
+        
+        self.cmdline=cmdline
+        self.variables=varlist
+        
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+        
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.timedOut)
+        
+        # Aussenrahmen
+        self.layout=QVBoxLayout()
+        
+        # VBox
+        l=QLabel(QCoreApplication.translate("ecl", "Font type"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        self.layout.addWidget(l)
+        
+        self.font=QComboBox()
+        self.font.setStyleSheet("font-size: 18px;")
+        self.font.addItems(["Times","Helvetica","Courier"])
+
+        if self.cmdline.split()[1] == "Helvetica": self.font.setCurrentIndex(1)
+        elif self.cmdline.split()[1] == "Courier": self.font.setCurrentIndex(2)
+      
+        
+        self.layout.addWidget(self.font)
+        
+        self.layout.addStretch()
+        
+        l=QLabel(QCoreApplication.translate("ecl","Font size"))
+        l.setStyleSheet("font-size: 18px;")
+        self.layout.addWidget(l)     
+        
+        self.value=QLineEdit()
+        self.value.setReadOnly(True)
+        self.value.setStyleSheet("font-size: 18px;")
+            
+        self.value.setText(self.cmdline.split()[2])
+        self.value.mousePressEvent=self.valPress
+        self.value.mouseReleaseEvent=self.valRelease
+        self.layout.addWidget(self.value)
+        
+        self.layout.addStretch()
+        
+        l=QLabel(QCoreApplication.translate("ecl","Variable"))
+        l.setStyleSheet("font-size: 18px;")
+        self.layout.addWidget(l)
+        
+        self.text=QComboBox()
+        self.text.setStyleSheet("font-size: 18px;")
+        self.text.addItems(self.variables)
+        
+        if self.cmdline.split()[3] in self.variables:
+            self.text.setCurrentIndex(self.variables.index(self.cmdline.split()[3]))
+        
+        self.layout.addWidget(self.text)
+        
+        self.layout.addStretch()                
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+    
+    def valPress(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btnTimedOut=False
+        self.timer.start(500)
+    
+    def timedOut(self):
+        self.btnTimedOut=True
+        self.timer.stop()
+        self.value.setText(queryVarName(self.variables,self.value.text()))  
+    
+    def valRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            try:
+                int(self.value.text())
+            except:
+                self.value.setText("0")  
+            self.getValue(1)
+        
+    def on_confirm(self):
+        self.cmdline="VarToText " +self.font.currentText() + " " + self.value.text()
+        self.cmdline=self.cmdline + " " + self.text.currentText()
+        self.close()
+    
+    def ifChanged(self):
+        pass        
+    
+    def getValue(self,m):
+        a=self.value.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Value"),a,self).exec_()
+        try:
+            int(t)
+        except:
+            t=a
+        self.value.setText(str(int(t)))
+
+
 
 #
 # main GUI application
@@ -5350,6 +6074,8 @@ class FtcGuiApplication(TouchApplication):
     msgBack=pyqtSignal(int)
     IMsgBack=pyqtSignal(str)
     stop=pyqtSignal()
+    gfxData=pyqtSignal(int, int, int, int, int, int, int)
+    canvasReturn=pyqtSignal()
     
     def __init__(self, args):
         TouchApplication.__init__(self, args)
@@ -5360,6 +6086,22 @@ class FtcGuiApplication(TouchApplication):
         self.TXT=None
         self.FTD=None
         self.etf=False
+        
+        self.pred=255
+        self.pgreen=255
+        self.pblue=255
+        
+        self.bred=33
+        self.bgreen=117
+        self.bblue=204
+        
+        self.xpos=0
+        self.ypos=0
+        
+        self.area = QtGui.QPolygonF()
+        self.fontSize=10
+        self.fontStyle="Serif"
+        self.text=""
         
         # load last project
         
@@ -5530,6 +6272,7 @@ class FtcGuiApplication(TouchApplication):
         #self.canvas.setPixmap(QPixmap(pixdir+"pixmap.png"))
         self.canvas.setPixmap(QPixmap(canvasSize, canvasSize))
         self.canvas.hide()
+        self.painter=QImage(canvasSize, canvasSize, QImage.Format_RGB32)
         
         self.mainwindow.show()
         try:
@@ -6022,29 +6765,67 @@ class FtcGuiApplication(TouchApplication):
         
     def canvasSig(self, stack):
         s=stack.split()
-        self.pred=255
-        self.pgreen=255
-        self.pblue=255
-        if s[1]=="show": self.canvas.show()
-        elif s[1]=="hide": self.canvas.hide()
+
+        if s[0]=="Text":
+            self.fontStyle=s[1]
+            self.fontSize=int(s[2])
+            self.text=" ".join(s[3:])
+            self.canvasReturn.emit()
+        elif s[0]=="requestData":
+            rgb=self.painter.pixel(self.xpos,self.ypos)
+            self.gfxData.emit(self.canvas.width(),
+                              self.canvas.height(),
+                              self.xpos,
+                              self.ypos, QtGui.qRed(rgb), QtGui.qGreen(rgb), QtGui.qBlue(rgb))
+        elif s[1]=="show":
+            self.canvas.show()
+            self.canvasReturn.emit()
+        elif s[1]=="hide": 
+            self.canvas.hide()
+            self.canvasReturn.emit()
         elif s[1]=="square":
             canvasSize=min(self.mainwindow.width(),self.mainwindow.height())
             self.canvas.setGeometry(0, 0, canvasSize, canvasSize)
             self.canvas.setPixmap(QPixmap(canvasSize, canvasSize))
+            self.canvasReturn.emit()
         elif s[1]=="full":
             self.canvas.setGeometry(0, 0, self.mainwindow.width(), self.mainwindow.height())
             self.canvas.setPixmap(QPixmap(self.mainwindow.width(), self.mainwindow.height()))
+            self.canvasReturn.emit()
         elif s[1]=="clear":
             self.canvas.setPixmap(QPixmap(self.canvas.width(), self.canvas.height()))
-            pm=self.canvas.pixmap() #QPixmap(self.canvas.width(), self.canvas.height())
+            pm=self.painter
             p=QPainter()
             p.begin(pm)
-            p.setPen(QtGui.QColor(0,0,0,255))
             p.setBackgroundMode(Qt.TransparentMode)
-            p.fillRect(0,0,pm.width(),pm.height(),QtGui.QColor(50,125,195,255))
+            p.fillRect(0,0,pm.width(),pm.height(),QtGui.QColor(self.bred,self.bgreen,self.bblue,255)) #50, 125, 195
             p.end()
-        elif s[1]=="plot":
+            self.canvas.setPixmap(QPixmap.fromImage(self.painter))
+            self.canvasReturn.emit()
+        elif s[1]=="update":
+            self.canvas.setPixmap(QPixmap.fromImage(self.painter))
+            self.canvas.repaint()
+            self.canvasReturn.emit()
+        elif s[1]=="origin":
+            self.painter=self.painter.copy(self.xpos, self.ypos, self.painter.width(), self.painter.height())
+            #self.canvas.setPixmap(QPixmap.fromImage(self.painter))
+            #self.canvas.pixmap().scroll(0-self.xpos, 0-self.ypos, self.painter.rect())
+            #self.painter=self.canvas.pixmap().toImage()
+            self.canvasReturn.emit()
+        elif s[1]=="log":
             pm=self.canvas.pixmap()
+            try:
+                lfn=logdir+"img"+time.strftime("%Y%m%d-%H%M%S")+".png"
+                pm.save(lfn,"",90)
+            except:
+                pass
+            self.canvasReturn.emit()
+        elif s[1]=="move":
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
+            self.canvasReturn.emit()
+        elif s[1]=="plot":
+            pm=self.painter #self.canvas.pixmap()
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -6052,8 +6833,9 @@ class FtcGuiApplication(TouchApplication):
             self.ypos=int(s[3])
             p.drawPoint(self.xpos,self.ypos)
             p.end()
+            self.canvasReturn.emit()
         elif s[1]=="lineTo":
-            pm=self.canvas.pixmap()
+            pm=self.painter #self.canvas.pixmap()
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -6063,8 +6845,9 @@ class FtcGuiApplication(TouchApplication):
             self.ypos=int(s[3])
             p.drawLine(ax,ay,self.xpos,self.ypos)
             p.end()  
+            self.canvasReturn.emit()
         elif s[1]=="rectTo":
-            pm=self.canvas.pixmap()
+            pm=self.painter #self.canvas.pixmap()
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -6072,10 +6855,11 @@ class FtcGuiApplication(TouchApplication):
             ay=self.ypos
             self.xpos=int(s[2])
             self.ypos=int(s[3])
-            p.drawRect(ax,ay,self.xpos-ax,self.ypos-ay)
+            p.drawRect(ax,ay,self.xpos-ax+1,self.ypos-ay+1)
             p.end() 
+            self.canvasReturn.emit()
         elif s[1]=="boxTo":
-            pm=self.canvas.pixmap()
+            pm=self.painter #self.canvas.pixmap()
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -6083,9 +6867,87 @@ class FtcGuiApplication(TouchApplication):
             ay=self.ypos
             self.xpos=int(s[2])
             self.ypos=int(s[3])
-            p.fillRect(ax,ay,self.xpos-ax,self.ypos-ay)
+            p.fillRect(ax,ay,self.xpos-ax+1,self.ypos-ay+1,QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
             p.end() 
+            self.canvasReturn.emit()
+        elif s[1]=="circleTo":
+            pm=self.painter #self.canvas.pixmap()
+            p=QPainter()
+            p.begin(pm)
+            p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
+            ax=self.xpos
+            ay=self.ypos
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
+            p.drawEllipse(ax,ay,self.xpos-ax,self.ypos-ay)
+            p.end()
+            self.canvasReturn.emit()
+        elif s[1]=="discTo":
+            pm=self.painter #self.canvas.pixmap()
+            p=QPainter()
+            p.begin(pm)
+            p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
+            p.setBrush(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
+            ax=self.xpos
+            ay=self.ypos
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
+            p.drawEllipse(ax,ay,self.xpos-ax,self.ypos-ay)
+            p.end()
+            self.canvasReturn.emit()
+        elif s[1]=="eraseTo":
+            pm=self.painter #self.canvas.pixmap()
+            p=QPainter()
+            p.begin(pm)
+            p.setPen(QtGui.QColor(self.bred, self.bgreen, self.bblue, 255))
+            ax=self.xpos
+            ay=self.ypos
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
+            p.fillRect(ax,ay,self.xpos-ax,self.ypos-ay,QtGui.QColor(self.bred, self.bgreen, self.bblue, 255))
+            p.end() 
+            self.canvasReturn.emit()
+        elif s[1]=="areaAdd":
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
+            self.area.append( QtCore.QPointF(self.xpos, self.ypos) )
+            self.canvasReturn.emit()
+        elif s[1]=="areaDraw":
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
+            self.area.append( QtCore.QPointF(self.xpos, self.ypos) )
+            pm=self.painter #self.canvas.pixmap()
+            p=QPainter()
+            p.begin(pm)
+            p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
+            p.setBrush(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
+            p.drawPolygon(self.area)
+            self.area = QtGui.QPolygonF()
+            self.canvasReturn.emit()
+        elif s[1]=="text": # draw text
+            pm=self.painter #self.canvas.pixmap()
+            p=QPainter()
+            p.begin(pm)
+            p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
+            self.xpos=int(s[2])
+            self.ypos=int(s[3])
+            p.setFont(QFont(self.fontStyle, self.fontSize))
+            p.drawText(QtCore.QPointF(self.xpos,self.ypos), self.text) 
+            p.end()                 
+            self.canvasReturn.emit()
+        elif s[1]=="pen": # Color pen r g b
+            self.pred=min(max(int(s[2]),0),255)
+            self.pgreen=min(max(int(s[3]),0),255)
+            self.pblue=min(max(int(s[4]),0),255)
+            self.canvasReturn.emit()
+        elif s[1]=="paper": # Color paper r g b
+            self.bred=min(max(int(s[2]),0),255)
+            self.bgreen=min(max(int(s[3]),0),255)
+            self.bblue=min(max(int(s[4]),0),255)
+            self.canvasReturn.emit()        
+        
             
+        
     def messageBox(self, stack):
         msg=stack.split("'")
         t=TouchMessageBox(QCoreApplication.translate("exec","Message"),self.mainwindow)
@@ -6222,7 +7084,6 @@ class FtcGuiApplication(TouchApplication):
             ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Variables"), self.mainwindow)
             ftb.setButtons([ QCoreApplication.translate("addcodeline","Init"),
                              QCoreApplication.translate("addcodeline","From..."),
-                             #QCoreApplication.translate("addcodeline","Shelf"),
                              QCoreApplication.translate("addcodeline","QueryVar"),
                              QCoreApplication.translate("addcodeline","IfVar"),
                              QCoreApplication.translate("addcodeline","Calc")
@@ -6339,7 +7200,8 @@ class FtcGuiApplication(TouchApplication):
             ftb.setButtons([ QCoreApplication.translate("addcodeline","Print"),
                              QCoreApplication.translate("addcodeline","Clear"),
                              QCoreApplication.translate("addcodeline","Message"),
-                             QCoreApplication.translate("addcodeline","Logfile")
+                             QCoreApplication.translate("addcodeline","Logfile"),
+                             QCoreApplication.translate("addcodeline","Graphics")
                             ]
                           )
             ftb.setTextSize(3)
@@ -6350,7 +7212,44 @@ class FtcGuiApplication(TouchApplication):
                 elif p==QCoreApplication.translate("addcodeline","Clear"):      self.acl_clear()
                 elif p==QCoreApplication.translate("addcodeline","Message"):    self.acl_message()
                 elif p==QCoreApplication.translate("addcodeline","Logfile"):    self.acl_logfile()
-                
+                elif p==QCoreApplication.translate("addcodeline","Graphics"):
+                    ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Graphics"), self.mainwindow)
+                    ftb.setButtons([ QCoreApplication.translate("addcodeline","Canvas"),
+                                    QCoreApplication.translate("addcodeline","Pen"),
+                                    QCoreApplication.translate("addcodeline","Color"),
+                                    QCoreApplication.translate("addcodeline","Text"),
+                                    QCoreApplication.translate("addcodeline","VarToText")
+                                    ]
+                                )
+                    ftb.setTextSize(3)
+                    ftb.setBtnTextSize(3)
+                    (t,p)=ftb.exec_()
+                    if t:
+                        if   p==QCoreApplication.translate("addcodeline","Canvas"):
+                            ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Canvas"), self.mainwindow)
+                            ftb.setButtons([ QCoreApplication.translate("addcodeline","Show"),
+                                            QCoreApplication.translate("addcodeline","Hide"),
+                                            QCoreApplication.translate("addcodeline","Clear"),
+                                            QCoreApplication.translate("addcodeline","Update"),
+                                            QCoreApplication.translate("addcodeline","Origin"),
+                                            QCoreApplication.translate("addcodeline","Log"),
+                                            ]
+                                        )
+                            ftb.setTextSize(3)
+                            ftb.setBtnTextSize(3)
+                            (t,p)=ftb.exec_()
+                            if   p==QCoreApplication.translate("addcodeline","Show"):     self.acl_canvas_show()
+                            elif p==QCoreApplication.translate("addcodeline","Hide"):     self.acl_canvas_hide()
+                            elif p==QCoreApplication.translate("addcodeline","Clear"):    self.acl_canvas_clear()
+                            elif p==QCoreApplication.translate("addcodeline","Update"):   self.acl_canvas_update()
+                            elif p==QCoreApplication.translate("addcodeline","Origin"):   self.acl_canvas_origin()
+                            elif p==QCoreApplication.translate("addcodeline","Log"):      self.acl_canvas_log()
+                             
+                        elif p==QCoreApplication.translate("addcodeline","Pen"):       self.acl_pen()
+                        elif p==QCoreApplication.translate("addcodeline","Text"):      self.acl_text()
+                        elif p==QCoreApplication.translate("addcodeline","Color"):     self.acl_color()
+                        elif p==QCoreApplication.translate("addcodeline","VarToText"): self.acl_varToText()
+                        
     def acl(self,code):
         self.proglist.insertItem(self.proglist.currentRow()+1,code)
         self.proglist.setCurrentRow(self.proglist.currentRow()+1)
@@ -6360,6 +7259,36 @@ class FtcGuiApplication(TouchApplication):
             if s=="RIF" or s=="TXT" or s=="FTD": self.lastIF=s
         except:
             pass
+        
+    def acl_canvas_show(self):
+        self.acl("Canvas show")
+        
+    def acl_canvas_hide(self):
+        self.acl("Canvas hide")
+        
+    def acl_canvas_clear(self):
+        self.acl("Canvas clear")
+
+    def acl_canvas_update(self):
+        self.acl("Canvas update")
+        
+    def acl_canvas_origin(self):
+        self.acl("Canvas origin")
+        
+    def acl_canvas_log(self):
+        self.acl("Canvas log")
+        
+    def acl_pen(self):
+        self.acl("Pen plot 120 120")
+        
+    def acl_text(self):
+        self.acl("Text Serif 15 Text")
+    
+    def acl_varToText(self):
+        self.acl("VarToText Serif 15 ?")
+        
+    def acl_color(self):
+        self.acl("Color pen 255 0 0")
         
     def acl_counterClear(self):
         self.acl("CounterClear " + self.lastIF + " 1")
@@ -6574,6 +7503,10 @@ class FtcGuiApplication(TouchApplication):
         elif stack[0] == "Message":    itm=self.ecl_message(itm)
         elif stack[0] == "Request":    itm=self.ecl_request(itm)
         elif stack[0] == "RIFShift":   itm=self.ecl_rifshift(itm)
+        elif stack[0] == "Pen":        itm=self.ecl_pen(itm, vari)
+        elif stack[0] == "Color":      itm=self.ecl_color(itm, vari)
+        elif stack[0] == "Text":       itm=self.ecl_text(itm, vari)
+        elif stack[0] == "VarToText":  itm=self.ecl_varToText(itm, vari)
         
         self.proglist.setCurrentRow(crow)
         self.proglist.item(crow).setText(itm)
@@ -6614,7 +7547,7 @@ class FtcGuiApplication(TouchApplication):
         for i in range(0,self.proglist.count()):
             if self.proglist.item(i).text().split()[0]=="Tag": tagteam.append(self.proglist.item(i).text()[4:])
   
-        if len(tagteam)==0:
+        if len(tagteam)==0:          
             t=TouchMessageBox(QCoreApplication.translate("ecl","IfInDig"), self.mainwindow)
             t.setCancelButton()
             t.setText(QCoreApplication.translate("ecl","No Tags defined!"))
@@ -6940,6 +7873,26 @@ class FtcGuiApplication(TouchApplication):
         
         return "RIFShift "+str(v)
 
+    def ecl_pen(self, itm, vari):
+        return editPen(itm, vari, self.mainwindow).exec_()
+    
+    def ecl_color(self, itm, vari):
+        return editColor(itm, vari, self.mainwindow).exec_()
+
+    def ecl_text(self, itm, vari):
+        return editText(itm, vari, self.mainwindow).exec_()
+
+    def ecl_varToText(self, itm, vari):
+        if len(vari)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","VarToText"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+            return itm
+        return editVarToText(itm, vari, self.mainwindow).exec_()
 
 #
 # and the initial application launch

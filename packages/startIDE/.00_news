@@ -1,4 +1,7 @@
 News<hr>
+<b>v1.5.0(20181121):</b><br>official release of the touch functions<hr>
+v1.4.2.0:<br>added IfTouchArea<hr>
+v1.4.1.0:<br>added WaitForTouch / WaitForRelease<hr>
 <b>v1.4.0(20180411):</b><br>added graphics commands<hr>
 v1.3.3:<br>Bugfix in ftd input acquisition<hr>
 v1.3.2:<br>Added RIFShift command<hr>

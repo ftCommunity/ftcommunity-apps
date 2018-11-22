@@ -9,6 +9,7 @@ from TouchAuxiliary import *
 from PyQt4.QtCore import QTimer
 import queue, pty, subprocess, select, os
 import urllib.request, urllib.parse, urllib.error
+import avrdude_widget
 
 MAX_TEXT_LINES=50
 
@@ -34,83 +35,13 @@ try:
 except:
     VSTRING="n/a" 
     
-
-class TextWidget(QPlainTextEdit):
-    def __init__(self, parent=None):
-        QTextEdit.__init__(self, parent)
-        self.setMaximumBlockCount(MAX_TEXT_LINES)
-        self.setReadOnly(True)
-        style = STD_STYLE
-        self.setStyleSheet(style)
-    
-        # a timer to read the ui output queue and to update
-        # the screen
-        self.ui_queue = queue.Queue()
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.on_timer)
-        self.timer.start(10)
-
-    def append_str(self, text, color=None):
-        self.moveCursor(QTextCursor.End)
-        if not hasattr(self, 'tf') or not self.tf:
-            self.tf = self.currentCharFormat()
-            self.tf.setFontWeight(QFont.Bold);
-        if color:
-            tf = self.currentCharFormat()
-            tf.setForeground(QBrush(QColor(color)))
-            self.textCursor().insertText(text, tf);
-        else:
-            self.textCursor().insertText(text, self.tf);
-            
-    def delete(self):
-        self.textCursor().deletePreviousChar()
-        
-    def append(self, text, color=None):
-        pstr = ""
-        for c in text:
-            # special char!
-            if c in "\b\a":
-                if pstr != "":
-                    self.append_str(pstr, color)
-                    pstr = ""
-        
-                if c == '\b':
-                    self.delete()
-            else:
-                pstr = pstr + c
-
-        if pstr != "":
-            self.append_str(pstr, color)
-
-        # put something into output queue
-    def write(self, str):
-        self.ui_queue.put( str )
-    
-    def clear(self):
-        self.setPlainText("")
-    
-        # regular timer to check for messages in the queue
-        # and to output them locally
-    def on_timer(self):
-        while not self.ui_queue.empty():
-            # get from queue
-            e = self.ui_queue.get()
-
-            # strings are just sent
-            if type(e) is str:
-                self.append(e)
-
 class FtcGuiApplication(TouchApplication):
-    sigExecFinished=pyqtSignal(int)
-    
     def __init__(self, args):
         TouchApplication.__init__(self, args)
         
-        self.sigExecFinished.connect(self.execFinished)
-        
         self.duinos=[]
         self.act_duino=None
-        self.flashType=0
+        self.flashBootloader=False
         
         self.window = TouchWindow("ftDuinIO")       
         self.window.titlebar.close.clicked.connect(self.end)
@@ -121,8 +52,8 @@ class FtcGuiApplication(TouchApplication):
         self.menu=self.window.addMenu()
         self.menu.setStyleSheet("font-size: 24px;")
                 
-        self.m_cache = self.menu.addAction(QCoreApplication.translate("mmain","Cache"))
-        self.m_cache.triggered.connect(self.on_menu_cache) 
+        self.m_manage = self.menu.addAction(QCoreApplication.translate("mmain","Sketches"))
+        self.m_manage.triggered.connect(self.on_menu_manage) 
         
         #self.menu.addSeparator()
         
@@ -149,7 +80,6 @@ class FtcGuiApplication(TouchApplication):
         
     def end(self):
         self.out=False
-        self.on_close()
         if self.act_duino!=None:
             try:
                 self.act_duino.close()
@@ -157,27 +87,14 @@ class FtcGuiApplication(TouchApplication):
                 pass
             
     def on_menu_bootloader(self):
+        self.flashBootloader=True
+        
         self.dFlash_clicked()
-        self.fSelect.hide()
         self.menu.setDisabled(True)
         
-        path = os.path.dirname(os.path.realpath(__file__))
-
-        files = [f for f in os.listdir(os.path.join(path,"bootloader")) if os.path.isfile(os.path.join(path, "bootloader", f))]
-        self.flashType=2
         self.fFlash.setStyleSheet("font-size: 20px; color: white; background-color: qlineargradient( x1:0 y1:0, x2:0 y2:1, stop:0 yellow, stop:1 red);")
             
-        if len(files)>1:
-            (s,r)=TouchAuxListRequester(QCoreApplication.translate("fSelect","Binary"),QCoreApplication.translate("fSelect","Select binary to be flashed:"),files,files[0],"Okay").exec_()
-
-            if s: # flash file selected
-                self.flashFile=r
-                self.fBinary.setText(self.flashFile)
-                self.fFlash.setDisabled(False)
-        elif len(files)==1:
-                self.flashFile=files[0]
-                self.fBinary.setText(self.flashFile)
-                self.fFlash.setDisabled(False)        
+        self.fFlash.setDisabled(False)
     
     def on_menu_about(self):
         t=TouchMessageBox(QCoreApplication.translate("about","About"), self.window)
@@ -189,23 +106,135 @@ class FtcGuiApplication(TouchApplication):
         t.setText(text)
         t.setPosButton(QCoreApplication.translate("about","Okay"))
         t.exec_()   
-        
-    def on_menu_cache(self):
+
+    def get_bootloader(self):
         path = os.path.dirname(os.path.realpath(__file__))
+        # remove trailing .hex
+        files = [f[:-4] for f in os.listdir(os.path.join(path,"bootloader")) if os.path.isfile(os.path.join(path, "bootloader", f))]
+        return files
+
+    def get_binaries(self):
+        path = os.path.dirname(os.path.realpath(__file__))
+        # remove trailing .ino.hex
         files = [f[:-8] for f in os.listdir(os.path.join(path,"binaries")) if os.path.isfile(os.path.join(path, "binaries", f))]
-        s=False
-        if len(files)>0:
-            (s,r)=TouchAuxListRequester(QCoreApplication.translate("cache","Cache"),QCoreApplication.translate("cache","Select binary"),files,files[0],"Okay").exec_()
-            if s:
-                t=TouchMessageBox(QCoreApplication.translate("cache","Download"), self.window)
-                t.setText( QCoreApplication.translate("cache","File:") + "<br>"+ r + "<br><br>" +
-                           QCoreApplication.translate("cache","stored in cache."))
-                t.setPosButton(QCoreApplication.translate("cache","Delete!"))
-                t.setNegButton(QCoreApplication.translate("cache","Okay"))
-                (c,v)=t.exec_() 
-                if v==QCoreApplication.translate("cache","Delete!"):
-                    os.remove(os.path.join(path,"binaries",r+".ino.hex"))
+        return files
+
+    class FileList(TouchDialog):
+        def __init__(self,parent=None):
+            TouchDialog.__init__(self,QCoreApplication.translate("manage","Sketches"),parent)  
                 
+            self.layout=QVBoxLayout()
+        
+            # the list
+            self.itemlist = QListWidget()
+            self.itemlist.setObjectName("smalllabel")
+            self.itemlist.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.itemlist.itemClicked.connect(self.on_itemchanged)
+
+            self.scan()
+            
+            self.layout.addWidget(self.itemlist)
+
+            self.download_btn = QPushButton(QCoreApplication.translate("manage","More..."))
+            self.download_btn.setStyleSheet("font-size: 20px;")
+            self.download_btn.clicked.connect(self.on_download)
+            self.layout.addWidget(self.download_btn)
+               
+            self.centralWidget.setLayout(self.layout)    
+
+        def scan(self):
+            self.itemlist.clear()
+            path = os.path.dirname(os.path.realpath(__file__))
+            # remove trailing .ino.hex
+            files = [f[:-8] for f in os.listdir(os.path.join(path,"binaries")) if os.path.isfile(os.path.join(path, "binaries", f))]
+            self.itemlist.addItems(files)
+            
+        def on_itemchanged(self):
+            r = self.itemlist.currentItem().text()
+            t = TouchMessageBox(QCoreApplication.translate("manage","Sketch"), self)
+            t.setText(r)
+            t.setPosButton(QCoreApplication.translate("manage","Delete!"))
+            t.setNegButton(QCoreApplication.translate("manage","Cancel"))
+            (c,v)=t.exec_() 
+            if v==QCoreApplication.translate("manage","Delete!"):
+                path = os.path.dirname(os.path.realpath(__file__))
+                os.remove(os.path.join(path,"binaries",r+".ino.hex"))
+                self.scan()
+
+        def on_download(self):
+            food=[]
+            select=[]
+            try:
+                file=urllib.request.urlopen(STORE+"00index.txt", timeout=1)
+                food=file.read().decode('utf-8').split("\n")
+                file.close()
+            except:
+                t=TouchMessageBox(QCoreApplication.translate("flash","Store"), self)
+                t.setCancelButton()
+                t.setText(QCoreApplication.translate("flash","Store not accessible."))
+                t.setPosButton(QCoreApplication.translate("flash","Okay"))
+                t.exec_()
+
+            if food !=[]:
+                menu=[]
+                for line in food:
+                    if line[0:6]=="name: ": menu.append(line[6:])
+
+                (s,r)=TouchAuxListRequester(QCoreApplication.translate("flash","Store"),QCoreApplication.translate("ecl","Select binary:"),menu,menu[0],"Okay",self).exec_()
+            
+                if s:
+                    a=False
+                    b=False
+                    for line in food:
+                        if b:
+                            version=line[9:]
+                            break
+                        if a and not b:
+                            filename=line[6:]
+                            b=True
+                        if line[6:]==r: a=True
+                
+                    v=""
+                    if b:
+                        t=TouchMessageBox(QCoreApplication.translate("flash","Download"), self)
+                        t.setText( QCoreApplication.translate("flash","File:") + "<br>"+ filename + "<br><br>" +
+                                   QCoreApplication.translate("flash","Version: v") + version)
+                        t.setPosButton(QCoreApplication.translate("flash","Download"))
+                        t.setNegButton(QCoreApplication.translate("flash","Cancel"))
+                        (c,v)=t.exec_()
+                
+                    if v==QCoreApplication.translate("flash","Download"):
+                        try:
+                            file=urllib.request.urlopen(STORE+filename, timeout=1)
+                            food=file.read()
+                            file.close()
+                            target = os.path.dirname(os.path.realpath(__file__))
+                            target = os.path.join(target, "binaries", filename)
+                            v=QCoreApplication.translate("flash","Replace")
+                            if os.path.exists(target):
+                                t=TouchMessageBox(QCoreApplication.translate("flash","Download"), self)
+                                t.setText( QCoreApplication.translate("flash","File:") + "<br>"+ filename + "<br><br>" +
+                                           QCoreApplication.translate("flash","already exists!"))
+                                t.setPosButton(QCoreApplication.translate("flash","Replace"))
+                                t.setNegButton(QCoreApplication.translate("flash","Cancel"))
+                                (c,v)=t.exec_() 
+                            
+                            if v==QCoreApplication.translate("flash","Replace"):
+                                with open(target, 'wb') as f:
+                                    f.write(food)
+                                f.close()
+                                
+                            self.scan()
+                        except: # download failed
+                            t=TouchMessageBox(QCoreApplication.translate("flash","Store"), self)
+                            t.setCancelButton()
+                            t.setText(QCoreApplication.translate("flash","Download failed."))
+                            t.setPosButton(QCoreApplication.translate("flash","Okay"))
+                            t.exec_()
+        
+    def on_menu_manage(self):
+        self.FileList(self.window).exec_()
+            
     def checkFtdComm(self):
         if self.act_duino!=None:
             n=self.act_duino.comm("ftduino_id_get")
@@ -290,157 +319,36 @@ class FtcGuiApplication(TouchApplication):
             if ((st!="") and res):
                 res=self.act_duino.comm("ftduino_id_set "+st)
         self.rescan_clicked()
+
+    def rescan_trigger(self):
+        self.timer = QTimer()        
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.rescan_clicked)
+        self.timer.start(1000)
         
     def rescan_clicked(self):
-        if TST:
-            self.dFlash_clicked()
-        else:
-            self.dComm.setStyleSheet("font-size: 20px; background-color: darkorange;")
-            self.dComm.setText(QCoreApplication.translate("comm","scanning"))
-            self.dComm.repaint()
-            self.processEvents()
-            self.ftdscan()
+        self.dComm.setStyleSheet("font-size: 20px; background-color: darkorange;")
+        self.dComm.setText(QCoreApplication.translate("comm","scanning"))
+        self.dComm.repaint()
+        self.processEvents()
+        self.ftdscan()
     
-    def fSelect_clicked(self):
-        self.flashFile=""
-        ftb=TouchAuxMultibutton(QCoreApplication.translate("fSelect","Flash"), self.window)
-        ftb.setText(QCoreApplication.translate("fSelect","Please select the source of the binary to flash:"))
-        ftb.setButtons([ QCoreApplication.translate("fSelect","Local Cache"),
-                        QCoreApplication.translate("fSelect","Download"),
-                        #QCoreApplication.translate("fSelect","Bootloader")
-                        ] )
-        ftb.setTextSize(3)
-        ftb.setBtnTextSize(3)
-        (t,p)=ftb.exec_()
-        
-        if not t: return
-        
-        path = os.path.dirname(os.path.realpath(__file__))
-        
-        if p == QCoreApplication.translate("fSelect","Local Cache"):
-            files = [f[:-8] for f in os.listdir(os.path.join(path,"binaries")) if os.path.isfile(os.path.join(path, "binaries", f))]
-            self.flashType=1
-            self.fFlash.setStyleSheet("font-size: 20px; color: white; background-color: darkred;")
-        if p == QCoreApplication.translate("fSelect","Download"):
-            self.flashType=1
-            files = self.dlBinary()
-        if p == QCoreApplication.translate("fSelect","Bootloader"):
-            files = [f for f in os.listdir(os.path.join(path,"bootloader")) if os.path.isfile(os.path.join(path, "bootloader", f))]
-            self.flashType=2
-            self.fFlash.setStyleSheet("font-size: 20px; color: white; background-color: qlineargradient( x1:0 y1:0, x2:0 y2:1, stop:0 yellow, stop:1 red);")
-            
-        s=False
-        if len(files)>1:
-            (s,r)=TouchAuxListRequester(QCoreApplication.translate("fSelect","Binary"),QCoreApplication.translate("fSelect","Select binary to be flashed:"),files,files[0],"Okay").exec_()
-        elif len(files)==1:
-            s=True
-            r=files[0]
-            
-        if s: # flash file selected
-            self.flashFile=r
-            self.fBinary.setText(self.flashFile)
-            self.fFlash.setDisabled(False)
-        else:
-            self.flashType=0
-            
-            
-    def dlBinary(self):
-        self.window.hide()
-        food=[]
-        select=[]
-        try:
-            file=urllib.request.urlopen(STORE+"00index.txt", timeout=1)
-            food=file.read().decode('utf-8').split("\n")
-            file.close()
-        except:
-            self.window.show()
-            t=TouchMessageBox(QCoreApplication.translate("flash","Store"), self.window)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("flash","Store not accessible."))
-            t.setPosButton(QCoreApplication.translate("flash","Okay"))
-            t.exec_()
-            
-        if food !=[]:
-            menu=[]
-            for line in food:
-                if line[0:6]=="name: ": menu.append(line[6:])
-
-            (s,r)=TouchAuxListRequester(QCoreApplication.translate("flash","Store"),QCoreApplication.translate("ecl","Select binary:"),menu,menu[0],"Okay",self.window).exec_()
-            
-            if s:
-                a=False
-                b=False
-                for line in food:
-                    if b:
-                        version=line[9:]
-                        break
-                    if a and not b:
-                        filename=line[6:]
-                        b=True
-                    if line[6:]==r: a=True
-                
-                v=""
-                if b:
-                    t=TouchMessageBox(QCoreApplication.translate("flash","Download"), self.window)
-                    t.setText( QCoreApplication.translate("flash","File:") + "<br>"+ filename + "<br><br>" +
-                               QCoreApplication.translate("flash","Version: v") + version)
-                    t.setPosButton(QCoreApplication.translate("flash","Okay"))
-                    t.setNegButton(QCoreApplication.translate("flash","Cancel"))
-                    (c,v)=t.exec_()
-                    
-                    
-                
-                if v==QCoreApplication.translate("flash","Okay"):
-                    try:
-                        file=urllib.request.urlopen(STORE+filename, timeout=1)
-                        food=file.read()
-                        file.close()
-                        target = os.path.dirname(os.path.realpath(__file__))
-                        target = os.path.join(target, "binaries", filename)
-                        v=QCoreApplication.translate("flash","Replace")
-                        if os.path.exists(target):
-                            t=TouchMessageBox(QCoreApplication.translate("flash","Download"), self.window)
-                            t.setText( QCoreApplication.translate("flash","File:") + "<br>"+ filename + "<br><br>" +
-                                QCoreApplication.translate("flash","already exists in cache!"))
-                            t.setPosButton(QCoreApplication.translate("flash","Replace"))
-                            t.setNegButton(QCoreApplication.translate("flash","Cancel"))
-                            (c,v)=t.exec_() 
-                            
-                        if v==QCoreApplication.translate("flash","Replace"):
-                            with open(target, 'wb') as f:
-                                f.write(food)
-                            f.close()
-                            filename=filename[:-8]
-                        else:
-                            filename=""
-                    except: # download failed
-                        filename=""
-                        t=TouchMessageBox(QCoreApplication.translate("flash","Store"), self.window)
-                        t.setCancelButton()
-                        t.setText(QCoreApplication.translate("flash","Download failed."))
-                        t.setPosButton(QCoreApplication.translate("flash","Okay"))
-                        t.exec_()
-
-        self.window.show()
-        return [filename]
-        
     def fFlash_clicked(self):
         flasherror=False
         
         self.fLabel.hide()
-        self.fSelect.hide()
         self.fBinary.hide()
         self.fFlash.hide()
+        self.avrdude.show()
         self.menu.setDisabled(True)
-        self.fBack.setDisabled(True)
-        self.fBack.setText(QCoreApplication.translate("flash","please wait"))
-        self.fCon.clear()
+        self.fBack.hide()
         self.processEvents()
         self.fWidget.repaint()
-        
-        path = os.path.dirname(os.path.realpath(__file__))  
-        
-        if self.flashType==1: # binary flash
+
+        # get file to flash from combobox
+        file = self.fBinary.currentText()
+                
+        if not self.flashBootloader: # binary flash
             duino=self.device[self.dList.currentIndex()]
             # activate bootloader
             if self.act_duino!="None":
@@ -449,51 +357,9 @@ class FtcGuiApplication(TouchApplication):
                 except:
                     pass
             self.act_duino=None
-            
-            self.fCon.write("C:> ")
-            self.fWidget.repaint()
-            for i in "del c:*.*":
-                self.fCon.write(i)
-                self.processEvents()
-                self.fWidget.repaint()
-                self.processEvents()
-                time.sleep(0.25)
-            time.sleep(2)
-            self.fCon.write("\nC:> ")
-            for i in "avrdude "+self.flashFile+".s19":
-                self.fCon.write(i)
-                self.processEvents()
-                self.fWidget.repaint()
-                self.processEvents()
-                time.sleep(0.25)    
-            self.fCon.write('\nUnknown command "avrdude.com"')
-            self.processEvents()
-            self.fWidget.repaint()
-            self.processEvents()
-            time.sleep(2) 
-            self.fCon.write("\nC:> ")
-            for i in "dir ":
-                self.fCon.write(i)
-                self.processEvents()
-                self.fWidget.repaint()
-                self.processEvents()
-                time.sleep(0.25)                   
-            self.fCon.write('\nUnknown command "dir.com"')
-            self.processEvents()
-            self.fWidget.repaint()
-            self.processEvents()
-            time.sleep(2)        
-            
-            try:
-                ser = serial.Serial()
-                ser.port = duino
-                ser.baudrate = 1200
-                ser.open()
-                ser.setDTR(0)
-                ser.close()
-                time.sleep(2)
-            except:
-                pass
+
+            self.avrdude.setPort(duino)
+            self.avrdude.trigger_bootloader()
             
             devices = []
             for dev in serial.tools.list_ports.grep("vid:pid="+FTDUINO_VIDPID):
@@ -513,74 +379,16 @@ class FtcGuiApplication(TouchApplication):
                 t.setPosButton(QCoreApplication.translate("flash","Okay"))
                 t.exec_() 
                 return
-            else:            
-                # prepare avrdude call
-                cmd = [ "avrdude",
-                    "-v",
-                    "-patmega32u4",
-                    "-cavr109",
-                    "-P"+devices[0],
-                    "-b57600",
-                    "-D",
-                    "-Uflash:w:"+os.path.join(path, "binaries", self.flashFile)+".ino.hex:i"]
-
-                flasherror=self.exec_command(cmd)
+            else:
+                # tell avrdude widget which port to use
+                self.avrdude.setPort(devices[0])
+                self.avrdude.flash(os.path.join("binaries", file)+".ino.hex")
         
-        elif self.flashType==2: # bootloader flash
-            self.fCon.write("C:> ")
-            self.fWidget.repaint()
-            for i in "CP/M":
-                self.fCon.write(i)
-                self.processEvents()
-                self.fWidget.repaint()
-                time.sleep(0.25)
-                
-            self.fCon.write("\nCP/M loading\n")
-            self.processEvents()
-            for i in "##########":
-                self.fCon.write(i)
-                self.processEvents()
-                self.fWidget.repaint()
-                time.sleep(0.2)
+        else: # bootloader flash
+            # bootloader
+            self.avrdude.flash(os.path.join("bootloader", file)+".hex", True)
+            self.flashBootloader = False
             
-            time.sleep(1)
-            self.fCon.setStyleSheet(EXT_STYLE)
-            self.fCon.clear()
-            self.processEvents()
-            self.fWidget.repaint()
-            time.sleep(0.5)
-            self.fCon.write("CP/M 2.2 - Amstrad Consumer Electronics plc\n\n")
-            self.fWidget.repaint()
-            self.processEvents()            
-            time.sleep(1)
-            self.fCon.write("A>dir\n")
-            self.fWidget.repaint()
-            self.processEvents()            
-            time.sleep(0.4)        
-            self.fCon.write("A: AVRDUDE  COM : "+self.flashFile[:8]+" BIN\nA: STAT     COM : FILECOPY COM\n")
-            self.fWidget.repaint()
-            self.processEvents()
-            time.sleep(0.25)
-            self.fCon.write("A: DISC     BAS : SETUP    COM\nA: BOOTGEN  COM : LOAD     COM\n")
-            self.fWidget.repaint()
-            self.processEvents()
-            time.sleep(0.25)
-            self.fCon.write("A>avrdude "+self.flashFile[:8]+".bin\n")
-            self.processEvents()
-            self.fWidget.repaint()
-            self.processEvents()
-            time.sleep(2)
-
-            cmd=["avrdude",
-                 "-v",
-                 "-patmega32u4",
-                 "-cusbasp",
-                 "-Pusb", 
-                 "-Uflash:w:"+os.path.join(path, "bootloader", self.flashFile)+":i",
-                 "-Ulock:w:0x2F:m" ]
-            
-            flasherror=self.exec_command(cmd)
-        self.fWidget.repaint()
         self.fBack.setDisabled(False)
         self.fBack.setText(QCoreApplication.translate("flash","Back"))
         self.processEvents()            
@@ -588,6 +396,8 @@ class FtcGuiApplication(TouchApplication):
     def xBack_clicked(self):
         self.out=False
         self.menu.setDisabled(False)
+        self.avrdude.hide()
+        self.fBack.show()
         self.dWidget.show()
         self.fWidget.hide()
         self.ioWidget.hide()
@@ -691,17 +501,31 @@ class FtcGuiApplication(TouchApplication):
                 
             
     def dFlash_clicked(self):
+        # get files to fill combobox
+        files = None
+        if self.flashBootloader:
+            files = self.get_bootloader()
+            self.fLabel.setText(QCoreApplication.translate("flash","Bootloader:"))
+        else:
+            files = self.get_binaries()
+            self.fLabel.setText(QCoreApplication.translate("flash","Binary sketch:"))
+
         self.dWidget.hide()
         self.ioWidget.hide()
-        self.fCon.clear()
-        self.fCon.setStyleSheet(STD_STYLE)
+
+        self.avrdude.setPort(self.act_duino)
+        self.avrdude.reset()
+        
+        # enable flash button if at least one file is present
         self.fFlash.setStyleSheet("font-size: 20px; color: white; background-color: darkred;")
-        if self.flashType==2:
-            self.flashType=0
-            self.fBinary.setText("-- none --")
-        self.fCon.write("C:>")
+        if len(files):
+            self.fFlash.setEnabled(True)
+            
+        self.fBinary.clear()
+        for f in files:
+            self.fBinary.addItem(f)
+
         self.fLabel.show()
-        self.fSelect.show()
         self.fBinary.show()
         self.fFlash.show()
         self.fWidget.show()
@@ -770,47 +594,53 @@ class FtcGuiApplication(TouchApplication):
         self.dIO.clicked.connect(self.dIO_clicked)
         self.dFlash.clicked.connect(self.dFlash_clicked)
 
+    def on_avrdude_done(self, ok):
+        # close dialog automatically if everything is fine
+        if ok:
+            self.xBack_clicked()
+            self.rescan_trigger()        
+        else:
+            self.fBack.show()
+        
     def setFWidget(self):       
         # widget für Flashtool:
         
         self.fWidget=QWidget()
         
         flash=QVBoxLayout()
+        flash.setContentsMargins(0,0,0,0)
+        flash.addStretch()
         
         hbox=QHBoxLayout()
         
-        self.fLabel=QLabel(QCoreApplication.translate("flash","Binary:"))
+        self.fLabel=QLabel("")
         self.fLabel.setStyleSheet("font-size: 20px;")
         hbox.addWidget(self.fLabel)
         
-        self.fSelect=QPushButton(QCoreApplication.translate("flash","Select"))
-        self.fSelect.setStyleSheet("font-size: 20px;")
-        hbox.addWidget(self.fSelect)
-        
         flash.addLayout(hbox)
         
-        self.fBinary=QLineEdit()
-        self.fBinary.setReadOnly(True)
+        self.fBinary = QComboBox()
         self.fBinary.setStyleSheet("font-size: 20px; color: white;")
-        self.fBinary.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-        self.fBinary.setText(QCoreApplication.translate("flash","-- none --"))
         flash.addWidget(self.fBinary)
+        
+        # add avrdude widget
+        self.avrdude = avrdude_widget.AvrdudeWidget(self.window)
+        self.avrdude.hide()
+        self.avrdude.done.connect(self.on_avrdude_done)
+        flash.addWidget(self.avrdude)
         
         self.fFlash=QPushButton(QCoreApplication.translate("flash","--> Flash <--"))
         self.fFlash.setStyleSheet("font-size: 20px; color: white; background-color: darkred;")
         flash.addWidget(self.fFlash)
         self.fFlash.setDisabled(True)
-                
-        self.fCon=TextWidget(self.window)
-        flash.addWidget(self.fCon)
-        
+
+        flash.addStretch()
         self.fBack=QPushButton(QCoreApplication.translate("flash","Back"))
         self.fBack.setStyleSheet("font-size: 20px; color: white;")
         flash.addWidget(self.fBack)
         
         self.fWidget.setLayout(flash)
         
-        self.fSelect.clicked.connect(self.fSelect_clicked)
         self.fFlash.clicked.connect(self.fFlash_clicked)
         self.fBack.clicked.connect(self.xBack_clicked)        
     
@@ -1130,70 +960,6 @@ class FtcGuiApplication(TouchApplication):
     def mPower_changed(self):
         self.mPVal.setText(str(self.mPower.value()))
     
-    def execFinished(self,returncode):
-        self.menu.setDisabled(False)
-        if returncode: # Returncode, da stimmt evtl. was nicht...
-            return returncode
-        return
-    
-    def exec_command(self, commandline):
-            # run subprocess
-            self.log_master_fd, self.log_slave_fd = pty.openpty()
-            self.app_process = subprocess.Popen(commandline, stdout=self.log_slave_fd, stderr=self.log_slave_fd)
-            self.app_process.returncode=False
-            self.app_process.command=commandline[0]
-            
-            # start a timer to monitor the ptys
-            self.log_timer = QTimer()
-            self.log_timer.timeout.connect(self.on_log_timer)
-            self.log_timer.start(10)
-            
-    def app_is_running(self):
-        if self.app_process == None:
-            return False
-
-        return self.app_process.poll() == None
-    
-    def on_close(self):
-        if self.app_is_running():
-            self.app_process.terminate()
-            self.app_process.wait()
-        
-    def on_log_timer(self):
-        # first read whatever the process may have written
-        if select.select([self.log_master_fd], [], [], 0)[0]:
-            output = os.read(self.log_master_fd, 100)
-            if output: 
-                self.fCon.write(str(output, "utf-8"))
-        else:
-            # check if process is still alive
-            if not self.app_is_running():
-                time.sleep(1.0)
-                while select.select([self.log_master_fd], [], [], 0)[0]:
-                    output = os.read(self.log_master_fd, 100)
-                    if output: 
-                        self.fCon.write(str(output, "utf-8"))
-                    time.sleep(0.01)
-                    
-                    self.fWidget.repaint()
-                    self.processEvents()
-                    self.fWidget.repaint()  
-                
-                if self.app_process.returncode:
-                    self.fCon.write(self.app_process.command+" ended with return value " + str(self.app_process.returncode) + "\n")
-
-                self.fWidget.repaint()
-                self.processEvents()
-                self.fWidget.repaint()
-                
-                # close any open ptys
-                os.close(self.log_master_fd)
-                os.close(self.log_slave_fd)
-
-                # remove timer
-                self.log_timer = None
-                self.sigExecFinished.emit(self.app_process.returncode)
-                
 if __name__ == "__main__":
     FtcGuiApplication(sys.argv)
 

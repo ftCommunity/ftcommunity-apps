@@ -107,14 +107,14 @@ firmware: >=0.9.0
 [ftDuinIO]
 name: ftDuinIO
 category: Tools
-author: Peter Habermehl
+author: Peter Habermehl / Dr. Till Harbaum
 icon: icon.png
 desc: ftDuino I/O test and flash tool
 exec: ftduinio.py
 html: index.py
 managed: yes
 uuid: 0990bda0-f222-11e7-8f1a-0800200c9a66
-version: 1.0.4
+version: 2.0.0
 firmware: >=0.9.4
 desc_de: ftDuino I/O-Test und Flashtool
 html_de: index.py

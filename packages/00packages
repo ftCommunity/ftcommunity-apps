@@ -74,6 +74,18 @@ firmware: >=0.9.2
 desc_de: Fotografiere und verwalte Bilder mit dem TXT
 html_de: index.py?lang=de
 
+[USBList]
+name: USBList
+category: Tools
+author: Peter Habermehl
+icon: icon.png
+desc: List all acttached USB devices
+exec: usblist.py
+managed: yes
+uuid: 4b2d9ae0-fe32-11e8-b568-0800200c9a66
+version: 1.0
+firmware: 0.9.4
+
 [brickly]
 name: Brickly
 category: Tools

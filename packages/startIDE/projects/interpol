@@ -1,0 +1,1 @@
+["# new", "ArrayInit data_in", "ArrayInit data_out", "Init integer 0", "Init integer2 0", "Tag a", "Array integer appendTo data_in 0", "Calc integer2 integer * 100", "Array integer2 appendTo data_out 0", "Calc integer integer + 10", "LoopTo a 5", "QueryArray data_in", "QueryArray data_out", "LookUpTable integer data_in linear data_out 5", "QueryVar integer"]

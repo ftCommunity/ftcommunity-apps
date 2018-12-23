@@ -58,7 +58,7 @@ def translate(string, locale = LOCAL):
     elif string == "Control your model with a finger touch":
         if locale == "de": return "Steuere Modelle mit einem Fingertipp"
         if locale == "fr": return "Contr&ocirc;lez vos mod&egrave;les avec un clic du doigt"
-    elif string == "<b>Download</b> a":
+    elif string == "<b>Download</b> a" or string == "<b>Download</b> an":
         if locale == "de": return "<b>Lade</b> ein"
         if locale == "fr": return "<b>T&eacute;l&eacute;charger</b> un"
     elif string == "project":
@@ -73,12 +73,15 @@ def translate(string, locale = LOCAL):
     elif string == "from your TXT.":
         if locale == "de": return "vom TXT herunter."
         if locale == "fr": return "<b>ici</b>."    
-    elif string == "<b>Upload</b> a":
+    elif string == "<b>Upload</b> a" or string == "<b>Upload</b> an" :
         if locale == "de": return "<b>Sende</b> ein"
         if locale == "fr": return "<b>T&eacute;l&eacute;charger</b> un"
     elif string == "to your TXT.":
         if locale == "de": return "von hier zum TXT."
         if locale == "fr": return "<b>sur le TXT</b>."
+    elif string == "Download a data array from your TXT":
+        if locale == "de": return "Lade ein Daten-Array vom TXT herunter"
+        if locale == "fr": return "T&eacute;l&eacute;charger un tableau depuis le TXT"
     elif string == "Download a project from your TXT":
         if locale == "de": return "Lade ein Projekt vom TXT herunter"
         if locale == "fr": return "T&eacute;l&eacute;charger un projet depuis le TXT"
@@ -88,6 +91,9 @@ def translate(string, locale = LOCAL):
     elif string == "Upload a project  to your TXT":
         if locale == "de": return "Sende ein Projekt zum TXT"
         if locale == "fr": return "T&eacute;l&eacute;charger un projet sur le TXT"
+    elif string == "Upload an array to your TXT":
+        if locale == "de": return "Sende ein Array zum TXT"
+        if locale == "fr": return "T&eacute;l&eacute;charger un tableau sur le TXT"
     elif string == "Upload a module to your TXT":
         if locale == "de": return "Sende ein Modul zum TXT"
         if locale == "fr": return "T&eacute;l&eacute;charger un module sur le TXT"
@@ -118,6 +124,9 @@ def translate(string, locale = LOCAL):
     elif string == "Module file:":
         if locale == "de": return "Moduldatei:"
         if locale == "fr": return "Fichier de module:"
+    elif string == "Array file:":
+        if locale == "de": return "Array-Datei:"
+        if locale == "fr": return "Fichier de tableau:"
     elif string == "Upload!":
         if locale == "de": return "Hochladen!"
         if locale == "fr": return "T&eacute;l&eacute;charger!"
@@ -160,9 +169,15 @@ def translate(string, locale = LOCAL):
     elif string == "Download a module as a text file":
         if locale == "de": return "Lade ein Modul als Textdatei herunter"
         if locale == "fr": return "T&eacute;l&eacute;charger un module comme un fichier texte"
-    elif string == "":
-        if locale == "de": return ""
-        if locale == "fr": return ""
+    elif string == "Upload a pixmap (240x240 png image) to your TXT":
+        if locale == "de": return "Lade eine Pixmap (240x240 png Bild) auf den TXT"
+        if locale == "fr": return "T&eacute;l&eacute;charger un image (240x240 png) sur le TXT"
+    elif string == "Please select png image:":
+        if locale == "de": return "W&auml;hle eine png Bilddatei aus:"
+        if locale == "fr": return "Veuillez s&eacute;lectionner l'image png:"
+    elif string == "Image file:":
+        if locale == "de": return "Bilddatei:"
+        if locale == "fr": return "Fichier image png:"
     # if string == "another string":  
     #     if locale == "de": return "Deutsche Übersetzung"
     #     if locale == "fr": return "Traduction francaise"

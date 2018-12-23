@@ -1,0 +1,1 @@
+["# NTC2k", "Init R_in 0", "Init T_cels 0", "ArrayInit NTC2k_R", "ArrayLoad NTC2k_R byName ", "ArrayInit NTC2k_T", "ArrayLoad NTC2k_T byName ", "FromIn TXT 1 R R_in", "LookUpTable T_cels NTC2k_R linear NTC2k_T R_in", "QueryVar T_cels"]

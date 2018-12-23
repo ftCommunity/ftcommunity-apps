@@ -3,14 +3,17 @@
 #
 import sys, time, os, json, shutil
 import threading as thd
+import ftrobopy as txt
+import random, math
+import serial
+import serial.tools.list_ports
+
+import translator
+
 from TouchStyle import *
 from TouchAuxiliary import *
 from robointerface import *
-import ftrobopy as txt
-import random, math
 from datetime import datetime
-
-import translator
 from PyQt4 import QtCore, QtGui
 
 try:
@@ -36,14 +39,18 @@ RIFSERIAL=""
 # do not check for missing interfaces
 IGNOREMISSING=False
 
+# VID:PID for servoDuino (SRD)
+SRDVIDPID="6666:6666"
+
 #FTTXTADDRESS="192.168.178.24"
 FTTXTADDRESS="auto"
 
-hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
-projdir = hostdir + "projects/"
-moddir  = hostdir + "modules/"
-logdir  = hostdir + "logfiles/"
-pixdir  = hostdir + "pixmaps/"
+hostdir = os.path.dirname(os.path.realpath(__file__))
+projdir = os.path.join(hostdir , "projects")
+moddir  = os.path.join(hostdir , "modules")
+logdir  = os.path.join(hostdir , "logfiles")
+pixdir  = os.path.join(hostdir , "pixmaps")
+arrdir  = os.path.join(hostdir,"arrays")
 
 if not os.path.exists(projdir):
     os.mkdir(projdir)
@@ -51,9 +58,11 @@ if not os.path.exists(moddir):
     os.mkdir(moddir)
 if not os.path.exists(logdir):
     os.mkdir(logdir)
-    
+if not os.path.exists(arrdir):
+    os.mkdir(arrdir)
+
 try:
-    with open(hostdir+"manifest","r", encoding="utf-8") as f:
+    with open( os.path.join(hostdir, "manifest") ,"r", encoding="utf-8") as f:
         r=f.readline()
         while not "version" in r:
           r=f.readline()
@@ -70,7 +79,7 @@ except:
 #
 
 try:
-    with open(hostdir+".locale","w") as f:
+    with open(os.path.join(hostdir, ".locale") ,"w") as f:
         r=f.write(translator.getActiveLocale())
         f.close()
 except:
@@ -85,6 +94,12 @@ TXTsndStack = [ "---", "Plane", "Alarm", "Bell", "Brakes", "Horn(short)", "Horn(
 #
 # some auxiliaries
 #
+
+def USBScan(vidpid):
+    d=[]
+    for dev in serial.tools.list_ports.grep("vid:pid="+vidpid):
+        d.append(dev[0])
+    return d
 
 def clean(text,maxlen):
     res=""
@@ -137,7 +152,7 @@ class QDblPushButton(QPushButton):
 #
 # the exec thread incl. parsing of the code
 #
-            
+
 class execThread(QThread):
     updateText=pyqtSignal(str)
     clearText=pyqtSignal()
@@ -146,6 +161,7 @@ class execThread(QThread):
     requestKeyboard=pyqtSignal(int, str)
     requestDial=pyqtSignal(str, int, int, int, str)
     requestBtn=pyqtSignal(str, str, list)
+    requestArray=pyqtSignal(str,list,str)
     canvasSig=pyqtSignal(str)
     
     def __init__(self, codeList, output, starter, RIF,TXT,FTD, parent):
@@ -160,6 +176,7 @@ class execThread(QThread):
         self.RIF=RIF
         self.TXT=TXT
         self.FTD=FTD
+        self.SRD=None
         self.parent=parent
         
         self.parent.msgBack.connect(self.msgBack)
@@ -174,6 +191,7 @@ class execThread(QThread):
         
         self.parent.outputClicked.connect(self.goOn)
         
+        self.count=0
         self.halt=False
         self.trace=False
         self.singlestep=False
@@ -184,6 +202,7 @@ class execThread(QThread):
         self.requireTXT=False
         self.requireRIF=False
         self.requireFTD=False
+        self.requireSRD=False
         
         self.jmpTable=[]
         self.LoopStack=[]
@@ -226,26 +245,33 @@ class execThread(QThread):
         extmodfailure=False
         RS=False
         
+        self.arrays=[]
+        self.array=[]
+        
         for line in self.codeList:
             a=line.split()
             if len(a)<2: a.append("x")
-            
+                
             if "TXT" in a[1]:
                 self.requireTXT=True
-            if "RIF" in a[1]:
+            elif "RIF" in a[1]:
                 self.requireRIF=True
-            if "FTD" in a[1]:
+            elif "FTD" in a[1]:
                 self.requireFTD=True
-            if "Tag" in line[:3]: 
+            elif "SRD"==a[1]:
+                self.requireSRD=True
+            elif "SRDVIDPID" in a[1]:
+                SRDVIDPID=a[2]
+            elif a[0]=="Tag": 
                 self.jmpTable.append([line[4:], cnt])
-            elif "Module" in line[:6]:
+            elif a[0]=="Module":
                 self.modTable.append([line[7:], cnt])
                 mcnt=mcnt+1
-            elif "MEnd" in line[:4]:
+            elif a[0]=="MEnd":
                 mcnt=mcnt-1
             elif a[0] == "CallExt" and not (a[1] in self.impmod):
                 try:
-                    with open(moddir+a[1],"r", encoding="utf-8") as f:
+                    with open(os.path.join(moddir,a[1]),"r", encoding="utf-8") as f:
                         module=json.load(f)
                         f.close()
                     nmp = len(self.codeList)
@@ -260,7 +286,7 @@ class execThread(QThread):
             #
             # configure i/o of the devices:
             #
-            if a[0]=="RIFShift":
+            elif a[0]=="RIFShift":
                 if int(a[1])>0:
                     RS=True
                 else:
@@ -367,6 +393,29 @@ class execThread(QThread):
             cnt=cnt+1
         self.clrOut()
         
+        if self.requireSRD:
+            try:
+                SRDdevices=self.USBScan(SRDVIDPID)
+                if len(SRDdevices)==1:
+                    self.SRD=serial.Serial(SRDdevices[0], 115200, timeout=0.1, writeTimeout = 0.1)
+                    time.sleep(0.25)
+                    self.SRD.flushInput()
+                    self.SRD.flushOutput()
+                    
+                    #Hier jetzt mal checken, ob das device auf ein "report_code" antwortet...
+                    self.SRD.write("report_code\n".encode("utf-8"))
+                    n=self.SRD.readline().decode("utf-8")[:-2]
+                    if n!="verdammt,wiehabichdasdochgleichgenannt":
+                        self.SRD.close()
+                        self.SRD=None
+                        self.msgOut(QCoreApplication.translate("exec","servoDuino not found!\nProgram terminated\n"))                
+                        if not IGNOREMISSING: self.stop()
+                else:
+                    self.msgOut(QCoreApplication.translate("exec","servoDuino detect error!\nProgram terminated\n"))                
+                    if not IGNOREMISSING: self.stop()                    
+            except:
+                self.msgOut(QCoreApplication.translate("exec","servoDuino not found!\nProgram terminated\n"))                
+                if not IGNOREMISSING: self.stop()
         if self.requireTXT and self.TXT==None:
             self.msgOut(QCoreApplication.translate("exec","TXT not found!\nProgram terminated\n"))
             if not IGNOREMISSING: self.stop()
@@ -504,8 +553,8 @@ class execThread(QThread):
         
         self.interrupt=-1
         self.timestamp=time.time()
-        
-        if 1: #try:
+        #if 1:
+        try:
             while not self.halt and self.count<len(self.codeList):
                 line=self.codeList[self.count]
                 if self.trace: self.cmdPrint(str(self.count)+":"+line)
@@ -518,15 +567,19 @@ class execThread(QThread):
                     
                 self.count=self.count+1
                 self.parent.processEvents()
-        else: #except:
+        #else:
+        except:
             self.cce=True
             self.halt=True
                 
         if not self.halt: self.msgOut("<End>")
         else: 
-            if self.cce: self.msgOut("CompleteConfusionError\nin line "+str(self.count)+":\n"+self.codeList[self.count])
-            self.msgOut("<Break>")
-        
+            if self.cce:
+                self.msgOut("CompleteConfusionError\nin code:\n"+self.codeList[self.count])
+                self.msgOut("<Break in line "+str(self.count)+">")
+            else:
+                self.msgOut("<Break in line "+str(self.count)+">")
+                
         try:
             if self.logging: self.logfile.close()
         except:
@@ -549,6 +602,9 @@ class execThread(QThread):
             for i in range(1,9):
                 self.FTD.comm("output_set O"+str(i)+" 1 0")
         
+        if self.SRD!=None:
+            self.SRD.close()
+            
         self.execThreadFinished.emit()
     
     def __del__(self):
@@ -603,6 +659,7 @@ class execThread(QThread):
         elif stack[0]== "MotorP":   self.cmdMotorPulsewheel(stack)
         elif stack[0]== "MotorE":   self.cmdMotorEncoder(stack)
         elif stack[0]== "MotorES":  self.cmdMotorEncoderSync(stack)
+        elif stack[0]== "Servo":    self.cmdServo(stack)
         elif stack[0]== "Delay":    self.cmdDelay(stack)
         elif stack[0]== "TimerQuery": self.cmdPrint("Timer: "+str(int((time.time()-self.timestamp)*1000)))
         elif stack[0]== "TimerClear": self.timestamp=time.time()
@@ -650,11 +707,18 @@ class execThread(QThread):
         elif stack[0]== "RIFShift": self.RIFShift=int(stack[1])
         elif stack[0]== "WaitForTouch": self.cmdWaitForTouch()
         elif stack[0]== "WaitForRelease": self.cmdWaitForRelease()
+        elif stack[0]== "ArrayInit":    self.cmdArrayInit(stack)
+        elif stack[0]== "Array":        self.cmdArray(stack)
+        elif stack[0]== "ArrayStat":    self.cmdArrayStat(stack)
+        elif stack[0]== "ArrayLoad":    self.cmdArrayLoad(stack)
+        elif stack[0]== "ArraySave":    self.cmdArraySave(stack)
+        elif stack[0]== "QueryArray":   self.cmdQueryArray(stack)
+        elif stack[0]== "LookUpTable":  self.cmdLookUpTable(stack)
         
         else:
-            self.cmdPrint("DontKnowWhatToDo\nin line:\n"+line)
+            self.cmdPrint("DontKnowWhatToDo\nin code:\n"+line)
             self.halt=True
-        
+            
         if time.time()>self.interrupt and self.interrupt>0:
             self.interruptExec()
     
@@ -698,6 +762,258 @@ class execThread(QThread):
         while self.released==False and not self.halt:
             self.parent.processEvents()
     
+    def cmdLookUpTable(self, stack):
+        if not (stack[2] in self.arrays):
+            self.cmdPrint("Array '" + stack[2] + "'\nreferenced without\nArrayInit!\nProgram terminated") 
+            self.halt=True
+        elif not (stack[4] in self.arrays):
+            self.cmdPrint("Array '" + stack[4] + "'\nreferenced without\nArrayInit!\nProgram terminated") 
+            self.halt=True
+        else:
+            inp=self.array[self.arrays.index(stack[2])]
+            oup=self.array[self.arrays.index(stack[4])]
+            
+            ival = self.getVal(stack[5])
+            
+            if (ival<min(inp)) or (ival>max(inp)):
+                self.cmdPrint("Input out of\nArray boundaries!\nProgram terminated") 
+                self.halt=True
+            elif (len(inp) != len(oup)) or len(inp)<2:
+                self.cmdPrint("Array size mismatch!\nProgram terminated") 
+                self.halt=True
+            else:
+                n=0
+                while (inp[n]<ival) and n<len(inp):
+                    n=n+1
+                a=inp[n-1]
+                b=inp[n]
+                m=(a+b)/2
+
+                x=(ival-a)/(b-a)
+                
+                if stack[3]=="nearest":
+                    if ival<m: oval=oup[n-1]
+                    else: oval=oup[n]
+                elif stack[3]=="linear":
+                    oval=(oup[n]-oup[n-1]) * x + oup[n-1]
+                    
+                cc=0
+                for i in self.memory:
+                    if i[0]==stack[1]:
+                        self.memory[cc][1] = int(oval)
+                        break
+                    cc=cc+1 
+            
+    def cmdQueryArray(self, stack):
+        if stack[1] in self.arrays:
+            st=stack[1]+": "
+            for i in self.array[self.arrays.index(stack[1])]:
+                st=st+str(i)+";"
+            self.cmdPrint(st[:-1])
+                    
+        else:
+            self.halt=True
+            self.cmdPrint("Array '" + stack[1] + "'\nreferenced without\nArrayInit!\nProgram terminated") 
+    
+    def cmdArraySave(self, stack):
+        if stack[1] in self.arrays:
+            if stack[2]=="replace":
+                fname=os.path.join(arrdir, stack[1]+".arr")
+            elif stack[2]=="rename":
+                fname=os.path.join(arrdir, stack[1]+time.strftime("%Y%m%d-%H%M%S")+".arr")
+            else:
+                files=os.listdir(arrdir)
+                for i in files: 
+                    if i[-4:]!=".arr": files.remove(i)
+                
+                files.sort()
+                s=False
+                if len(files)>0:
+                    self.msg=0
+                    self.requestArray.emit(QCoreApplication.translate("ecl","Save"),files,stack[1])
+                    while self.msg==0:
+                        time.sleep(0.01)
+                    r=self.imesg
+                    if r!="-1": s=True
+                    
+                    
+                if not s: 
+                    self.cmdPrint("Error saving array '"+stack[1]+"'.")
+                    return
+                
+                fname=os.path.join(arrdir, r)
+            
+            if os.path.exists(fname) and stack[2]=="rename": 
+                self.cmdPrint("Error saving array '"+stack[1]+"'.")
+                return
+            
+            try:
+                expfile=open(fname,"w",encoding="utf-8")
+                for i in self.array[self.arrays.index(stack[1])]:
+                    expfile.write(str(i)+";")
+                expfile.close()    
+            except:
+                self.cmdPrint("Error saving array '"+stack[1]+"'.")
+                    
+        else:
+            self.halt=True
+            self.cmdPrint("Array '" + stack[1] + "'\nreferenced without\nArrayInit!\nProgram terminated")        
+    
+    def cmdArrayLoad(self, stack):
+        if stack[1] in self.arrays:
+            if stack[2]=="byName": fname=os.path.join(arrdir, stack[1]+".arr")
+            else:
+                files=os.listdir(arrdir)
+                for i in files: 
+                    if i[-4:]!=".arr": files.remove(i)
+                
+                files.sort()
+                
+                s=False
+                if len(files)>0:
+                    self.msg=0
+                    self.requestArray.emit(QCoreApplication.translate("ecl","Load"),files,stack[1])
+                    while self.msg==0:
+                        time.sleep(0.01)
+                    r=self.imesg
+                    if r!="-1":  s=True
+                    
+                if not s: 
+                    self.cmdPrint("Error loading array '"+stack[1]+"'.")
+                    return
+            
+                fname=os.path.join(arrdir, r)
+            
+            if os.path.exists(fname):
+                impfile=open(fname,"r",encoding="utf-8")
+                t=impfile.read().split(";")
+                t.pop()
+                for i in range(0,len(t)):
+                    t[i]=int(t[i])
+                self.array[self.arrays.index(stack[1])]=t
+                impfile.close()
+            else:
+                self.cmdPrint("Error loading array '"+stack[1]+"'.")
+                return
+                
+        else:
+            self.halt=True
+            self.cmdPrint("Array '" + stack[1] + "'\nreferenced without\nArrayInit!\nProgram terminated") 
+            
+    def cmdArrayInit(self,stack):
+        if stack[1] in self.arrays:
+            self.array[ self.arrays.index(stack[1]) ] = []
+        else:
+            self.arrays.append(stack[1])
+            self.array.append([])
+    
+    def cmdArray(self,stack):
+        var=stack[1]
+        val=self.getVal(var)
+        arr=stack[3]
+        idx=self.getVal(stack[4])
+
+        if not (arr in self.arrays):
+            self.cmdPrint("Array '" + stack[1] + "'\nreferenced without\nArrayInit!\nProgram terminated")
+            self.halt=True
+
+        if self.halt: return
+    
+        if stack[2]=="appendTo":
+            self.array[self.arrays.index(arr)].append(val)
+        elif stack[2]=="writeTo":
+            if idx<len(self.array[self.arrays.index(arr)]) and (idx>=0): self.array[self.arrays.index(arr)][idx]=val
+            else:
+                self.halt=True
+                self.cmdPrint("Index exceeded\nactual array size!\nProgram terminated")
+        elif stack[2]=="readFrom":
+            if idx<len(self.array[self.arrays.index(arr)]) and (idx>=0):
+                cc=0
+                for i in self.memory:
+                    if i[0]==var:
+                        self.memory[cc][1] = self.array[self.arrays.index(arr)][idx]
+                        break
+                    cc=cc+1            
+            else:
+                self.halt=True
+                self.cmdPrint("Index exceeded\nactual array size!\nProgram terminated")
+        elif stack[2]=="insertTo":
+            if idx<len(self.array[self.arrays.index(arr)]) and (idx>=0): self.array[self.arrays.index(arr)].insert(idx, val)  
+            else:
+                self.halt=True
+                self.cmdPrint("Index exceeded\nactual array size!\nProgram terminated")
+        elif stack[2]=="removeFrom":
+            if idx<len(self.array[self.arrays.index(arr)]) and (idx>=0):
+                cc=0
+                for i in self.memory:
+                    if i[0]==var:
+                        self.memory[cc][1] = self.array[self.arrays.index(arr)][idx]
+                        del self.array[self.arrays.index(arr)][idx]
+                        break
+                    cc=cc+1            
+            else:
+                self.halt=True
+                self.cmdPrint("Index exceeded\nactual array size!\nProgram terminated")
+                
+    def cmdArrayStat(self,stack):
+        var=stack[1]
+        val=self.getVal(var)
+        arr=stack[3]
+
+        if not (arr in self.arrays):
+            self.cmdPrint("Array '" + stack[1] + "'\nreferenced without\nArrayInit!\nProgram terminated")
+            self.halt=True
+
+        if self.halt: return
+        
+        # "sizeOf","min","max","mean","minIdx","maxIdx"
+
+        if stack[2]=="sizeOf":
+            cc=0
+            for i in self.memory:
+                if i[0]==var:
+                    self.memory[cc][1] = len(self.array[self.arrays.index(arr)])
+                    break
+                cc=cc+1            
+        elif stack[2]=="min":
+            cc=0
+            for i in self.memory:
+                if i[0]==var:
+                    self.memory[cc][1] = min(self.array[self.arrays.index(arr)])
+                    break
+                cc=cc+1         
+        elif stack[2]=="max":
+            cc=0
+            for i in self.memory:
+                if i[0]==var:
+                    self.memory[cc][1] = max(self.array[self.arrays.index(arr)])
+                    break
+                cc=cc+1  
+        elif stack[2]=="mean":
+            mean=0
+            for i in range(0, len(self.array[self.arrays.index(arr)])):
+                mean=mean+self.array[self.arrays.index(arr)][i]
+                
+            mean=mean//len(self.array[self.arrays.index(arr)])
+            
+            cc=0
+            for i in self.memory:
+                if i[0]==var:
+                    self.memory[cc][1] = mean
+                    break
+                cc=cc+1
+                
+        elif stack[2]=="maxIdx" or stack[2]=="minIdx":
+            if stack[2]=="maxIdx": t=max(self.array[self.arrays.index(arr)])
+            else:  t=min(self.array[self.arrays.index(arr)])   
+            
+            cc=0
+            for i in self.memory:
+                if i[0]==var:
+                    self.memory[cc][1] = self.array[self.arrays.index(arr)].index(t)
+                    break
+                cc=cc+1            
+            
     def cmdInterrupt(self,stack):
         if stack[1]=="Off":
             self.interrupt=-1
@@ -1146,7 +1462,7 @@ class execThread(QThread):
                 pass
             
             try:
-                lfn=logdir+"log"+time.strftime("%Y%m%d-%H%M%S")+".txt"
+                lfn=os.path.join(logdir, "log"+time.strftime("%Y%m%d-%H%M%S")+".txt")
                 while os.path.exists(lfn):
                     lfn=lfn+"-"
                 self.logfile=open(lfn,"w",encoding="utf-8")
@@ -1395,6 +1711,21 @@ class execThread(QThread):
                 if not a==b: c=c+1
             
             self.FTD.comm("motor_set M"+str(m)+" brake 0")
+
+    def cmdServo(self, stack):
+        v=self.getVal(stack[3])
+        if self.halt: return
+        
+        if stack[1]=="SRD":
+            self.SRD.flushInput()
+            self.SRD.flushOutput()
+            self.SRD.write(("pwm_set "+str(int((stack[2])[1:]))+" 0 "+str(v)).encode("utf-8"))
+            self.SRD.readline().decode("utf-8")[:-2]
+        elif stack[1]=="TXT":
+            # self.txt_o[int(stack[2])-1].setLevel(v)
+            pass
+        elif stack[1]=="FTD":
+            self.FTD.comm("pwm_set "+str(int((stack[2])[1:]))+" 0 "+str(v))             
             
     def cmdDelay(self, stack):
         v=self.getVal(stack[1])
@@ -1414,8 +1745,6 @@ class execThread(QThread):
             time.sleep(0.001)
         
         self.sleeper.cancel()
-        if self.halt:
-            self.count=len(self.codeList)
             
 
     def wake(self):
@@ -1928,6 +2257,8 @@ class execThread(QThread):
         while self.msg==0:
             pass
         self.msg=0
+
+
 #
 #
 # GUI classes for editing command lines
@@ -2324,6 +2655,126 @@ class editOutput(TouchDialog):
             else: self.value.setText(str(max(0,min(512,int(self.value.text())))))
         except:
             pass
+
+class editServo(TouchDialog):
+    def __init__(self, cmdline, vari, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","Servo"), parent)
+        
+        self.cmdline=cmdline
+        self.variables=vari
+    
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+        
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.timedOut)
+        
+        self.layout=QVBoxLayout()
+        
+        k1=QVBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Device"))
+        l.setStyleSheet("font-size: 20px;")
+        
+        k1.addWidget(l)
+        
+        self.interface=QComboBox()
+        self.interface.setStyleSheet("font-size: 20px;")
+        self.interface.addItems(["SRD","FTD","TXT"])
+
+        if self.cmdline.split()[1]=="TXT": self.interface.setCurrentIndex(2)
+        if self.cmdline.split()[1]=="FTD": self.interface.setCurrentIndex(1)
+        self.interface.currentIndexChanged.connect(self.ifChanged)
+        k1.addWidget(self.interface)
+        
+        #self.layout.addStretch()
+        
+        k2=QVBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl","Port"))
+        l.setStyleSheet("font-size: 20px;")
+        k2.addWidget(l)
+        
+        self.port=QComboBox()
+        self.port.setStyleSheet("font-size: 20px;")
+        self.port.addItems(["S00","S01","S02","S03","S04","S05","S06","S07","S08","S09","S10","S11","S12","S13","S14","S15"])
+        p=self.cmdline.split()[2]
+        print(p)
+        self.port.setCurrentIndex(int(p[1:]))
+        k2.addWidget(self.port)
+        
+        k9=QHBoxLayout()
+        k9.addLayout(k1)
+        k9.addStretch()
+        k9.addLayout(k2)
+        
+        self.layout.addLayout(k9)
+        
+        l=QLabel(QCoreApplication.translate("ecl","Value"))
+        l.setStyleSheet("font-size: 20px;")
+        self.layout.addWidget(l)     
+        
+        self.value=QLineEdit()
+        self.value.setReadOnly(True)
+        self.value.setStyleSheet("font-size: 20px;")
+        self.value.setText(self.cmdline.split()[3])
+        self.value.mousePressEvent=self.valPress
+        self.value.mouseReleaseEvent=self.valRelease
+        self.layout.addWidget(self.value)
+        
+        self.layout.addStretch()
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+    
+    def on_confirm(self):
+        self.cmdline="Servo " +self.interface.currentText()+ " " + self.port.currentText() + " " + self.value.text()
+        self.close()
+    
+    def ifChanged(self):
+        self.valueChanged()
+
+    def valPress(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btnTimedOut=False
+        self.timer.start(500)
+    
+    def timedOut(self):
+        self.btnTimedOut=True
+        self.timer.stop()
+        self.value.setText(queryVarName(self.variables,self.value.text()))  
+    
+    def valRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            try:
+                int(self.value.text())
+            except:
+                self.value.setText("0")  
+            self.getValue(1)
+    
+    def getValue(self,m):
+        a=self.value.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Value"),a,self).exec_()
+        try:
+            self.value.setText(str(int(t)))
+        except:
+            
+            self.value.setText(a)
+            
+        self.valueChanged()
+        
+    def valueChanged(self):
+        try:            
+            self.value.setText(str(max(0,min(4095,int(self.value.text())))))
+        except:
+            pass
+
 
 class editMotor(TouchDialog):
     def __init__(self, cmdline, vari, parent=None):
@@ -4310,8 +4761,6 @@ class editInit(TouchDialog):
         a=self.pulses.text()
         t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Value"),a,self.parent).exec_()
         try:
-            if int(t)<0: t=str(0)
-            if int(t)>9999: t=str(9999)
             t=str(int(t))
         except:
             t=a
@@ -6337,8 +6786,533 @@ class editVarToText(TouchDialog):
             t=a
         self.value.setText(str(int(t)))
 
+class editArray(TouchDialog):
+    def __init__(self, cmdline, vari, arrays, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","Array"), parent)
+        
+        self.cmdline=cmdline
+        self.variables=vari
+        self.arrays=arrays
+    
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+                
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.timedOut)
+        
+        self.layout=QVBoxLayout()
+        
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Variable:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.target=QComboBox()
+        self.target.setStyleSheet("font-size: 18px;")
+        self.target.addItems(self.variables)
 
+        if self.cmdline.split()[1] in self.variables:
+            self.target.setCurrentIndex(self.variables.index(self.cmdline.split()[1]))
+        else:
+            self.target.setCurrentIndex(0)
 
+        h.addWidget(self.target)
+        
+        self.layout.addLayout(h)
+        
+        #
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Action:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        f=["readFrom","writeTo","appendTo","insertTo","removeFrom"]
+        self.data=QComboBox()
+        self.data.setStyleSheet("font-size: 18px;")
+        self.data.addItems(f)
+
+        if self.cmdline.split()[2] in f:
+            self.data.setCurrentIndex(f.index(self.cmdline.split()[2]))
+        else:
+            self.data.setCurrentIndex(0)        
+
+        h.addWidget(self.data)
+        
+        self.layout.addLayout(h)
+
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Array:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.array=QComboBox()
+        self.array.setStyleSheet("font-size: 18px;")
+        self.array.addItems(self.arrays)
+
+        if self.cmdline.split()[3] in self.arrays:
+            self.array.setCurrentIndex(self.arrays.index(self.cmdline.split()[3]))
+        else:
+            self.array.setCurrentIndex(0)
+
+        h.addWidget(self.array)
+
+        self.layout.addLayout(h)
+        self.layout.addStretch()
+        
+        l=QLabel(QCoreApplication.translate("ecl","at index"))
+        l.setStyleSheet("font-size: 18px;")
+        self.layout.addWidget(l)     
+        
+        self.value=QLineEdit()
+        self.value.setReadOnly(True)
+        self.value.setStyleSheet("font-size: 18px;")
+            
+        self.value.setText(self.cmdline.split()[4])
+        self.value.mousePressEvent=self.valPress
+        self.value.mouseReleaseEvent=self.valRelease
+        self.layout.addWidget(self.value)
+        
+        self.layout.addStretch()
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+
+    def on_confirm(self):
+        self.cmdline = "Array " +self.target.itemText(self.target.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.data.itemText(self.data.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.array.itemText(self.array.currentIndex()) + " "
+        if self.data.itemText(self.data.currentIndex()) == "appendTo":
+            self.cmdline = self.cmdline + "0"
+        else:
+            self.cmdline = self.cmdline + self.value.text()
+
+        self.close()
+ 
+    def valPress(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btnTimedOut=False
+        self.timer.start(500)
+    
+    def timedOut(self):
+        self.btnTimedOut=True
+        self.timer.stop()
+        self.value.setText(queryVarName(self.variables,self.value.text()))  
+    
+    def valRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            try:
+                int(self.value.text())
+            except:
+                self.value.setText("0")  
+            self.getValue(1)
+    
+    def ifChanged(self):
+        pass        
+    
+    def getValue(self,m):
+        a=self.value.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Index"),a,self).exec_()
+        try:
+            int(t)
+        except:
+            t=a
+        self.value.setText(str(int(t)))
+        
+class editLookUpTable(TouchDialog):
+    def __init__(self, cmdline, vari, arrays, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","LookUpTable"), parent)
+        
+        self.cmdline=cmdline
+        self.variables=vari
+        self.arrays=arrays
+    
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+                
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.timedOut)
+        
+        self.layout=QVBoxLayout()
+        
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Output variable:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.target=QComboBox()
+        self.target.setStyleSheet("font-size: 18px;")
+        self.target.addItems(self.variables)
+
+        if self.cmdline.split()[1] in self.variables:
+            self.target.setCurrentIndex(self.variables.index(self.cmdline.split()[1]))
+        else:
+            self.target.setCurrentIndex(0)
+
+        h.addWidget(self.target)
+        
+        self.layout.addLayout(h)
+        
+        #
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Input Array:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.array=QComboBox()
+        self.array.setStyleSheet("font-size: 18px;")
+        self.array.addItems(self.arrays)
+
+        if self.cmdline.split()[2] in self.arrays:
+            self.array.setCurrentIndex(self.arrays.index(self.cmdline.split()[2]))
+        else:
+            self.array.setCurrentIndex(0)
+
+        h.addWidget(self.array)
+
+        self.layout.addLayout(h)
+        #
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Method:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        f=["nearest","linear"]
+        self.data=QComboBox()
+        self.data.setStyleSheet("font-size: 18px;")
+        self.data.addItems(f)
+
+        if self.cmdline.split()[3] in f:
+            self.data.setCurrentIndex(f.index(self.cmdline.split()[3]))
+        else:
+            self.data.setCurrentIndex(0)        
+
+        h.addWidget(self.data)
+        
+        self.layout.addLayout(h)
+
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Output Array:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.array2=QComboBox()
+        self.array2.setStyleSheet("font-size: 18px;")
+        self.array2.addItems(self.arrays)
+
+        if self.cmdline.split()[4] in self.arrays:
+            self.array2.setCurrentIndex(self.arrays.index(self.cmdline.split()[4]))
+        else:
+            self.array2.setCurrentIndex(0)
+
+        h.addWidget(self.array2)
+
+        self.layout.addLayout(h)
+        self.layout.addStretch()
+        
+        l=QLabel(QCoreApplication.translate("ecl","Input value:"))
+        l.setStyleSheet("font-size: 18px;")
+        self.layout.addWidget(l)     
+        
+        self.value=QLineEdit()
+        self.value.setReadOnly(True)
+        self.value.setStyleSheet("font-size: 18px;")
+            
+        self.value.setText(self.cmdline.split()[5])
+        self.value.mousePressEvent=self.valPress
+        self.value.mouseReleaseEvent=self.valRelease
+        self.layout.addWidget(self.value)
+        
+        self.layout.addStretch()
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+
+    def on_confirm(self):
+        self.cmdline = "LookUpTable " +self.target.itemText(self.target.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.array.itemText(self.array.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.data.itemText(self.data.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.array2.itemText(self.array2.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.value.text()
+
+        self.close()
+ 
+    def valPress(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btnTimedOut=False
+        self.timer.start(500)
+    
+    def timedOut(self):
+        self.btnTimedOut=True
+        self.timer.stop()
+        self.value.setText(queryVarName(self.variables,self.value.text()))  
+    
+    def valRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            try:
+                int(self.value.text())
+            except:
+                self.value.setText("0")  
+            self.getValue(1)
+    
+    def ifChanged(self):
+        pass        
+    
+    def getValue(self,m):
+        a=self.value.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Value"),a,self).exec_()
+        try:
+            int(t)
+        except:
+            t=a
+        self.value.setText(str(int(t)))
+
+class editArrayStat(TouchDialog):
+    def __init__(self, cmdline, vari, arrays, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","ArrayStat"), parent)
+        
+        self.cmdline=cmdline
+        self.variables=vari
+        self.arrays=arrays
+    
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+
+        
+        self.layout=QVBoxLayout()
+        
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Variable:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.target=QComboBox()
+        self.target.setStyleSheet("font-size: 18px;")
+        self.target.addItems(self.variables)
+
+        if self.cmdline.split()[1] in self.variables:
+            self.target.setCurrentIndex(self.variables.index(self.cmdline.split()[1]))
+        else:
+            self.target.setCurrentIndex(0)
+
+        h.addWidget(self.target)
+        
+        self.layout.addLayout(h)
+        
+        #
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Function:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        f=["sizeOf","min","max","mean","minIdx","maxIdx"]
+        self.data=QComboBox()
+        self.data.setStyleSheet("font-size: 18px;")
+        self.data.addItems(f)
+
+        if self.cmdline.split()[2] in f:
+            self.data.setCurrentIndex(f.index(self.cmdline.split()[2]))
+        else:
+            self.data.setCurrentIndex(0)        
+
+        h.addWidget(self.data)
+        
+        self.layout.addLayout(h)
+
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Array:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.array=QComboBox()
+        self.array.setStyleSheet("font-size: 18px;")
+        self.array.addItems(self.arrays)
+
+        if self.cmdline.split()[3] in self.arrays:
+            self.array.setCurrentIndex(self.arrays.index(self.cmdline.split()[3]))
+        else:
+            self.array.setCurrentIndex(0)
+
+        h.addWidget(self.array)
+
+        self.layout.addLayout(h)
+        self.layout.addStretch()
+        
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+
+    def on_confirm(self):
+        self.cmdline = "ArrayStat " +self.target.itemText(self.target.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.data.itemText(self.data.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.array.itemText(self.array.currentIndex()) + " "
+
+        self.close()
+
+class editArrayLoad(TouchDialog):
+    def __init__(self, cmdline, arrays, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","ArrayLoad"), parent)
+        
+        self.cmdline=cmdline
+        self.arrays=arrays
+    
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+
+        
+        self.layout=QVBoxLayout()
+        
+        #
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Filename:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        f=["userSelect","byName"]
+        self.data=QComboBox()
+        self.data.setStyleSheet("font-size: 18px;")
+        self.data.addItems(f)
+
+        if self.cmdline.split()[2] in f:
+            self.data.setCurrentIndex(f.index(self.cmdline.split()[2]))
+        else:
+            self.data.setCurrentIndex(0)        
+
+        h.addWidget(self.data)
+        
+        self.layout.addLayout(h)
+
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Array:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.array=QComboBox()
+        self.array.setStyleSheet("font-size: 18px;")
+        self.array.addItems(self.arrays)
+
+        if self.cmdline.split()[1] in self.arrays:
+            self.array.setCurrentIndex(self.arrays.index(self.cmdline.split()[1]))
+        else:
+            self.array.setCurrentIndex(0)
+
+        h.addWidget(self.array)
+
+        self.layout.addLayout(h)
+        self.layout.addStretch()
+        
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+
+    def on_confirm(self):
+        self.cmdline = "ArrayLoad " + self.array.itemText(self.array.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.data.itemText(self.data.currentIndex()) + " "
+
+        self.close()
+class editArraySave(TouchDialog):
+    def __init__(self, cmdline, arrays, parent=None):
+        TouchDialog.__init__(self, QCoreApplication.translate("ecl","ArraySave"), parent)
+        
+        self.cmdline=cmdline
+        self.arrays=arrays
+    
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+
+        
+        self.layout=QVBoxLayout()
+        
+        #
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "File:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        f=["replace","rename","userSelect"]
+        self.data=QComboBox()
+        self.data.setStyleSheet("font-size: 18px;")
+        self.data.addItems(f)
+
+        if self.cmdline.split()[2] in f:
+            self.data.setCurrentIndex(f.index(self.cmdline.split()[2]))
+        else:
+            self.data.setCurrentIndex(0)        
+
+        h.addWidget(self.data)
+        
+        self.layout.addLayout(h)
+
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Array:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.array=QComboBox()
+        self.array.setStyleSheet("font-size: 18px;")
+        self.array.addItems(self.arrays)
+
+        if self.cmdline.split()[1] in self.arrays:
+            self.array.setCurrentIndex(self.arrays.index(self.cmdline.split()[1]))
+        else:
+            self.array.setCurrentIndex(0)
+
+        h.addWidget(self.array)
+
+        self.layout.addLayout(h)
+        self.layout.addStretch()
+        
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+
+    def on_confirm(self):
+        self.cmdline = "ArraySave " + self.array.itemText(self.array.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.data.itemText(self.data.currentIndex()) + " "
+
+        self.close()
 #
 # main GUI application
 #
@@ -6382,15 +7356,15 @@ class FtcGuiApplication(TouchApplication):
         # load last project
         
         try:
-            with open(hostdir+".lastproject","r", encoding="utf-8") as f:
+            with open( os.path.join(hostdir, ".lastproject"), "r", encoding="utf-8") as f:
                 [self.codeName,self.codeSaved]=json.load(f)
             
             if not self.codeSaved:
-                with open(hostdir+".autosave","r", encoding="utf-8") as f:
+                with open( os.path.join(hostdir, ".autosave"),"r", encoding="utf-8") as f:
                     self.code=json.load(f)                
-                os.remove(hostdir+".autosave")
+                os.remove(os.path.join(hostdir,".autosave"))
             else:
-                with open(projdir+self.codeName,"r", encoding="utf-8") as f:
+                with open(os.path.join(projdir, self.codeName),"r", encoding="utf-8") as f:
                     self.code=json.load(f)
         except:
             self.code=["# new"]
@@ -6427,6 +7401,11 @@ class FtcGuiApplication(TouchApplication):
         
         self.m_modules = self.menu.addAction(QCoreApplication.translate("mmain","Modules"))
         self.m_modules.triggered.connect(self.on_menu_modules)
+        
+        self.menu.addSeparator()
+        
+        self.m_modules = self.menu.addAction(QCoreApplication.translate("mmain","Data"))
+        self.m_modules.triggered.connect(self.on_menu_data)
         
         self.menu.addSeparator()
         
@@ -6545,7 +7524,6 @@ class FtcGuiApplication(TouchApplication):
         canvasSize=min(self.mainwindow.width(),self.mainwindow.height())
         self.canvas=QLabel(self.mainwindow)
         self.canvas.setGeometry(0, 0, canvasSize, canvasSize)        
-        #self.canvas.setPixmap(QPixmap(pixdir+"pixmap.png"))
         self.canvas.setPixmap(QPixmap(canvasSize, canvasSize))
         self.canvas.hide()
         self.painter=QImage(canvasSize, canvasSize, QImage.Format_RGB32)
@@ -6554,16 +7532,16 @@ class FtcGuiApplication(TouchApplication):
         
         self.mainwindow.show()
         try:
-            if os.path.isfile(hostdir+".01_firstrun"):
+            if os.path.isfile(os.path.join(hostdir,".01_firstrun")):
                 t=TouchMessageBox("first run", self.mainwindow)
                 t.setCancelButton()
-                with open(hostdir+".01_firstrun", "r", encoding="utf-8") as f:
+                with open(os.path.join(hostdir,".01_firstrun"), "r", encoding="utf-8") as f:
                     msg=f.read()
                     f.close()
                 t.setText(msg)
                 t.exec_()
                 
-                os.remove(hostdir+".01_firstrun")
+                os.remove(os.path.join(hostdir,".01_firstrun"))
         except:
             pass
         
@@ -6581,11 +7559,11 @@ class FtcGuiApplication(TouchApplication):
         self.codeFromListWidget()
         
         if not self.codeSaved:
-            with open(hostdir+".autosave","w", encoding="utf-8") as f:
+            with open(os.path.join(hostdir,".autosave"),"w", encoding="utf-8") as f:
                 json.dump(self.code,f)
                 f.close()           
         
-        with open(hostdir+".lastproject", "w", encoding="utf-8") as f:
+        with open(os.path.join(hostdir, ".lastproject"), "w", encoding="utf-8") as f:
             json.dump([self.codeName, self.codeSaved],f)
 
 
@@ -6603,8 +7581,8 @@ class FtcGuiApplication(TouchApplication):
         if v2==QCoreApplication.translate("m_about","News"):
             t=TouchMessageBox(QCoreApplication.translate("m_about","News"), self.mainwindow)
             t.setCancelButton()
-            if os.path.isfile(hostdir+".00_news"):
-                with open(hostdir+".00_news","r") as f:
+            if os.path.isfile(os.path.join(hostdir,".00_news")):
+                with open(os.path.join(hostdir, ".00_news"),"r") as f:
                     text=f.read()
                     f.close()
             else: text="No news found."
@@ -6679,7 +7657,7 @@ class FtcGuiApplication(TouchApplication):
             
         if not s: return
     
-        with open(projdir+r,"r", encoding="utf-8") as f:
+        with open(os.path.join(projdir,r),"r", encoding="utf-8") as f:
             self.code=json.load(f)
             f.close()
         
@@ -6698,7 +7676,7 @@ class FtcGuiApplication(TouchApplication):
         
         if not s: return
         pfn=r
-        if os.path.isfile(projdir+pfn):
+        if os.path.isfile(os.path.join(projdir,pfn)):
             t=TouchMessageBox(QCoreApplication.translate("m_project","Save"), self.mainwindow)
             t.setCancelButton()
             t.setText(QCoreApplication.translate("m_project","A file with this name already exists. Do you want to overwrite it?"))
@@ -6711,7 +7689,7 @@ class FtcGuiApplication(TouchApplication):
         
         self.codeFromListWidget()
         
-        with open(projdir+pfn,"w", encoding="utf-8") as f:
+        with open(os.path.join(projdir,pfn),"w", encoding="utf-8") as f:
             
             json.dump(self.code,f)
             f.close()
@@ -6746,7 +7724,7 @@ class FtcGuiApplication(TouchApplication):
             
         if v2 !=  QCoreApplication.translate("m_project","Yes"): return
         
-        os.remove(projdir+r)
+        os.remove(os.path.join(projdir,r))
         
         if self.codeName==r: self.codeSaved=False
 
@@ -6783,7 +7761,7 @@ class FtcGuiApplication(TouchApplication):
             
         if not s: return
     
-        with open(moddir+r,"r", encoding="utf-8") as f:
+        with open(os.path.join(moddir,r),"r", encoding="utf-8") as f:
             module=json.load(f)
         
         self.codeFromListWidget()
@@ -6856,7 +7834,7 @@ class FtcGuiApplication(TouchApplication):
             cnt=cnt+1
 
         pfn=r
-        if os.path.isfile(moddir+pfn):
+        if os.path.isfile(os.path.join(moddir,pfn)):
             t=TouchMessageBox(QCoreApplication.translate("m_modules","Export"), self.mainwindow)
             t.setCancelButton()
             t.setText(QCoreApplication.translate("m_modules","A module file with this name already exists. Do you want to overwrite it?"))
@@ -6874,7 +7852,7 @@ class FtcGuiApplication(TouchApplication):
             a=a+1
         module.append("MEnd")
         
-        with open(moddir+pfn,"w", encoding="utf-8") as f:
+        with open(os.path.join(moddir,pfn),"w", encoding="utf-8") as f:
             
             json.dump(module,f)
             f.close()
@@ -6906,8 +7884,110 @@ class FtcGuiApplication(TouchApplication):
             
         if v2 !=  QCoreApplication.translate("m_modules","Yes"): return
         
-        os.remove(moddir+r)
+        os.remove(os.path.join(moddir,r))
+
+    def on_menu_data(self):
+        fta=TouchAuxMultibutton(QCoreApplication.translate("m_data","Data"), self.mainwindow)
+        fta.setButtons([ QCoreApplication.translate("m_data","Arrays"),
+                         QCoreApplication.translate("m_data","Pixmaps"),
+                         QCoreApplication.translate("m_data","Logfiles")
+                        ]
+                      )
+        fta.setTextSize(3)
+        fta.setBtnTextSize(3)
+        (s,r)=fta.exec_()      
         
+        if   r == QCoreApplication.translate("m_data","Arrays"):    self.data_arrays()
+        elif r == QCoreApplication.translate("m_data","Pixmaps"):   self.data_pixmaps()
+        elif r == QCoreApplication.translate("m_data","Logfiles"):  self.data_logfiles()      
+
+    def data_arrays(self):
+        # get list of arrays and query user
+        filelist=os.listdir(arrdir)
+        filelist.sort()
+        if len(filelist)>0:
+            (s,r)=TouchAuxListRequester(QCoreApplication.translate("m_data","Arrays"),QCoreApplication.translate("m_data","Array"),filelist,filelist[0],"Okay",self.mainwindow).exec_()
+        else:
+            t=TouchMessageBox(QCoreApplication.translate("m_data","Arrays"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("m_data","No saved arrays found."))
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("m_data","Okay"))
+            (v1,v2)=t.exec_()   
+            s=False
+            
+        if not s: return
+
+        t=TouchMessageBox(QCoreApplication.translate("m_modules","Delete"), self.mainwindow)
+        t.setCancelButton()
+        t.setText(QCoreApplication.translate("m_modules","Do you really want to permanently delete this array?")+"<br>"+r)
+        t.setBtnTextSize(2)
+        t.setPosButton(QCoreApplication.translate("m_modules","Yes"))
+        t.setNegButton(QCoreApplication.translate("m_modules","No"))
+        (v1,v2)=t.exec_()
+            
+        if v2 !=  QCoreApplication.translate("m_modules","Yes"): return
+        
+        os.remove(os.path.join(arrdir,r))
+
+    def data_pixmaps(self):
+        # get list of pixmaps and query user
+        filelist=os.listdir(pixdir)
+        filelist.sort()
+        if len(filelist)>0:
+            (s,r)=TouchAuxListRequester(QCoreApplication.translate("m_data","Pixmaps"),QCoreApplication.translate("m_data","Pixmap"),filelist,filelist[0],"Okay",self.mainwindow).exec_()
+        else:
+            t=TouchMessageBox(QCoreApplication.translate("m_data","Pixmaps"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("m_data","No pixmaps found."))
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("m_data","Okay"))
+            (v1,v2)=t.exec_()   
+            s=False
+            
+        if not s: return
+
+        t=TouchMessageBox(QCoreApplication.translate("m_modules","Delete"), self.mainwindow)
+        t.setCancelButton()
+        t.setText(QCoreApplication.translate("m_modules","Do you really want to permanently delete this pixmap?")+"<br>"+r)
+        t.setBtnTextSize(2)
+        t.setPosButton(QCoreApplication.translate("m_modules","Yes"))
+        t.setNegButton(QCoreApplication.translate("m_modules","No"))
+        (v1,v2)=t.exec_()
+            
+        if v2 !=  QCoreApplication.translate("m_modules","Yes"): return
+        
+        os.remove(os.path.join(pixdir,r))
+    
+    
+    def data_logfiles(self):
+        # get list of arrays and query user
+        filelist=os.listdir(logdir)
+        filelist.sort()
+        if len(filelist)>0:
+            (s,r)=TouchAuxListRequester(QCoreApplication.translate("m_data","Logfiles"),QCoreApplication.translate("m_data","Logfile"),filelist,filelist[0],"Okay",self.mainwindow).exec_()
+        else:
+            t=TouchMessageBox(QCoreApplication.translate("m_data","Logfiles"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("m_data","No saved logfiles found."))
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("m_data","Okay"))
+            (v1,v2)=t.exec_()   
+            s=False
+            
+        if not s: return
+
+        t=TouchMessageBox(QCoreApplication.translate("m_modules","Delete"), self.mainwindow)
+        t.setCancelButton()
+        t.setText(QCoreApplication.translate("m_modules","Do you really want to permanently delete this logfile?")+"<br>"+r)
+        t.setBtnTextSize(2)
+        t.setPosButton(QCoreApplication.translate("m_modules","Yes"))
+        t.setNegButton(QCoreApplication.translate("m_modules","No"))
+        (v1,v2)=t.exec_()
+            
+        if v2 !=  QCoreApplication.translate("m_modules","Yes"): return
+        
+        os.remove(os.path.join(logdir,r))
 
     def on_menu_interfaces(self):
         global RIFSERIAL
@@ -7016,6 +8096,7 @@ class FtcGuiApplication(TouchApplication):
                 self.et.requestKeyboard.connect(self.requestKeyboard)
                 self.et.requestDial.connect(self.requestDial)
                 self.et.requestBtn.connect(self.requestButton)
+                self.et.requestArray.connect(self.requestArray)
                 self.et.canvasSig.connect(self.canvasSig)
                 self.et.start() 
             else:
@@ -7086,15 +8167,19 @@ class FtcGuiApplication(TouchApplication):
             self.canvasReturn.emit()
         elif s[1]=="origin":
             self.painter=self.painter.copy(self.xpos, self.ypos, self.painter.width(), self.painter.height())
-            #self.canvas.setPixmap(QPixmap.fromImage(self.painter))
-            #self.canvas.pixmap().scroll(0-self.xpos, 0-self.ypos, self.painter.rect())
-            #self.painter=self.canvas.pixmap().toImage()
             self.canvasReturn.emit()
         elif s[1]=="log":
             pm=self.canvas.pixmap()
             try:
-                lfn=logdir+"img"+time.strftime("%Y%m%d-%H%M%S")+".png"
+                lfn=os.path.join(logdir, "img"+time.strftime("%Y%m%d-%H%M%S")+".png")
                 pm.save(lfn,"",90)
+            except:
+                pass
+            self.canvasReturn.emit()
+        elif s[1]=="load":
+            try:
+                self.painter.load(os.path.join(pixdir,s[2]))
+                self.canvas.setPixmap(QPixmap.fromImage(self.painter))
             except:
                 pass
             self.canvasReturn.emit()
@@ -7103,7 +8188,7 @@ class FtcGuiApplication(TouchApplication):
             self.ypos=int(s[3])
             self.canvasReturn.emit()
         elif s[1]=="plot":
-            pm=self.painter #self.canvas.pixmap()
+            pm=self.painter 
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -7113,7 +8198,7 @@ class FtcGuiApplication(TouchApplication):
             p.end()
             self.canvasReturn.emit()
         elif s[1]=="lineTo":
-            pm=self.painter #self.canvas.pixmap()
+            pm=self.painter 
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -7125,7 +8210,7 @@ class FtcGuiApplication(TouchApplication):
             p.end()  
             self.canvasReturn.emit()
         elif s[1]=="rectTo":
-            pm=self.painter #self.canvas.pixmap()
+            pm=self.painter 
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -7137,7 +8222,7 @@ class FtcGuiApplication(TouchApplication):
             p.end() 
             self.canvasReturn.emit()
         elif s[1]=="boxTo":
-            pm=self.painter #self.canvas.pixmap()
+            pm=self.painter 
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -7149,7 +8234,7 @@ class FtcGuiApplication(TouchApplication):
             p.end() 
             self.canvasReturn.emit()
         elif s[1]=="circleTo":
-            pm=self.painter #self.canvas.pixmap()
+            pm=self.painter 
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -7161,7 +8246,7 @@ class FtcGuiApplication(TouchApplication):
             p.end()
             self.canvasReturn.emit()
         elif s[1]=="discTo":
-            pm=self.painter #self.canvas.pixmap()
+            pm=self.painter 
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -7174,7 +8259,7 @@ class FtcGuiApplication(TouchApplication):
             p.end()
             self.canvasReturn.emit()
         elif s[1]=="eraseTo":
-            pm=self.painter #self.canvas.pixmap()
+            pm=self.painter 
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.bred, self.bgreen, self.bblue, 255))
@@ -7194,7 +8279,7 @@ class FtcGuiApplication(TouchApplication):
             self.xpos=int(s[2])
             self.ypos=int(s[3])
             self.area.append( QtCore.QPointF(self.xpos, self.ypos) )
-            pm=self.painter #self.canvas.pixmap()
+            pm=self.painter
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -7202,8 +8287,8 @@ class FtcGuiApplication(TouchApplication):
             p.drawPolygon(self.area)
             self.area = QtGui.QPolygonF()
             self.canvasReturn.emit()
-        elif s[1]=="text": # draw text
-            pm=self.painter #self.canvas.pixmap()
+        elif s[1]=="text": 
+            pm=self.painter
             p=QPainter()
             p.begin(pm)
             p.setPen(QtGui.QColor(self.pred, self.pgreen, self.pblue, 255))
@@ -7263,6 +8348,18 @@ class FtcGuiApplication(TouchApplication):
         
         if s:
             self.IMsgBack.emit(str(buttons.index(r)+1))
+        else:
+            self.IMsgBack.emit("-1")
+        self.msgBack.emit(1)
+
+    def requestArray(self, title, files, select):
+        
+        if not (select in files): select=files[0] 
+   
+        (s,r)=TouchAuxListRequester(title,QCoreApplication.translate("ecl","Array"),files,select,"Okay", self.mainwindow).exec_()
+        
+        if s:
+            self.IMsgBack.emit(r)
         else:
             self.IMsgBack.emit("-1")
         self.msgBack.emit(1)
@@ -7341,7 +8438,8 @@ class FtcGuiApplication(TouchApplication):
                              QCoreApplication.translate("addcodeline","Motor"),
                              QCoreApplication.translate("addcodeline","MotorPulsew."),
                              QCoreApplication.translate("addcodeline","MotorEnc"),
-                             QCoreApplication.translate("addcodeline","MotorEncSync")
+                             QCoreApplication.translate("addcodeline","MotorEncSync")#,
+                             #QCoreApplication.translate("addcodeline","Servo")
                             ]
                           )
             ftb.setTextSize(3)
@@ -7357,14 +8455,16 @@ class FtcGuiApplication(TouchApplication):
                 elif p==QCoreApplication.translate("addcodeline","MotorPulsew."):   self.acl_motorPulsewheel()
                 elif p==QCoreApplication.translate("addcodeline","MotorEnc"):   self.acl_motorEncoder()  
                 elif p==QCoreApplication.translate("addcodeline","MotorEncSync"): self.acl_motorEncoderSync()
-
+                elif p==QCoreApplication.translate("addcodeline","Servo"):  self.acl_servo()
+                
         elif r==QCoreApplication.translate("addcodeline","Variables"):
             ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Variables"), self.mainwindow)
             ftb.setButtons([ QCoreApplication.translate("addcodeline","Init"),
                              QCoreApplication.translate("addcodeline","From..."),
                              QCoreApplication.translate("addcodeline","QueryVar"),
                              QCoreApplication.translate("addcodeline","IfVar"),
-                             QCoreApplication.translate("addcodeline","Calc")
+                             QCoreApplication.translate("addcodeline","Calc"),
+                             QCoreApplication.translate("addcodeline","Arrays")
                             ]
                           )
             ftb.setTextSize(3)
@@ -7377,8 +8477,8 @@ class FtcGuiApplication(TouchApplication):
             (t,p)=ftb.exec_()
             if t:
                 if   p==QCoreApplication.translate("addcodeline","Init"):       self.acl_init()
-                if   p==QCoreApplication.translate("addcodeline","From..."):
-                    ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Variables"), self.mainwindow)
+                elif   p==QCoreApplication.translate("addcodeline","From..."):
+                    ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","From..."), self.mainwindow)
                     ftb.setButtons([    QCoreApplication.translate("addcodeline","FromIn"),
                                         QCoreApplication.translate("addcodeline","FromKeypad"),
                                         QCoreApplication.translate("addcodeline","FromDial"),
@@ -7401,8 +8501,34 @@ class FtcGuiApplication(TouchApplication):
                     elif p2==QCoreApplication.translate("addcodeline","FromButtons"): self.acl_fromButtons()
                     elif p2==QCoreApplication.translate("addcodeline","FromPoly"): self.acl_fromPoly()
                     elif p2==QCoreApplication.translate("addcodeline","FromSys"): self.acl_fromSys()
+                
+                elif   p==QCoreApplication.translate("addcodeline","Arrays"):
+                    ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Arrays"), self.mainwindow)
+                    ftb.setButtons([    QCoreApplication.translate("addcodeline","ArrayInit"),
+                                        QCoreApplication.translate("addcodeline","Array"),
+                                        QCoreApplication.translate("addcodeline","ArrayStat"),
+                                        QCoreApplication.translate("addcodeline","QueryArray"),
+                                        QCoreApplication.translate("addcodeline","LookUpTable"),
+                                        QCoreApplication.translate("addcodeline","ArrayLoad"),
+                                        QCoreApplication.translate("addcodeline","ArraySave")
+                                    ])
+                    ftb.setTextSize(3)
+                    try:
+                        ftb.setColumnSplit(3)
+                    except:
+                        pass
                     
-                elif p==QCoreApplication.translate("addcodeline","Shelf"):      self.acl_shelf()
+                    ftb.setBtnTextSize(3)
+                    (t2,p2)=ftb.exec_()
+                    
+                    if   p2==QCoreApplication.translate("addcodeline","ArrayInit"): self.acl_ArrayInit()
+                    elif p2==QCoreApplication.translate("addcodeline","Array"):     self.acl_Array()
+                    elif p2==QCoreApplication.translate("addcodeline","ArrayStat"): self.acl_ArrayStat()
+                    elif p2==QCoreApplication.translate("addcodeline","QueryArray"): self.acl_QueryArray()
+                    elif p2==QCoreApplication.translate("addcodeline","LookUpTable"): self.acl_LookUpTable()
+                    elif p2==QCoreApplication.translate("addcodeline","ArrayLoad"): self.acl_ArrayLoad()
+                    elif p2==QCoreApplication.translate("addcodeline","ArraySave"): self.acl_ArraySave()
+                    
                 elif p==QCoreApplication.translate("addcodeline","QueryVar"):   self.acl_queryVar()  
                 elif p==QCoreApplication.translate("addcodeline","IfVar"):      self.acl_ifVar()                
                 elif p==QCoreApplication.translate("addcodeline","Calc"):       self.acl_calc()
@@ -7511,7 +8637,8 @@ class FtcGuiApplication(TouchApplication):
                                             QCoreApplication.translate("addcodeline","Clear"),
                                             QCoreApplication.translate("addcodeline","Update"),
                                             QCoreApplication.translate("addcodeline","Origin"),
-                                            QCoreApplication.translate("addcodeline","Log"),
+                                            QCoreApplication.translate("addcodeline","Load"),
+                                            QCoreApplication.translate("addcodeline","Log")
                                             ]
                                         )
                             ftb.setTextSize(3)
@@ -7522,6 +8649,7 @@ class FtcGuiApplication(TouchApplication):
                             elif p==QCoreApplication.translate("addcodeline","Clear"):    self.acl_canvas_clear()
                             elif p==QCoreApplication.translate("addcodeline","Update"):   self.acl_canvas_update()
                             elif p==QCoreApplication.translate("addcodeline","Origin"):   self.acl_canvas_origin()
+                            elif p==QCoreApplication.translate("addcodeline","Load"):     self.acl_canvas_load()
                             elif p==QCoreApplication.translate("addcodeline","Log"):      self.acl_canvas_log()
                              
                         elif p==QCoreApplication.translate("addcodeline","Pen"):       self.acl_pen()
@@ -7568,7 +8696,10 @@ class FtcGuiApplication(TouchApplication):
         
     def acl_canvas_origin(self):
         self.acl("Canvas origin")
-        
+
+    def acl_canvas_load(self):
+        self.acl("Canvas load canvas.png")        
+
     def acl_canvas_log(self):
         self.acl("Canvas log")
         
@@ -7608,6 +8739,9 @@ class FtcGuiApplication(TouchApplication):
     def acl_output(self):
         self.acl("Output " + self.lastIF + " 1 0")
         
+    def acl_servo(self):
+        self.acl("Servo " + "SRD" + " S00 340")
+    
     def acl_motor(self):
         self.acl("Motor " + self.lastIF + " 1 l 0")
     
@@ -7732,6 +8866,27 @@ class FtcGuiApplication(TouchApplication):
 
     def acl_rifshift(self):
         self.acl("RIFShift 0")
+        
+    def acl_ArrayInit(self):
+        self.acl("ArrayInit data")
+    
+    def acl_Array(self):
+        self.acl("Array integer writeTo data 0")
+    
+    def acl_ArrayStat(self):
+        self.acl("ArrayStat integer sizeOf data")
+    
+    def acl_ArrayLoad(self):
+        self.acl("ArrayLoad data byName")
+    
+    def acl_ArraySave(self):
+        self.acl("ArraySave data replace")
+    
+    def acl_QueryArray(self):
+        self.acl("QueryArray data")
+    
+    def acl_LookUpTable(self):
+        self.acl("LookUpTable integer array nearest array 1")
     
     def remCodeLine(self):
         row=self.proglist.currentRow()
@@ -7776,6 +8931,7 @@ class FtcGuiApplication(TouchApplication):
         elif stack[0] == "MotorP":     itm=self.ecl_motorPulsewheel(itm, vari)
         elif stack[0] == "MotorE":     itm=self.ecl_motorEncoder(itm, vari)
         elif stack[0] == "MotorES":    itm=self.ecl_motorEncoderSync(itm, vari)
+        elif stack[0] == "Servo":      itm=self.ecl_servo(itm, vari)
         elif stack[0] == "WaitInDig":  itm=self.ecl_waitForInputDig(itm, vari)
         elif stack[0] == "IfInDig":    itm=self.ecl_ifInputDig(itm, vari)
         elif stack[0] == "WaitIn":     itm=self.ecl_waitForInput(itm, vari)
@@ -7811,6 +8967,16 @@ class FtcGuiApplication(TouchApplication):
         elif stack[0] == "Color":      itm=self.ecl_color(itm, vari)
         elif stack[0] == "Text":       itm=self.ecl_text(itm, vari)
         elif stack[0] == "VarToText":  itm=self.ecl_varToText(itm, vari)
+        elif stack[0] == "Canvas":
+            if stack[1] == "load":     itm=self.ecl_canvas_load(itm)
+        elif stack[0] == "ArrayInit":  itm=self.ecl_ArrayInit(itm)
+        elif stack[0] == "Array":      itm=self.ecl_Array(itm, vari)
+        elif stack[0] == "ArrayStat":  itm=self.ecl_ArrayStat(itm, vari)
+        elif stack[0] == "ArrayLoad":  itm=self.ecl_ArrayLoad(itm)
+        elif stack[0] == "ArraySave":  itm=self.ecl_ArraySave(itm)
+        elif stack[0] == "QueryArray": itm=self.ecl_QueryArray(itm)
+        elif stack[0] == "LookUpTable": itm=self.ecl_LookUpTable(itm, vari)
+        
         
         self.proglist.setCurrentRow(crow)
         self.proglist.item(crow).setText(itm)
@@ -7827,6 +8993,9 @@ class FtcGuiApplication(TouchApplication):
     
     def ecl_output(self, itm, vari):
         return editOutput(itm,vari, self.mainwindow).exec_()
+
+    def ecl_servo(self, itm, vari):
+        return editServo(itm,vari, self.mainwindow).exec_()
     
     def ecl_motor(self, itm, vari):
         return editMotor(itm,vari,self.mainwindow).exec_()
@@ -8194,6 +9363,30 @@ class FtcGuiApplication(TouchApplication):
         
         return "RIFShift "+str(v)
 
+    def ecl_canvas_load(self, itm):
+        
+        select=itm.split()[2]
+        
+        files=os.listdir(pixdir)
+        files.sort()
+        if len(files)>0:
+            if not (select in files): select=files[0] 
+   
+            (s,r)=TouchAuxListRequester("Canvas",QCoreApplication.translate("ecl","Pixmap"),files,select,"Okay", self.mainwindow).exec_()
+        
+            if s:
+                return "Canvas load " + r
+        else:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","Canvas load"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No pixmaps found!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+
+        return itm
+    
     def ecl_pen(self, itm, vari):
         return editPen(itm, vari, self.mainwindow).exec_()
     
@@ -8214,7 +9407,146 @@ class FtcGuiApplication(TouchApplication):
             (v1,v2)=t.exec_()
             return itm
         return editVarToText(itm, vari, self.mainwindow).exec_()
+    
+    def ecl_ArrayInit(self,itm):
+        return "ArrayInit " + clean(TouchAuxKeyboard(QCoreApplication.translate("ecl","ArrayInit"),itm.split()[1],self.mainwindow).exec_(),32)
 
+    def ecl_Array(self, itm, vari):
+        arrays=[]
+        for i in range(0,self.proglist.count()):
+            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])
+  
+        if len(arrays)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","Array"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+            return itm
+        if len(vari)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","Array"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+            return itm
+        
+        return editArray(itm, vari, arrays, self.mainwindow).exec_()
+    
+    def ecl_ArrayStat(self, itm, vari):
+        arrays=[]
+        for i in range(0,self.proglist.count()):
+            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])
+  
+        if len(arrays)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","ArrayStat"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+            return itm
+        if len(vari)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","ArrayStat"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+            return itm
+        
+        return editArrayStat(itm, vari, arrays, self.mainwindow).exec_()
+    
+    def ecl_ArrayLoad(self, itm):
+        arrays=[]
+        for i in range(0,self.proglist.count()):
+            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])
+  
+        if len(arrays)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","ArrayLoad"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exe
+            return itm
+    
+        return editArrayLoad(itm, arrays, self.mainwindow).exec_()
+    
+    def ecl_ArraySave(self, itm):
+        arrays=[]
+        for i in range(0,self.proglist.count()):
+            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])
+  
+        if len(arrays)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","ArraySave"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exe
+            return itm
+        
+        return editArraySave(itm, arrays, self.mainwindow).exec_()
+    
+    def ecl_QueryArray(self, itm):
+        arrays=[]
+        for i in range(0,self.proglist.count()):
+            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])   
+
+        if len(arrays)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","QueryArray"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+            return itm
+            
+        if itm.split()[1] in arrays: 
+            (s,r)=TouchAuxListRequester(QCoreApplication.translate("ecl","QueryArray"),QCoreApplication.translate("ecl","Select array"),arrays,itm.split()[1],"Okay").exec_()
+        else:
+            (s,r)=TouchAuxListRequester(QCoreApplication.translate("ecl","QueryArray"),QCoreApplication.translate("ecl","Select array"),arrays,arrays[0],"Okay").exec_()
+            
+        if s: return "QueryArray "+r
+        
+        return itm
+
+    def ecl_LookUpTable(self, itm, vari):
+        arrays=[]
+        for i in range(0,self.proglist.count()):
+            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])   
+
+        if len(arrays)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","LookUpTable"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+            return itm
+        if len(vari)==0:
+            t=TouchMessageBox(QCoreApplication.translate("ecl","LookUpTable"), self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+            return itm
+            
+        return editLookUpTable(itm, vari, arrays, self.mainwindow).exec_()
+    
 #
 # and the initial application launch
 #

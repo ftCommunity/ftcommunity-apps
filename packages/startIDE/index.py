@@ -32,9 +32,9 @@ def mainpage():
     hth.link(tr.translate("logfile"),"index.py?action=LogDown") 
     hth.text(tr.translate("from your TXT."))
     hth.lf(2)
-    hth.text(tr.translate("<b>Convert</b> a"))
-    hth.link(tr.translate("logfile"),"index.py?action=LogCSV") 
-    hth.text(tr.translate("to .CSV"))
+    hth.text(tr.translate("<b>Upload</b> a"))
+    hth.link(tr.translate("pixmap"),"index.py?action=PICUp")
+    hth.text(tr.translate("to your TXT."))
     hth.separator()
     hth.lf(1)
     hth.text(tr.translate("<b><u>Experts corner</b></u>"))
@@ -50,12 +50,24 @@ def mainpage():
     hth.text(tr.translate("or a"))
     hth.link(tr.translate("module"),"index.py?action=MCUp")
     hth.text(tr.translate("from a plain text file."))
-    hth.lf(1)  
+    hth.lf(2)
+    hth.text(tr.translate("<b>Convert</b> a"))
+    hth.link(tr.translate("logfile"),"index.py?action=LogCSV") 
+    hth.text(tr.translate("to .CSV"))
+    hth.lf(2)
+    hth.text(tr.translate("<b>Download</b> an"))
+    hth.link(tr.translate("array"),"index.py?action=ADown")
+    hth.text(tr.translate("from your TXT."))
+    hth.lf(1)
+    hth.text(tr.translate("<b>Upload</b> an"))
+    hth.link(tr.translate("array"),"index.py?action=AUp")
+    hth.text(tr.translate("to your TXT."))
     hth.separator()
     hth.htmlfoot("","/","TXT Home")
 
 def download(obj:str):
-    if obj=="P": hth.htmlhead("startIDE", tr.translate("Download a project from your TXT"))
+    if obj=="A": hth.htmlhead("startIDE", tr.translate("Download a data array from your TXT"))
+    elif obj=="P": hth.htmlhead("startIDE", tr.translate("Download a project from your TXT"))
     elif obj=="M": hth.htmlhead("startIDE", tr.translate("Download a module from your TXT"))
     elif obj=="PC": hth.htmlhead("startIDE", tr.translate("Download a project as a text file"))
     elif obj=="MC": hth.htmlhead("startIDE", tr.translate("Download a module as a text file"))
@@ -64,7 +76,11 @@ def download(obj:str):
     hth.separator()
     hth.lf()
     
-    if obj=="P":
+    if obj=="A":
+        hth.text(tr.translate("Please select array:"))
+        hth.lf(2)
+        downloadfiles("arrays/")
+    elif obj=="P":
         hth.text(tr.translate("Please select project:"))
         hth.lf(2)
         downloadfiles("projects/")
@@ -94,14 +110,18 @@ def download(obj:str):
 
 def upload(obj:str):
     if obj=="P": hth.htmlhead("startIDE", tr.translate("Upload a project  to your TXT"))
+    elif obj=="A": hth.htmlhead("startIDE", tr.translate("Upload an array to your TXT"))
     elif obj=="M": hth.htmlhead("startIDE", tr.translate("Upload a module to your TXT"))
     if obj=="PC": hth.htmlhead("startIDE", tr.translate("Upload a project text file to your TXT"))
     elif obj=="MC": hth.htmlhead("startIDE", tr.translate("Upload a module text file to your TXT"))
+    if obj=="I":  hth.htmlhead("startIDE", tr.translate("Upload a pixmap (240x240 png image) to your TXT"))
     hth.separator()
     hth.lf(2)
     
     if obj=="P" or obj=="PC": hth.text(tr.translate("Please select project:"))
+    elif obj=="A": hth.text(tr.translate("Please select array:"))
     elif obj=="M" or obj=="MC":  hth.text(tr.translate("Please select module:"))
+    elif obj=="I": hth.text(tr.translate("Please select png image:"))
     
     print('<form action="index.py" method="post" enctype="multipart/form-data">')
     print('<label>')
@@ -118,7 +138,13 @@ def upload(obj:str):
             print('<input name="module" type="file" size="50" accept="application/zip,application/x-zip,application/x-zip-compressed"> </label>')
         else:
              print('<input name="moduleC" type="file" size="50" accept="text/plain"> </label>')           
-
+    elif obj=="A":
+        hth.text(tr.translate("Array file:"))
+        print('<input name="array" type="file" size="50" accept="text/plain"> </label>')
+    elif obj=="I":
+        hth.text(tr.translate("Image file:"))
+        print('<input name="image" type="file" size="50" accept="image/*"> </label>')
+    
     print('<button type="submit">')
     hth.text(tr.translate("Upload!"))
     print('</button></form>')
@@ -177,13 +203,19 @@ def uploader(obj:str, fileitem):
     
     if obj[0]=="P": filename = "projects/"+filename
     elif obj[0]=="M": filename = "modules/"+filename
+    elif obj[0]=="A": filename = "arrays/"+filename
+    elif obj[0]=="I": filename = "pixmaps/"+filename
     
-    if filename[-4:-3]==".": filename=filename[:-4]
+    if filename[-4:-3]=="." and not (obj[0]=="A" or obj[0]=="I"): filename=filename[:-4]
     
     try:
         if len(obj)<2:
-            with open(filename, 'w', encoding="utf-8") as f:
-                f.write(fileitem.file.read().decode())
+            if obj[0]=="I":
+                with open(filename, 'wb') as f:
+                    f.write(fileitem.file.read())
+            else:
+                with open(filename, 'w', encoding="utf-8") as f:
+                    f.write(fileitem.file.read().decode())
             f.close()
         else:
             stack=[]
@@ -306,6 +338,9 @@ if __name__ == "__main__":
         if form["action"].value=="MList": codelist("M")
         if form["action"].value=="LogDown": download("L")
         if form["action"].value=="LogCSV": download("C")
+        if form["action"].value=="ADown": download("A")
+        if form["action"].value=="AUp": upload("A")
+        if form["action"].value=="PICUp": upload("I")
     elif "module" in form:
         uploader("M", form["module"])
     elif "project" in form:
@@ -314,12 +349,16 @@ if __name__ == "__main__":
         uploader("MC", form["moduleC"])
     elif "projectC" in form:
         uploader("PC", form["projectC"])
+    elif "array" in form:
+        uploader("A", form["array"])
     elif "list" in form:
         filelister(form["list"].value)
     elif "csv" in form:
         csvconvert(form["csv"].value)
     elif "dc" in form:
         cconvert(form["dc"].value)
+    elif "image" in form:
+        uploader("I", form["image"])
     else:
         mainpage()
     

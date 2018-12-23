@@ -1,4 +1,11 @@
 News<hr>
+v1.6.3:<br>Added "Canvas load" to import png pixmaps<hr>
+v1.6.2:<br>New menu item "Data" to delete arrays or logfiles<hr>
+v1.6.1:<br>Added "userSelect" option to ArraySave<hr>
+<b>v1.6.0(20181215):</b><br>official release of the array functions<hr>
+v1.5.5:<br>LookUpTable added<hr>
+v1.5.2:<br>QueryArray and webinterface for arrays<hr>
+v1.5.1:<br>added array functions<hr>
 <b>v1.5.0(20181121):</b><br>official release of the touch functions<hr>
 v1.4.2.0:<br>added IfTouchArea<hr>
 v1.4.1.0:<br>added WaitForTouch / WaitForRelease<hr>

@@ -39,9 +39,6 @@ RIFSERIAL=""
 # do not check for missing interfaces
 IGNOREMISSING=False
 
-# VID:PID for servoDuino (SRD)
-SRDVIDPID="6666:6666"
-
 #FTTXTADDRESS="192.168.178.24"
 FTTXTADDRESS="auto"
 
@@ -190,6 +187,9 @@ class execThread(QThread):
     def run(self):
         
         self.parent.outputClicked.connect(self.goOn)
+        
+        # VID:PID for servoDuino (SRD)
+        SRDVIDPID="1a86:7523"
         
         self.count=0
         self.halt=False
@@ -394,18 +394,25 @@ class execThread(QThread):
         self.clrOut()
         
         if self.requireSRD:
-            try:
-                SRDdevices=self.USBScan(SRDVIDPID)
+            if 1:
+            #try:
+                SRDdevices=USBScan(SRDVIDPID)
                 if len(SRDdevices)==1:
-                    self.SRD=serial.Serial(SRDdevices[0], 115200, timeout=0.1, writeTimeout = 0.1)
-                    time.sleep(0.25)
+                    self.SRD=serial.Serial(SRDdevices[0], 115200, timeout=0.3, writeTimeout = 0.3)
+                    time.sleep(0.3)
                     self.SRD.flushInput()
                     self.SRD.flushOutput()
-                    
+                   
+                    found=False
                     #Hier jetzt mal checken, ob das device auf ein "report_code" antwortet...
-                    self.SRD.write("report_code\n".encode("utf-8"))
-                    n=self.SRD.readline().decode("utf-8")[:-2]
-                    if n!="verdammt,wiehabichdasdochgleichgenannt":
+                    for i in range(0,3):
+                        self.SRD.write("report_code\n".encode("utf-8"))
+                        #time.sleep(0.05)
+                        n=self.SRD.readline().decode("utf-8")[:-2]
+                        if n == "servoDuino": found=True
+                        self.SRD.flushInput()
+                        self.SRD.flushOutput()
+                    if not found:
                         self.SRD.close()
                         self.SRD=None
                         self.msgOut(QCoreApplication.translate("exec","servoDuino not found!\nProgram terminated\n"))                
@@ -413,7 +420,8 @@ class execThread(QThread):
                 else:
                     self.msgOut(QCoreApplication.translate("exec","servoDuino detect error!\nProgram terminated\n"))                
                     if not IGNOREMISSING: self.stop()                    
-            except:
+            else:
+            #except:
                 self.msgOut(QCoreApplication.translate("exec","servoDuino not found!\nProgram terminated\n"))                
                 if not IGNOREMISSING: self.stop()
         if self.requireTXT and self.TXT==None:
@@ -587,6 +595,11 @@ class execThread(QThread):
         
         self.cmdCanvas("Canvas hide")
         
+        
+        # 
+        # Alle Interfaces abschalten!
+        #
+        
         if self.RIF!=None:
             try:
                 for i in range(1,33):
@@ -599,10 +612,15 @@ class execThread(QThread):
                 self.TXT.setPwm(i,0)
         
         if self.FTD!=None:
+            self.FTD.comm("pwm_halt")
             for i in range(1,9):
                 self.FTD.comm("output_set O"+str(i)+" 1 0")
-        
+            
         if self.SRD!=None:
+            self.SRD.flushInput()
+            self.SRD.flushOutput()
+            self.SRD.write(("pwm_halt\n").encode("utf-8"))
+            time.sleep(0.05)
             self.SRD.close()
             
         self.execThreadFinished.emit()
@@ -1719,8 +1737,7 @@ class execThread(QThread):
         if stack[1]=="SRD":
             self.SRD.flushInput()
             self.SRD.flushOutput()
-            self.SRD.write(("pwm_set "+str(int((stack[2])[1:]))+" 0 "+str(v)).encode("utf-8"))
-            self.SRD.readline().decode("utf-8")[:-2]
+            self.SRD.write(("pwm_set "+str(int((stack[2])[1:]))+" 0 "+str(v)+"\n").encode("utf-8"))
         elif stack[1]=="TXT":
             # self.txt_o[int(stack[2])-1].setLevel(v)
             pass
@@ -2702,7 +2719,6 @@ class editServo(TouchDialog):
         self.port.setStyleSheet("font-size: 20px;")
         self.port.addItems(["S00","S01","S02","S03","S04","S05","S06","S07","S08","S09","S10","S11","S12","S13","S14","S15"])
         p=self.cmdline.split()[2]
-        print(p)
         self.port.setCurrentIndex(int(p[1:]))
         k2.addWidget(self.port)
         
@@ -8438,8 +8454,8 @@ class FtcGuiApplication(TouchApplication):
                              QCoreApplication.translate("addcodeline","Motor"),
                              QCoreApplication.translate("addcodeline","MotorPulsew."),
                              QCoreApplication.translate("addcodeline","MotorEnc"),
-                             QCoreApplication.translate("addcodeline","MotorEncSync")#,
-                             #QCoreApplication.translate("addcodeline","Servo")
+                             QCoreApplication.translate("addcodeline","MotorEncSync"),
+                             QCoreApplication.translate("addcodeline","Servo")
                             ]
                           )
             ftb.setTextSize(3)

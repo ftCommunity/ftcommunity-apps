@@ -1,4 +1,6 @@
 News<hr>
+v1.6.6:<br>Release incl. servo support<hr>
+v1.6.5:<br>Added I2C servo support for FTD and SRD<hr>
 v1.6.3:<br>Added "Canvas load" to import png pixmaps<hr>
 v1.6.2:<br>New menu item "Data" to delete arrays or logfiles<hr>
 v1.6.1:<br>Added "userSelect" option to ArraySave<hr>

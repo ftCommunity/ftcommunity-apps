@@ -1,6 +1,11 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# startIDE for the ftCommunity firmware on TXT and TX-Pi
+#          (c) 2017-2019 Peter David Habermehl
+#
+
+
 import sys, time, os, json, shutil
 import threading as thd
 import ftrobopy as txt
@@ -22,15 +27,13 @@ try:
 except:
     FTDUINO_DIRECT=False
 
+# set GPIO for display HW buttons to false until checked for display size
 try:
     import RPi.GPIO as gpio
-    gpio.setmode(gpio.BOARD)
-    gpio.setup(12, gpio.IN, pull_up_down = gpio.PUD_UP)
-    gpio.setup(16, gpio.IN, pull_up_down = gpio.PUD_UP)
-    gpio.setup(18, gpio.IN, pull_up_down = gpio.PUD_UP)
-    GPIO=True
 except:
-    GPIO=False
+    pass
+GPIO=False
+
 
 # set serial path for libroboint (i.e. to use Intelligent Interface on USB-Serial-Adapter)
 #RIFSERIAL="/dev/ttyUSB0"
@@ -179,6 +182,7 @@ class execThread(QThread):
         self.parent.msgBack.connect(self.msgBack)
         self.parent.IMsgBack.connect(self.IMsgBack)
         self.parent.gfxData.connect(self.gfxData)
+        self.parent.mousePos.connect(self.mousePos)
         self.parent.stop.connect(self.stop)
         self.parent.canvasReturn.connect(self.onCanvasReturn)
         self.parent.click.connect(self.onTouch)
@@ -215,8 +219,11 @@ class execThread(QThread):
         
         self.getCanvasData()
 
+        self.touched=False
         self.touchEventX=0
         self.touchEventY=0
+        self.actXPos=0
+        self.actYPos=0
 
         cnt=0
         mcnt=0
@@ -394,8 +401,8 @@ class execThread(QThread):
         self.clrOut()
         
         if self.requireSRD:
-            if 1:
-            #try:
+            #if 1:
+            try:
                 SRDdevices=USBScan(SRDVIDPID)
                 if len(SRDdevices)==1:
                     self.SRD=serial.Serial(SRDdevices[0], 115200, timeout=0.3, writeTimeout = 0.3)
@@ -420,8 +427,8 @@ class execThread(QThread):
                 else:
                     self.msgOut(QCoreApplication.translate("exec","servoDuino detect error!\nProgram terminated\n"))                
                     if not IGNOREMISSING: self.stop()                    
-            else:
-            #except:
+            #else:
+            except:
                 self.msgOut(QCoreApplication.translate("exec","servoDuino not found!\nProgram terminated\n"))                
                 if not IGNOREMISSING: self.stop()
         if self.requireTXT and self.TXT==None:
@@ -561,6 +568,7 @@ class execThread(QThread):
         
         self.interrupt=-1
         self.timestamp=time.time()
+        
         #if 1:
         try:
             while not self.halt and self.count<len(self.codeList):
@@ -653,6 +661,13 @@ class execThread(QThread):
         self.msg=1
         self.can=1
         
+    def mousePos(self, x, y):
+        self.actXPos=x
+        self.actYPos=y
+        self.msg=1
+        #self.can=1
+        
+        
     def parseLine(self,line):
         stack=line.split()
         if line[0:1]  == "#":
@@ -732,6 +747,8 @@ class execThread(QThread):
         elif stack[0]== "ArraySave":    self.cmdArraySave(stack)
         elif stack[0]== "QueryArray":   self.cmdQueryArray(stack)
         elif stack[0]== "LookUpTable":  self.cmdLookUpTable(stack)
+        elif stack[0]== "I2CWrite":     self.cmdI2CWrite(stack)
+        elif stack[0]== "I2CRead":      self.cmdI2CRead(stack)
         
         else:
             self.cmdPrint("DontKnowWhatToDo\nin code:\n"+line)
@@ -762,12 +779,10 @@ class execThread(QThread):
         self.touchEventX=thing.x()
         self.touchEventY=thing.y()
         self.touched=True
-        self.released=False
         
     def onRelease(self,thing):
         self.touchEventX=thing.x()
         self.touchEventY=thing.y()
-        self.released=True
         self.touched=False
         
     def cmdWaitForTouch(self):
@@ -775,9 +790,9 @@ class execThread(QThread):
         while self.touched==False and not self.halt:
             self.parent.processEvents()
 
-    def cmdWaitForRelease(self):
-        if not self.touched: self.released=False        
-        while self.released==False and not self.halt:
+    def cmdWaitForRelease(self):      
+        self.touched=True
+        while self.touched==True and not self.halt:
             self.parent.processEvents()
     
     def cmdLookUpTable(self, stack):
@@ -924,6 +939,10 @@ class execThread(QThread):
         else:
             self.arrays.append(stack[1])
             self.array.append([])
+        if len(stack)>2:
+            self.array[ self.arrays.index(stack[1]) ] = stack[2].split(";")
+            for i in range(0, len(self.array[ self.arrays.index(stack[1]) ])):
+              self.array[ self.arrays.index(stack[1]) ][i]= int(self.array[ self.arrays.index(stack[1]) ][i])
     
     def cmdArray(self,stack):
         var=stack[1]
@@ -949,7 +968,7 @@ class execThread(QThread):
                 cc=0
                 for i in self.memory:
                     if i[0]==var:
-                        self.memory[cc][1] = self.array[self.arrays.index(arr)][idx]
+                        self.memory[cc][1] = int(self.array[self.arrays.index(arr)][idx])
                         break
                     cc=cc+1            
             else:
@@ -965,7 +984,7 @@ class execThread(QThread):
                 cc=0
                 for i in self.memory:
                     if i[0]==var:
-                        self.memory[cc][1] = self.array[self.arrays.index(arr)][idx]
+                        self.memory[cc][1] = int(self.array[self.arrays.index(arr)][idx])
                         del self.array[self.arrays.index(arr)][idx]
                         break
                     cc=cc+1            
@@ -1048,7 +1067,6 @@ class execThread(QThread):
     def waitForCanvasReturn(self):
         while self.can==0:
             self.parent.processEvents()
-            #pass
             
     def onCanvasReturn(self):
         self.can=1
@@ -1208,6 +1226,15 @@ class execThread(QThread):
             t=self.touchEventX
         elif stack[2]=="touchYPos":
             t=self.touchEventY
+        elif stack[2]=="touch":
+            if self.touched==True: t=1
+            else: t=0
+        elif stack[2]=="actXPos":
+            self.getMousePos()
+            t=self.actXPos
+        elif stack[2]=="actYPos":
+            self.getMousePos()
+            t=self.actYPos
         else:
             t=-1
         
@@ -1224,6 +1251,12 @@ class execThread(QThread):
     def getCanvasData(self):
         self.msg=0
         self.canvasSig.emit("requestData")
+        while self.msg==0:
+            self.parent.processEvents()
+    
+    def getMousePos(self):
+        self.msg=0
+        self.canvasSig.emit("requestPos")
         while self.msg==0:
             self.parent.processEvents()
     
@@ -1317,6 +1350,33 @@ class execThread(QThread):
         elif op==">"  and (v1>v2): res=1 
         elif op==">=" and (v1>=v2): res=1 
         elif op=="<=" and (v1<=v2): res=1
+        elif op=="sign":
+            v1=int(v1)
+            v2=int(v2)
+            res=v1
+            if v1 > (2**(v2-1)): res = v1 - (2**v2)
+        elif op=="unsign":
+            v1=int(v1)
+            v2=int(v2)
+            res=v1
+            if v1 < 0: res = v1 + (2**v2)
+        elif op=="bitShift":
+            v1=int(v1)
+            v2=int(v2)
+            if v2 < 0: res = v1 >> abs(v2)
+            else: res = v1 << v2
+        elif op=="bitAnd":
+            v1=int(v1)
+            v2=int(v2)
+            res = v1 & v2
+        elif op=="bitOr":
+            v1=int(v1)
+            v2=int(v2)
+            res = v1 | v2
+        elif op=="bitXOr":
+            v1=int(v1)
+            v2=int(v2)
+            res = v1 ^ v2 
         elif op=="tempMeingast":
             a=2.15992060279525E-07
             b=-0.007569625106584
@@ -1388,9 +1448,8 @@ class execThread(QThread):
         y1=self.getVal(stack[2])
         x2=self.getVal(stack[3])
         y2=self.getVal(stack[4])
-        
         if self.halt: return
-        
+
         if (self.touchEventX >= x1) and (self.touchEventY >= y1) and (self.touchEventX <= x2) and (self.touchEventY <= y2):
             n=-1
             for line in self.jmpTable:
@@ -1735,9 +1794,7 @@ class execThread(QThread):
         if self.halt: return
         
         if stack[1]=="SRD":
-            self.SRD.flushInput()
-            self.SRD.flushOutput()
-            self.SRD.write(("pwm_set "+str(int((stack[2])[1:]))+" 0 "+str(v)+"\n").encode("utf-8"))
+            srdcomm(self.SRD, "pwm_set "+str(int((stack[2])[1:]))+" 0 "+str(v))
         elif stack[1]=="TXT":
             # self.txt_o[int(stack[2])-1].setLevel(v)
             pass
@@ -2275,6 +2332,76 @@ class execThread(QThread):
             pass
         self.msg=0
 
+    def cmdI2CRead(self, stack):
+        device=stack[1]
+        arr=stack[2]
+
+        if not (arr in self.arrays):
+            self.cmdPrint("Array '" + stack[1] + "'\nreferenced without\nArrayInit!\nProgram terminated")
+            self.halt=True
+
+        if self.halt: return
+        
+        data=""
+        for i in self.array[self.arrays.index(arr)]:
+            data=data+str(i)+" "  
+            
+        if device=="FTD":
+            read=self.FTD.comm("i2c_read "+data)
+        elif device=="SRD":            
+            read=srdcomm(self.SRD, "i2c_read "+data)    
+        elif device=="TXT":
+            self.cmdPrint("TXT I2C communication not yet available")
+            return
+        
+        data=read.split()
+        if data[0]=="Fail" or data[0].strip()=="": data=[]
+            
+        self.array[self.arrays.index(arr)]=data
+
+        
+    def cmdI2CWrite(self, stack):
+        device=stack[1]
+        arr=stack[2]
+
+        if not (arr in self.arrays):
+            self.cmdPrint("Array '" + stack[1] + "'\nreferenced without\nArrayInit!\nProgram terminated")
+            self.halt=True
+
+        if self.halt: return
+        
+        data=""
+        for i in self.array[self.arrays.index(arr)]:
+            data=data+str(i)+" "
+            
+        if device=="FTD":                
+            self.FTD.comm("i2c_write "+data)
+        
+        elif device=="SRD":
+            srdcomm(self.SRD, "i2c_write "+data)
+        
+        elif device=="TXT":
+            self.cmdPrint("TXT I2C communication not yet available")
+
+
+def srdcomm(device, command):
+    try:
+        command=(command+"\n").encode("utf-8")
+        
+        device.flushInput()
+        device.flushOutput()
+        
+        device.write(command)
+        
+        data = device.readline()
+        
+        if data:
+            if len(data.decode("utf-8"))>2: return data.decode("utf-8")[:-2]
+            return "Fail"
+        else: 
+            return "Fail"
+    except:
+        return "Fail"
 
 #
 #
@@ -3621,13 +3748,12 @@ class editLoopTo(TouchDialog):
         self.tags=QListWidget()
         self.tags.setStyleSheet("font-size: 20px;")
         self.tags.addItems(self.taglist)
-        try:
-            t=0
-            for tag in self.taglist:
-               if self.taglist[t]==self.cmdline.split()[1]: self.tags.setCurrentRow(t)
-               t=t+1
-        except:
-            self.tags.setCurrentRow(0)
+        self.tags.setCurrentRow(0)
+        t=0
+        for tag in self.taglist:
+            if self.taglist[t]==self.cmdline.split()[1]: self.tags.setCurrentRow(t)
+            t=t+1
+            
             
         self.layout.addWidget(self.tags)
         
@@ -5350,7 +5476,7 @@ class editCalc(TouchDialog):
         
         self.operator=QComboBox()
         self.operator.setStyleSheet("font-size: 18px;")
-        oplist=["+", "-", "*", "/", "div", "digit", "mod", "exp", "root", "min", "max", "sin", "cos", "random", "mean", "&&","||","<","<=","==","!=",">=",">"]
+        oplist=["+", "-", "*", "/", "div", "digit", "mod", "exp", "root", "min", "max", "sin", "cos", "random", "mean", "&&","||","<","<=","==","!=",">=",">","sign","unsign","bitShift","bitAnd","bitOr","bitXOr"]
         self.operator.addItems(oplist)
         if self.cmdline.split()[3] in oplist:
             self.operator.setCurrentIndex(oplist.index(self.cmdline.split()[3]))
@@ -5493,7 +5619,6 @@ class editFromPoly(TouchDialog):
         self.A.mousePressEvent=self.getA
         
         self.A.setText(self.cmdline.split()[3])
-        #self.A.textChanged.connect(self.AChanged)
         
         h.addWidget(self.A)
         self.layout.addLayout(h)
@@ -5510,7 +5635,6 @@ class editFromPoly(TouchDialog):
         self.B.setStyleSheet("font-size: 18px;")
         
         self.B.setText(self.cmdline.split()[4])
-        #self.B.textChanged.connect(self.BChanged)
         self.B.mousePressEvent=self.getB
         
         h.addWidget(self.B)      
@@ -5527,7 +5651,6 @@ class editFromPoly(TouchDialog):
         self.C.setStyleSheet("font-size: 18px;")
         
         self.C.setText(self.cmdline.split()[5])
-        #self.C.textChanged.connect(self.CChanged)
         self.C.mousePressEvent=self.getC
         
         h.addWidget(self.C)      
@@ -5544,7 +5667,6 @@ class editFromPoly(TouchDialog):
         self.D.setStyleSheet("font-size: 18px;")
         
         self.D.setText(self.cmdline.split()[6])
-        #self.D.textChanged.connect(self.DChanged)
         self.D.mousePressEvent=self.getD
         
         h.addWidget(self.D)      
@@ -5695,7 +5817,7 @@ class editFromSys(TouchDialog):
         f=["timer","hour","minute","second","year","month","day",
            "RIIR","dispBtn",
            "CxRes","CyRes","CxPos","CyPos","CpRed","CpGreen","CpBlue",
-           "touchXPos","touchYPos"]
+           "touch","touchXPos","touchYPos","actXPos","actYPos"]
         self.data=QComboBox()
         self.data.setStyleSheet("font-size: 18px;")
         self.data.addItems(f)
@@ -6802,6 +6924,132 @@ class editVarToText(TouchDialog):
             t=a
         self.value.setText(str(int(t)))
 
+class editArrayInit(TouchDialog):
+    def __init__(self, cmdline, arrays, parent=None):
+        TouchDialog.__init__(self, "ArrayInit", parent)
+        
+        self.cmdline=cmdline
+        self.arrays=arrays
+        self.parent=parent
+        
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.timedOut)
+        
+        self.layout=QVBoxLayout()
+        
+        k3=QVBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl","Array name"))
+        l.setStyleSheet("font-size: 20px;")
+        k3.addWidget(l)     
+        
+        self.value=QLineEdit()
+        self.value.setReadOnly(True)
+        self.value.setStyleSheet("font-size: 20px;")
+        self.value.setText(self.cmdline.split()[1])
+        self.value.mousePressEvent=self.valPress
+        self.value.mouseReleaseEvent=self.valRelease
+        k3.addWidget(self.value)
+                
+        self.layout.addLayout(k3)
+    
+        self.layout.addStretch()
+        
+        k13=QVBoxLayout()
+        
+        k11=QLabel("Init data")
+        k11.setStyleSheet("font-size: 20px;")
+        
+        k13.addWidget(k11)
+        k13.addStretch()
+        
+        if len(self.cmdline.split())>2:
+            iv=self.cmdline.split()[2]
+        else: iv=""
+        self.pulses=QLineEdit(iv)
+        self.pulses.setReadOnly(True)
+        self.pulses.setStyleSheet("font-size: 20px;")
+        self.pulses.mousePressEvent=self.plsPress
+        self.pulses.mouseReleaseEvent=self.plsRelease
+        k13.addWidget(self.pulses)
+        
+        self.layout.addLayout(k13)
+        
+        self.layout.addStretch()
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+    
+    def on_confirm(self):
+        self.cmdline="ArrayInit "
+        self.cmdline=self.cmdline + self.value.text()
+        self.cmdline=self.cmdline + " " + self.pulses.text()
+        self.close()
+    
+    def ifChanged(self):
+        pass
+    
+    def valPress(self,sender):
+        
+        if self.timer.isActive(): self.timer.stop()
+        self.btn=1
+        self.btnTimedOut=False
+        self.timer.start(500)
+    
+    def timedOut(self):
+        self.btnTimedOut=True
+        self.timer.stop()
+        
+        if self.btn==1:
+            if len(self.arrays)>0:
+                (s,r)=TouchAuxListRequester("Array","Name",self.arrays,self.arrays[0],"Okay").exec_()
+                self.value.setText(r)
+            else:
+                self.getValue(1)
+                
+        else: self.getPulses(self)
+            
+    def valRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            self.getValue(1)
+    
+    def getValue(self,m):
+        a=self.value.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Name"),a,self.parent).exec_()
+        if t[0] in "0123456789": t="i"+t
+        self.value.setText(t)
+        
+    def plsPress(self,sender):
+        if self.timer.isActive(): self.timer.stop()
+        self.btnTimedOut=False
+        self.btn=2
+        self.timer.start(500)
+     
+    def plsRelease(self,sender):
+        self.timer.stop()
+        if not self.btnTimedOut:
+            self.getPulses(1)
+            
+    def getPulses(self,m):
+        a=self.pulses.text()
+        t=TouchAuxKeyboard(QCoreApplication.translate("ecl","Values"),a,self.parent).exec_()
+        
+        res=""
+        for ch in t:
+          if ch in "1234567890-;": res=res+ch
+        
+        self.pulses.setText(res)
+
 class editArray(TouchDialog):
     def __init__(self, cmdline, vari, arrays, parent=None):
         TouchDialog.__init__(self, QCoreApplication.translate("ecl","Array"), parent)
@@ -7189,7 +7437,7 @@ class editArrayStat(TouchDialog):
     def on_confirm(self):
         self.cmdline = "ArrayStat " +self.target.itemText(self.target.currentIndex()) + " "
         self.cmdline = self.cmdline + self.data.itemText(self.data.currentIndex()) + " "
-        self.cmdline = self.cmdline + self.array.itemText(self.array.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.array.itemText(self.array.currentIndex())
 
         self.close()
 
@@ -7258,9 +7506,10 @@ class editArrayLoad(TouchDialog):
 
     def on_confirm(self):
         self.cmdline = "ArrayLoad " + self.array.itemText(self.array.currentIndex()) + " "
-        self.cmdline = self.cmdline + self.data.itemText(self.data.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.data.itemText(self.data.currentIndex())
 
         self.close()
+        
 class editArraySave(TouchDialog):
     def __init__(self, cmdline, arrays, parent=None):
         TouchDialog.__init__(self, QCoreApplication.translate("ecl","ArraySave"), parent)
@@ -7326,9 +7575,85 @@ class editArraySave(TouchDialog):
 
     def on_confirm(self):
         self.cmdline = "ArraySave " + self.array.itemText(self.array.currentIndex()) + " "
-        self.cmdline = self.cmdline + self.data.itemText(self.data.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.data.itemText(self.data.currentIndex())
 
         self.close()
+
+def editI2CRead(cmdline, arrays, parent):
+    return editI2C(cmdline, "I2CRead", arrays, parent).exec_()
+
+def editI2CWrite(cmdline, arrays, parent):
+    return editI2C(cmdline, "I2CWrite", arrays, parent).exec_()
+
+class editI2C(TouchDialog):    
+    def __init__(self, cmdline, xcmd, arrays, parent=None):
+        TouchDialog.__init__(self, xcmd, parent)
+        
+        self.cmdline=cmdline
+        self.arrays=arrays
+        self. xcmd=xcmd
+        
+    def exec_(self):
+    
+        self.confirm = self.titlebar.addConfirm()
+        self.confirm.clicked.connect(self.on_confirm)
+    
+        self.titlebar.setCancelButton()
+
+        
+        self.layout=QVBoxLayout()
+        
+        #
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Device:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.layout.addLayout(h)
+
+        self.interface=QComboBox()
+        self.interface.setStyleSheet("font-size: 18px;")
+        self.interface.addItems(["SRD","TXT","FTD"])
+
+        if self.cmdline.split()[1]=="TXT": self.interface.setCurrentIndex(1)
+        elif self.cmdline.split()[1]=="FTD": self.interface.setCurrentIndex(2)
+        
+        h.addWidget(self.interface)
+        
+        
+        h=QHBoxLayout()
+        l=QLabel(QCoreApplication.translate("ecl", "Array:"))
+        l.setStyleSheet("font-size: 18px;")
+        
+        h.addWidget(l)
+        
+        self.array=QComboBox()
+        self.array.setStyleSheet("font-size: 18px;")
+        self.array.addItems(self.arrays)
+
+        if self.cmdline.split()[2] in self.arrays:
+            self.array.setCurrentIndex(self.arrays.index(self.cmdline.split()[2]))
+        else:
+            self.array.setCurrentIndex(0)
+
+        h.addWidget(self.array)
+
+        self.layout.addLayout(h)
+        self.layout.addStretch()
+        
+        
+        self.centralWidget.setLayout(self.layout)
+        
+        TouchDialog.exec_(self)
+        return self.cmdline
+
+    def on_confirm(self):
+        self.cmdline = self.xcmd + " " + self.interface.itemText(self.interface.currentIndex()) + " "
+        self.cmdline = self.cmdline + self.array.itemText(self.array.currentIndex()) 
+
+        self.close()
+
 #
 # main GUI application
 #
@@ -7338,6 +7663,7 @@ class FtcGuiApplication(TouchApplication):
     msgBack=pyqtSignal(int)
     IMsgBack=pyqtSignal(str)
     stop=pyqtSignal()
+    mousePos=pyqtSignal(int, int)
     gfxData=pyqtSignal(int, int, int, int, int, int, int)
     canvasReturn=pyqtSignal()
     click=pyqtSignal(QMouseEvent)
@@ -7399,11 +7725,25 @@ class FtcGuiApplication(TouchApplication):
         self.mainwindow = TouchWindow("startIDE")
         
         # query screen orientation
-        
-        if self.mainwindow.width()>self.mainwindow.height():
+        mww=self.mainwindow.width()
+        mwh=self.mainwindow.height()
+        if mww>mwh:
             self.orientation=LANDSCAPE
         else:
             self.orientation=PORTRAIT
+        
+        # set GPIO for 240x320 displays
+        try:
+            if (mww==240 and mwh==320) or (mww==320 and mwh==240) :
+                gpio.setmode(gpio.BOARD)
+                gpio.setup(12, gpio.IN, pull_up_down = gpio.PUD_UP)
+                gpio.setup(16, gpio.IN, pull_up_down = gpio.PUD_UP)
+                gpio.setup(18, gpio.IN, pull_up_down = gpio.PUD_UP)
+                GPIO=True
+        except:
+            GPIO=False
+        
+        
         
         # add a menu
         
@@ -7543,6 +7883,8 @@ class FtcGuiApplication(TouchApplication):
         self.canvas.setPixmap(QPixmap(canvasSize, canvasSize))
         self.canvas.hide()
         self.painter=QImage(canvasSize, canvasSize, QImage.Format_RGB32)
+        self.painter.setDotsPerMeterX(3780)
+        self.painter.setDotsPerMeterY(3780)
         self.canvas.mousePressEvent=self.click.emit
         self.canvas.mouseReleaseEvent=self.release.emit
         
@@ -8152,6 +8494,10 @@ class FtcGuiApplication(TouchApplication):
                               self.canvas.height(),
                               self.xpos,
                               self.ypos, QtGui.qRed(rgb), QtGui.qGreen(rgb), QtGui.qBlue(rgb))
+        elif s[0]=="requestPos":
+            iix=self.canvas.mapFromGlobal(QCursor().pos())
+            self.mousePos.emit(iix.x(), iix.y())
+            pass
         elif s[1]=="show":
             self.canvas.show()
             self.canvasReturn.emit()
@@ -8195,6 +8541,8 @@ class FtcGuiApplication(TouchApplication):
         elif s[1]=="load":
             try:
                 self.painter.load(os.path.join(pixdir,s[2]))
+                self.painter.setDotsPerMeterX(3780)
+                self.painter.setDotsPerMeterY(3780)
                 self.canvas.setPixmap(QPixmap.fromImage(self.painter))
             except:
                 pass
@@ -8622,7 +8970,8 @@ class FtcGuiApplication(TouchApplication):
                              QCoreApplication.translate("addcodeline","Message"),
                              QCoreApplication.translate("addcodeline","Logfile"),
                              QCoreApplication.translate("addcodeline","Graphics"),
-                             QCoreApplication.translate("addcodeline","Touch")
+                             QCoreApplication.translate("addcodeline","Touch"),
+                             QCoreApplication.translate("addcodeline","Communication")
                             ]
                           )
             ftb.setTextSize(3)
@@ -8685,8 +9034,19 @@ class FtcGuiApplication(TouchApplication):
                     if t:
                         if   p==QCoreApplication.translate("addcodeline","WaitForTouch"):   self.acl_waitForTouch()
                         elif p==QCoreApplication.translate("addcodeline","WaitForRelease"): self.acl_waitForRelease()
-                        elif p==QCoreApplication.translate("addcodeline","IfTouchArea"):    self.acl_ifTouchArea()
-                            
+                        elif p==QCoreApplication.translate("addcodeline","IfTouchArea"): self.acl_ifTouchArea()
+                elif p==QCoreApplication.translate("addcodeline","Communication"):
+                    ftb=TouchAuxMultibutton(QCoreApplication.translate("addcodeline","Comm"), self.mainwindow)
+                    ftb.setButtons([ QCoreApplication.translate("addcodeline","I2CWrite"),
+                                    QCoreApplication.translate("addcodeline","I2CRead")
+                                    ]
+                                )                    
+                    ftb.setTextSize(3)
+                    ftb.setBtnTextSize(3)
+                    (t,p)=ftb.exec_()
+                    if t:
+                        if   p==QCoreApplication.translate("addcodeline","I2CWrite"):   self.acl_i2cwrite()
+                        elif p==QCoreApplication.translate("addcodeline","I2CRead"): self.acl_i2cread()                          
                             
     def acl(self,code):
         self.proglist.insertItem(self.proglist.currentRow()+1,code)
@@ -8904,6 +9264,12 @@ class FtcGuiApplication(TouchApplication):
     def acl_LookUpTable(self):
         self.acl("LookUpTable integer array nearest array 1")
     
+    def acl_i2cwrite(self):
+        self.acl("I2CWrite FTD array")
+    
+    def acl_i2cread(self):
+        self.acl("I2CRead FTD array")
+    
     def remCodeLine(self):
         row=self.proglist.currentRow()
         void=self.proglist.takeItem(row)
@@ -8992,6 +9358,8 @@ class FtcGuiApplication(TouchApplication):
         elif stack[0] == "ArraySave":  itm=self.ecl_ArraySave(itm)
         elif stack[0] == "QueryArray": itm=self.ecl_QueryArray(itm)
         elif stack[0] == "LookUpTable": itm=self.ecl_LookUpTable(itm, vari)
+        elif stack[0] == "I2CRead":     itm=self.ecl_I2CRead(itm)
+        elif stack[0] == "I2CWrite":    itm=self.ecl_I2CWrite(itm)
         
         
         self.proglist.setCurrentRow(crow)
@@ -9003,6 +9371,52 @@ class FtcGuiApplication(TouchApplication):
             if s=="RIF" or s=="TXT" or s=="FTD": self.lastIF=s
         except:
             pass
+
+    def checkVar(self, title, varlist):
+        if len(varlist)==0:
+            t=TouchMessageBox(title, self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+            return False
+        
+        return True
+    
+    def checkArrays(self, title):
+        arrays=[]
+        for i in range(0,self.proglist.count()):
+            if self.proglist.item(i).text().split()[0]=="ArrayInit": 
+                a=self.proglist.item(i).text().split()[1]
+                if not a in arrays: arrays.append(a)
+
+        if arrays==[]:
+            t=TouchMessageBox(title, self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+        return arrays
+    
+    def checkTags(self, title):
+        tagteam=[]
+  
+        for i in range(0,self.proglist.count()):
+            if self.proglist.item(i).text().split()[0]=="Tag": tagteam.append(self.proglist.item(i).text()[3:])
+
+        if tagteam==[]:
+            t=TouchMessageBox(title, self.mainwindow)
+            t.setCancelButton()
+            t.setText(QCoreApplication.translate("ecl","No Tags defined!"))
+            t.setTextSize(2)
+            t.setBtnTextSize(2)
+            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
+            (v1,v2)=t.exec_()
+        return tagteam
 
     def ecl_counterClear(self, itm):
         return editCounterClear(itm, self.mainwindow).exec_()
@@ -9032,36 +9446,14 @@ class FtcGuiApplication(TouchApplication):
         return editWaitForInput(itm,vari,self.mainwindow).exec_()
     
     def ecl_ifInputDig(self, itm, vari):
-        tagteam=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="Tag": tagteam.append(self.proglist.item(i).text()[4:])
-  
-        if len(tagteam)==0:          
-            t=TouchMessageBox(QCoreApplication.translate("ecl","IfInDig"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Tags defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        tagteam=self.checkTags("IfInputDig")
+        if tagteam==[]: return itm
         
         return editIfInputDig(itm,tagteam,vari, self.mainwindow).exec_()
     
     def ecl_ifInput(self, itm, varlist):
-        tagteam=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="Tag": tagteam.append(self.proglist.item(i).text()[4:])
-  
-        if len(tagteam)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","IfIn"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Tags defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        tagteam=self.checkTags("IfInput")
+        if tagteam==[]: return itm
         
         return editIfInput(itm,tagteam, varlist, self.mainwindow).exec_()
     
@@ -9069,93 +9461,38 @@ class FtcGuiApplication(TouchApplication):
         return editInit(itm, varlist, self.mainwindow).exec_()
     
     def ecl_fromIn(self, itm, varlist):
-        if len(varlist)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","FromIn"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        if self.checkVar(QCoreApplication.translate("ecl","FromIn"),varlist)==False: return itm
         
         return editFromIn(itm, varlist, self.mainwindow).exec_()
 
     def ecl_fromPoly(self, itm, varlist):
-        if len(varlist)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","FromPoly"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        if self.checkVar(QCoreApplication.translate("ecl","FromPoly"),varlist)==False: return itm
         
         return editFromPoly(itm, varlist, self.mainwindow).exec_()
 
     def ecl_fromSys(self, itm, varlist):
-        if len(varlist)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","FromSys"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        if self.checkVar(QCoreApplication.translate("ecl","FromSys"),varlist)==False: return itm
         
         return editFromSys(itm, varlist, self.mainwindow).exec_()
 
     def ecl_fromKeypad(self, itm, varlist):
-        if len(varlist)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","FromKeypad"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        if self.checkVar(QCoreApplication.translate("ecl","FromKeypad"),varlist)==False: return itm
         
         return editFromKeypad(itm, varlist, self.mainwindow).exec_()        
     
     def ecl_fromDial(self, itm, varlist):
-        if len(varlist)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","FromKeypad"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        if self.checkVar(QCoreApplication.translate("ecl","FromDial"),varlist)==False: return itm
         
         return editFromDial(itm, varlist, self.mainwindow).exec_()  
 
     def ecl_fromButtons(self, itm, varlist):
-        if len(varlist)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","FromButtons"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        if self.checkVar(QCoreApplication.translate("ecl","FromButtons"),varlist)==False: return itm
         
         return editFromButtons(itm, varlist, self.mainwindow).exec_()  
 
     def ecl_queryVar(self, itm, varlist):
-        if len(varlist)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","QueryVar"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        if self.checkVar(QCoreApplication.translate("ecl","QueryVar"),varlist)==False: return itm
+    
         r=varlist[0]
         if itm.split()[1] in varlist:
             r=itm.split()[1]
@@ -9165,59 +9502,20 @@ class FtcGuiApplication(TouchApplication):
         return itm
     
     def ecl_ifVar(self, itm, varlist):
-        tagteam=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="Tag": tagteam.append(self.proglist.item(i).text()[4:])
-  
-        if len(tagteam)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","IfVar"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Tags defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        tagteam=self.checkTags("IfVar")
+        if tagteam==[]: return itm
 
-        if len(varlist)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","IfVar"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        if self.checkVar(QCoreApplication.translate("ecl","IfVar"),varlist)==False: return itm
         
         return editIfVar(itm,tagteam, varlist, self.mainwindow).exec_()
 
     def ecl_ifTouchArea(self, itm, varlist):
-        tagteam=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="Tag": tagteam.append(self.proglist.item(i).text()[4:])
-  
-        if len(tagteam)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","IfTouchArea"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Tags defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
-
+        tagteam=self.checkTags("IfTouchArea")
+        if tagteam==[]: return itm
         return editIfTouchArea(itm,tagteam, varlist, self.mainwindow).exec_()
 
     def ecl_calc(self, itm, varlist):
-        if len(varlist)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","Calc"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        if self.checkVar(QCoreApplication.translate("ecl","Calc"),varlist)==False: return itm
         
         return editCalc(itm, varlist, self.mainwindow).exec_()
         
@@ -9230,18 +9528,8 @@ class FtcGuiApplication(TouchApplication):
     def ecl_jump(self, itm):
         itm=itm[5:]
         tagteam=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="Tag": tagteam.append(self.proglist.item(i).text()[4:])
-  
-        if len(tagteam)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","Jump"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Tags defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return "Jump "+itm
+        tagteam=self.checkTags("Jump")
+        if tagteam==[]: return "Jump "+itm
         
         if not itm in tagteam: itm=tagteam[0]
         (s,r)=TouchAuxListRequester(QCoreApplication.translate("ecl","Jump"),QCoreApplication.translate("ecl","Target"),tagteam,itm,"Okay", self.mainwindow).exec_()
@@ -9250,19 +9538,8 @@ class FtcGuiApplication(TouchApplication):
         return "Jump "+r
         
     def ecl_loopTo(self, itm, vari):
-        tagteam=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="Tag": tagteam.append(self.proglist.item(i).text()[4:])
-  
-        if len(tagteam)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","LoopTo"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Tags defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        tagteam=self.checkTags("LoopTo")
+        if tagteam==[]: return itm
         
         return editLoopTo(itm,tagteam,vari,self.mainwindow).exec_()
     
@@ -9289,27 +9566,19 @@ class FtcGuiApplication(TouchApplication):
         return "Delay "+itm[6:]
     
     def ecl_iftimer(self, itm, vari):
-        tagteam=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="Tag": tagteam.append(self.proglist.item(i).text()[4:])
-  
-        if len(tagteam)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","IfTimer"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Tags defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        tagteam=self.checkTags("IfTimer")
+        if tagteam==[]: return itm
         
         return editIfTimer(itm,tagteam,vari,self.mainwindow).exec_()
     
     def ecl_interrupt(self, itm, vari):
         tagteam=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="Module":
-                tagteam.append(self.proglist.item(i).text().split()[1])
+        if itm.split()[0]=="CallExt":
+            tagteam=os.listdir(moddir)
+            tagteam.sort()
+        else:    
+            for i in range(0,self.proglist.count()):
+                if self.proglist.item(i).text().split()[0]=="Module": tagteam.append(self.proglist.item(i).text()[7:])
   
         if len(tagteam)==0:
             t=TouchMessageBox(QCoreApplication.translate("ecl","Interrupt"), self.mainwindow)
@@ -9413,120 +9682,51 @@ class FtcGuiApplication(TouchApplication):
         return editText(itm, vari, self.mainwindow).exec_()
 
     def ecl_varToText(self, itm, vari):
-        if len(vari)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","VarToText"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        if self.checkVar(QCoreApplication.translate("ecl","VarToText"),vari)==False: return itm
+    
         return editVarToText(itm, vari, self.mainwindow).exec_()
     
     def ecl_ArrayInit(self,itm):
-        return "ArrayInit " + clean(TouchAuxKeyboard(QCoreApplication.translate("ecl","ArrayInit"),itm.split()[1],self.mainwindow).exec_(),32)
-
-    def ecl_Array(self, itm, vari):
         arrays=[]
         for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])
-  
-        if len(arrays)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","Array"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
-        if len(vari)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","Array"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+            if self.proglist.item(i).text().split()[0]=="ArrayInit": 
+                a=self.proglist.item(i).text().split()[1]
+                if not a in arrays: arrays.append(a)
+                
+        return editArrayInit(itm, arrays, self.mainwindow).exec_()
+        # return "ArrayInit " + clean(TouchAuxKeyboard(QCoreApplication.translate("ecl","ArrayInit"),itm.split()[1],self.mainwindow).exec_(),32)
+
+    def ecl_Array(self, itm, vari):
+        arrays=self.checkArrays(QCoreApplication.translate("ecl","Array"))
+        if arrays==[]: return itm
+        
+        if self.checkVar(QCoreApplication.translate("ecl","Array"),vari)==False: return itm
         
         return editArray(itm, vari, arrays, self.mainwindow).exec_()
     
     def ecl_ArrayStat(self, itm, vari):
-        arrays=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])
-  
-        if len(arrays)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","ArrayStat"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
-        if len(vari)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","ArrayStat"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        arrays=self.checkArrays(QCoreApplication.translate("ecl","ArrayStat"))
+        if arrays==[]: return itm
+    
+        if self.checkVar(QCoreApplication.translate("ecl","ArrayStat"),vari)==False: return itm
         
         return editArrayStat(itm, vari, arrays, self.mainwindow).exec_()
     
     def ecl_ArrayLoad(self, itm):
-        arrays=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])
-  
-        if len(arrays)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","ArrayLoad"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exe
-            return itm
+        arrays=self.checkArrays(QCoreApplication.translate("ecl","ArrayLoad"))
+        if arrays==[]: return itm
     
         return editArrayLoad(itm, arrays, self.mainwindow).exec_()
     
     def ecl_ArraySave(self, itm):
-        arrays=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])
-  
-        if len(arrays)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","ArraySave"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exe
-            return itm
+        arrays=self.checkArrays(QCoreApplication.translate("ecl","ArraySave"))
+        if arrays==[]: return itm
         
         return editArraySave(itm, arrays, self.mainwindow).exec_()
     
     def ecl_QueryArray(self, itm):
-        arrays=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])   
-
-        if len(arrays)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","QueryArray"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        arrays=self.checkArrays(QCoreApplication.translate("ecl","QueryArray"))
+        if arrays==[]: return itm
             
         if itm.split()[1] in arrays: 
             (s,r)=TouchAuxListRequester(QCoreApplication.translate("ecl","QueryArray"),QCoreApplication.translate("ecl","Select array"),arrays,itm.split()[1],"Okay").exec_()
@@ -9538,30 +9738,22 @@ class FtcGuiApplication(TouchApplication):
         return itm
 
     def ecl_LookUpTable(self, itm, vari):
-        arrays=[]
-        for i in range(0,self.proglist.count()):
-            if self.proglist.item(i).text().split()[0]=="ArrayInit": arrays.append(self.proglist.item(i).text().split()[1])   
-
-        if len(arrays)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","LookUpTable"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No Arrays defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
-        if len(vari)==0:
-            t=TouchMessageBox(QCoreApplication.translate("ecl","LookUpTable"), self.mainwindow)
-            t.setCancelButton()
-            t.setText(QCoreApplication.translate("ecl","No variables defined!"))
-            t.setTextSize(2)
-            t.setBtnTextSize(2)
-            t.setPosButton(QCoreApplication.translate("ecl","Okay"))
-            (v1,v2)=t.exec_()
-            return itm
+        arrays=self.checkArrays(QCoreApplication.translate("ecl","LookUpTable"))
+        if arrays==[]: return itm
+        
+        if self.checkVar(QCoreApplication.translate("ecl","LookUpTable"),vari)==False: return itm
             
         return editLookUpTable(itm, vari, arrays, self.mainwindow).exec_()
+    
+    def ecl_I2CRead(self, itm):
+        arrays=self.checkArrays("I2CRead")
+        if arrays==[]: return itm
+        return editI2CRead(itm, arrays, self.mainwindow)
+    
+    def ecl_I2CWrite(self, itm):
+        arrays=self.checkArrays("I2CWrite")
+        if arrays==[]: return itm
+        return editI2CWrite(itm, arrays, self.mainwindow)
     
 #
 # and the initial application launch

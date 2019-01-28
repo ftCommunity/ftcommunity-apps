@@ -1,1 +1,0 @@
-["# new", "Init integer 0", "ArrayInit data", "Tag c", "Calc integer 0 random 100", "Array integer appendTo data 0", "LoopTo c 25", "ArraySave data replace ", "ArrayStat integer mean data ", "QueryVar integer", "ArrayLoad data byName ", "ArrayStat integer mean data ", "QueryVar integer"]

@@ -1,0 +1,15 @@
+[app]
+name: RoProPreter
+category: Tools
+author: Leon Schnieber (olagino)
+icon: icon.png
+html: web.py
+desc: A janky interpreter for RoboPro-Files. (Level 1-Elements and german-encoded files only)
+exec: script.py
+managed: yes
+uuid: 957f48b8-8999-4c02-a337-2d8c9c29215e
+version: 0.9.0
+firmware: >=0.9.5
+
+[de]
+desc: Interpreter für RoboPro-Dateien. (Aktuell nur für Level 1-Elemente und Dateien mit deutscher Spracheinstellung.)

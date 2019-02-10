@@ -169,6 +169,20 @@ uuid: ad5e0ea4-4606-4254-add6-60c452c3db36
 version: 1.0
 firmware: >=0.9.0
 
+[ropropreter]
+name: RoProPreter
+category: Tools
+author: Leon Schnieber (olagino)
+icon: icon.png
+html: web.py
+desc: A janky interpreter for RoboPro-Files. (Level 1-Elements and german-encoded files only)
+exec: script.py
+managed: yes
+uuid: 957f48b8-8999-4c02-a337-2d8c9c29215e
+version: 0.9.0
+firmware: >=0.9.5
+desc_de: Interpreter für RoboPro-Dateien. (Aktuell nur für Level 1-Elemente und Dateien mit deutscher Spracheinstellung.)
+
 [startIDE]
 name: startIDE
 category: Tools

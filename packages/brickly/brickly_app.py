@@ -111,7 +111,11 @@ class WebsocketServerThread(QThread):
     def send(self, str):
         # If there is no client then just drop the messages.
         if self.websocket and self.websocket.open:
-            self.loop.call_soon_threadsafe(asyncio.async, self.send_async(str))
+            # Get the symbol for ensure_future / async.
+            # TODO: Remove this hack as soon as we don't need compatibility
+            # with python < 3.4.4 anymore
+            hack = getattr(asyncio, 'ensure_future', getattr(asyncio, 'async', None))
+            self.loop.call_soon_threadsafe(hack, self.send_async(str))
 
     def connected(self):
         return self.websocket != None

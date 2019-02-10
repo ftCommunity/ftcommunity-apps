@@ -52,8 +52,7 @@ class WebsocketServerThread(QThread):
     def stop(self):
         self.loop.call_soon_threadsafe(self.loop.stop)
         
-    @asyncio.coroutine
-    def handler(self, websocket, path):
+    async def handler(self, websocket, path):
         # reject any further client besides the first (main) one
         if self.websocket:
             return
@@ -66,7 +65,7 @@ class WebsocketServerThread(QThread):
         while(websocket.open):
             try:
                 # receive json encoded commands via websocket
-                msg_str = yield from websocket.recv()
+                msg_str = await websocket.recv()
                 msg = json.loads(msg_str)
 
                 # emit pyqt signals for any valid request
@@ -104,14 +103,13 @@ class WebsocketServerThread(QThread):
         self.websocket = None
 
     # send a message to the connected client
-    @asyncio.coroutine
-    def send_async(self, str):
-        yield from self.websocket.send(str)
+    async def send_async(self, str):
+        await self.websocket.send(str)
 
     def send(self, str):
         # If there is no client then just drop the messages.
         if self.websocket and self.websocket.open:
-            self.loop.call_soon_threadsafe(asyncio.async, self.send_async(str))
+            self.loop.call_soon_threadsafe(asyncio.ensure_future, self.send_async(str))
 
     def connected(self):
         return self.websocket != None

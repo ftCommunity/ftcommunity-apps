@@ -602,7 +602,7 @@ class execThread(QThread):
             pass
         
         self.cmdCanvas("Canvas hide")
-        
+        self.cmdCanvas("SHOWSTOPBTN")
         
         # 
         # Alle Interfaces abschalten!
@@ -685,7 +685,14 @@ class execThread(QThread):
                 self.cmdPrint("Memory dump")
                 self.cmdPrint("-----------")
                 for line in self.memory: self.cmdPrint(str(line))
-                    
+            if "SHOWSTOPBTN" in line:
+                self.cmdCanvas("SHOWSTOPBTN")
+            if "HIDESTOPBTN" in line:
+                self.cmdCanvas("HIDESTOPBTN")
+            if "SHOWTITLEBAR" in line:
+                self.cmdCanvas("SHOWTITLEBAR")
+            if "HIDETITLEBAR" in line:
+                self.cmdCanvas("HIDETITLEBAR")
         elif stack[0]== "Stop":     self.count=len(self.codeList)
         elif stack[0]== "Output":   self.cmdOutput(stack)
         elif stack[0]== "Motor":    self.cmdMotor(stack)
@@ -8442,7 +8449,8 @@ class FtcGuiApplication(TouchApplication):
             self.canvas.hide()
             self.setMainWindow(True)
             self.mainwindow.titlebar.menubut.show()
-            #self.mainwindow.titlebar.show()
+            self.starter.show()
+            self.mainwindow.titlebar.show()
             self.menu.setEnabled(True)
             self.etf=False
             self.start=False
@@ -8489,7 +8497,19 @@ class FtcGuiApplication(TouchApplication):
     def canvasSig(self, stack):
         s=stack.split()
 
-        if s[0]=="Text":
+        if s[0]=="HIDESTOPBTN":
+            self.starter.hide()
+            self.canvasReturn.emit()
+        elif s[0]=="SHOWSTOPBTN":
+            self.starter.show()
+            self.canvasReturn.emit()
+        elif s[0]=="HIDETITLEBAR":
+            self.mainwindow.titlebar.hide()
+            self.canvasReturn.emit()
+        elif s[0]=="SHOWTITLEBAR":
+            self.mainwindow.titlebar.show()
+            self.canvasReturn.emit()
+        elif s[0]=="Text":
             self.fontStyle=s[1]
             self.fontSize=int(s[2])
             self.text=" ".join(s[3:])

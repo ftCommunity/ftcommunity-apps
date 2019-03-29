@@ -27,6 +27,12 @@ try:
 except:
     FTDUINO_DIRECT=False
 
+try:
+    import smbus
+    i2c = smbus.SMBus(1)
+except:
+    i2c = None
+
 # set GPIO for display HW buttons to false until checked for display size
 try:
     import RPi.GPIO as gpio
@@ -2359,14 +2365,15 @@ class execThread(QThread):
             
         if device=="FTD":
             read=self.FTD.comm("i2c_read "+data)
+            data=read.split()
         elif device=="SRD":            
             read=srdcomm(self.SRD, "i2c_read "+data)    
-        elif device=="TXT":
-            self.cmdPrint("TXT I2C communication not yet available")
-            return
-        
-        data=read.split()
-        if data[0]=="Fail" or data[0].strip()=="": data=[]
+            data=read.split()
+        elif device=="TXT" or device=="RPI":                
+            data=i2c.read_i2c_block_data(int(self.array[self.arrays.index(arr)][0]),int(self.array[self.arrays.index(arr)][1]),int(self.array[self.arrays.index(arr)][2]))
+            
+        if data!=[]:
+            if data[0]=="Fail" or str(data[0]).strip()=="": data=[]
             
         self.array[self.arrays.index(arr)]=data
 
@@ -2391,9 +2398,15 @@ class execThread(QThread):
         elif device=="SRD":
             srdcomm(self.SRD, "i2c_write "+data)
         
-        elif device=="TXT":
-            self.cmdPrint("TXT I2C communication not yet available")
-
+        elif device=="TXT" or device=="RPI":
+            dst=[]
+            for i in self.array[self.arrays.index(arr)]:
+                dst.append(int(i))
+                
+            if len(dst)>2:
+                i2c.write_i2c_block_data(dst[0], dst[1], dst[2:])
+            else:
+                i2c.write_byte(dst[0], dst[1])
 
 def srdcomm(device, command):
     try:
@@ -7627,10 +7640,11 @@ class editI2C(TouchDialog):
 
         self.interface=QComboBox()
         self.interface.setStyleSheet("font-size: 18px;")
-        self.interface.addItems(["SRD","TXT","FTD"])
+        self.interface.addItems(["SRD","TXT","FTD","RPI"])
 
         if self.cmdline.split()[1]=="TXT": self.interface.setCurrentIndex(1)
         elif self.cmdline.split()[1]=="FTD": self.interface.setCurrentIndex(2)
+        elif self.cmdline.split()[1]=="RPI": self.interface.setCurrentIndex(3)
         
         h.addWidget(self.interface)
         

@@ -8,8 +8,8 @@ exec: txtshow.py
 html: index.py?lang=en
 managed: yes
 uuid: 37681ea0-dc00-11e6-9598-0800200c9a66
-version: 1.5
-firmware: >=0.9.2
+version: 2.0
+firmware: >=0.9.4
 [de]
 desc: Fotografiere und verwalte Bilder mit dem TXT
 html: index.py?lang=de

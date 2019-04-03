@@ -88,21 +88,21 @@ def create_html_output_dirs():
       print('<div title="'+d+'"; style="width:120px; float: left; padding: 2px; margin: 4px; border:1px #0c6acc solid; border-style: inset;">')
       print('<a href="index.py?ld='+d+'"><img style="border:1px #0c6acc solid; border-style: outset" src="'+"icons/folder-image-people.png"+'"><br>'+d+"</a><br>")
       if loc=="de":
-          print('<center><a href="index.py?rd='+d+'" onclick="return confirm('+"'"+'Soll das Album <'+d+'>wirklich gel&ouml;scht werden?'+"'"+')"><img src="remove.png"></a></center>')
+          print('<center><a href="index.py?rd='+d+'" onclick="return confirm('+"'"+'Soll das Album <'+d+'>wirklich gel&ouml;scht werden?'+"'"+')"><img src="icons/remove.png"></a></center>')
       else:  
-          print('<center><a href="index.py?rd='+d+'" onclick="return confirm('+"'"+'Really delete album <'+d+'>?'+"'"+')"><img src="remove.png"></a></center>')
+          print('<center><a href="index.py?rd='+d+'" onclick="return confirm('+"'"+'Really delete album <'+d+'>?'+"'"+')"><img src="icons/remove.png"></a></center>')
       print('</div>')
 
     print('</div><br>')
     
     if loc=="de":
-        print('Album anklicken, um seinen Inhalt zu bearbeiten.<br>L&ouml;schknopf <img src="remove.png"> anklicken, um Album <b>dauerhaft</b> zu l&ouml;schen.<br><br>')
+        print('Album anklicken, um seinen Inhalt zu bearbeiten.<br>L&ouml;schknopf <img src="icons/remove.png"> anklicken, um Album <b>dauerhaft</b> zu l&ouml;schen.<br><br>')
         print('<form action="index.py" method="post" enctype="multipart/form-data">')
         print('<label>Ein neues Album:')
         print('<input name="newdir" type="text" size=12> </label>')
         print('<button type="submit">erstellen</button></form>')  
     else:
-        print('Click on an album to manage its contents.<br>Click <img src="remove.png"> to remove album from TXT <b>permanently.</b><br><br>')
+        print('Click on an album to manage its contents.<br>Click <img src="icons/remove.png"> to remove album from TXT <b>permanently.</b><br><br>')
         print('<form action="index.py" method="post" enctype="multipart/form-data">')
         print('<label>Create a new album:')
         print('<input name="newdir" type="text" size=12> </label>')
@@ -143,9 +143,9 @@ def create_html_output_pics(pdir):
       print('<div title="'+pic+'"; style="width:80; height:130px; float: left; padding: 2px; margin: 4px; border:1px #0c6acc solid; border-style: inset;"><a href="'+picsdir+pdir+"/"+pic+'">')
       print('<img style="border:1px #0c6acc solid; border-style: outset" src="'+picsdir+pdir+"/"+pic+'" height="96"></a><br>')
       if loc=="de":
-          print('<center><a href="script/download.py?path='+hostdir+picsdir+pdir+"/&file="+pic+'"><img src="download.png"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + '<a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Wirklich das Bild '+pic+' l&ouml;schen?'+"'"+')"><img src="remove.png"></a></center>')
+          print('<center><a href="script/download.py?path='+hostdir+picsdir+pdir+"/&file="+pic+'"><img src="download.png"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + '<a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Wirklich das Bild '+pic+' l&ouml;schen?'+"'"+')"><img src="icons/remove.png"></a></center>')
       else:
-          print('<center><a href="script/download.py?path='+hostdir+picsdir+pdir+"/&file="+pic+'"><img src="download.png"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + '<a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Really delete image '+pic+'?'+"'"+')"><img src="remove.png"></a></center>')
+          print('<center><a href="script/download.py?path='+hostdir+picsdir+pdir+"/&file="+pic+'"><img src="download.png"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + '<a href="index.py?rp='+pic+'&directory='+pdir+'" onclick="return confirm('+"'"+'Really delete image '+pic+'?'+"'"+')"><img src="icons/remove.png"></a></center>')
       
       print('</div>')
 
@@ -153,7 +153,7 @@ def create_html_output_pics(pdir):
     print('</div><br>')
 
     if loc=="de":
-        print('Bild anklicken, um es anzuzeigen, <img src="download.png"> zum herunterladen.<br>L&ouml;schknopf <img src="remove.png"> anklicken, um das Bild <b>dauerhaft</b> zu l&ouml;schen.<br><br>')
+        print('Bild anklicken, um es anzuzeigen, <img src="download.png"> zum herunterladen.<br>L&ouml;schknopf <img src="icons/remove.png"> anklicken, um das Bild <b>dauerhaft</b> zu l&ouml;schen.<br><br>')
         print('Bildgr&ouml;&szlig;e sollte zwischen 320x240 und 960x720 liegen. Bedenke die begrenzte Leistungsf&auml;higkeit des TXT.<br>')
         print('<form action="index.py" method="post" enctype="multipart/form-data">')
         print('<input name="directory" type="hidden" value="'+pdir+'">')
@@ -162,7 +162,7 @@ def create_html_output_pics(pdir):
         print('<button type="submit">Hinzuf&uuml;gen</button></form>')
         print('<br><br><a href="index.py"> Zur&uuml;ck zur Alben&uuml;bersich </a>')
     else:
-        print('Click on the picture itself to view. <img src="download.png"> to download.<br>Click <img src="remove.png"> to remove picture from TXT <b>permanently.</b><br><br>')
+        print('Click on the picture itself to view. <img src="download.png"> to download.<br>Click <img src="icons/remove.png"> to remove picture from TXT <b>permanently.</b><br><br>')
         print('Picture size should be 320x240 to 960x720. Mind the limited ressources of the TXT.<br>')
         print('<form action="index.py" method="post" enctype="multipart/form-data">')
         print('<input name="directory" type="hidden" value="'+pdir+'">')

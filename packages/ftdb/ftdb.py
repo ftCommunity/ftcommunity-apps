@@ -13,7 +13,7 @@ import time
 import os.path
 
 global default_url
-default_url = 'https://ftdb.baubadil.de/'
+default_url = 'https://ft-datenbank.de/'
 temp_folder = '/tmp/ftdb/'
 image_temp = 'images/'
 image_size = 150

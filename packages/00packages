@@ -140,7 +140,7 @@ desc: ft:db search app. Icon partly by http://www.webalys.com/
 exec: ftdb.py
 managed: yes
 uuid: dce63db7-1327-4cb3-a04e-c358ac04b794
-version: 1.1
+version: 1.2
 firmware: >=0.9
 
 [iolyser]

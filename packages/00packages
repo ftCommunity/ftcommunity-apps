@@ -131,18 +131,6 @@ firmware: >=0.9.4
 desc_de: ftDuino I/O-Test und Flashtool
 html_de: index.py
 
-[ftdb]
-name: ft:db
-category: Tools
-author: Raphael Jacob
-icon: icon.png
-desc: ft:db search app. Icon partly by http://www.webalys.com/
-exec: ftdb.py
-managed: yes
-uuid: dce63db7-1327-4cb3-a04e-c358ac04b794
-version: 1.2
-firmware: >=0.9
-
 [iolyser]
 name: IOlyser
 category: System

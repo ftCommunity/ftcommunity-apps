@@ -69,7 +69,7 @@ exec: txtshow.py
 html: index.py?lang=en
 managed: yes
 uuid: 37681ea0-dc00-11e6-9598-0800200c9a66
-version: 2.0
+version: 2.1
 firmware: >=0.9.4
 desc_de: Fotografiere und verwalte Bilder mit dem TXT
 html_de: index.py?lang=de

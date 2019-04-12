@@ -485,6 +485,7 @@ class FtcGuiApplication(TouchApplication):
         fw_preturn = TouchAuxPicButton(QPixmap(icondir+"key-enter.png"))
         fw_preturn.clicked.connect(self.layer_show)
         bottbox.addWidget(fw_preturn)
+        bottbox.addStretch()
         
         self.fw_camera = TouchAuxPicButton(QPixmap(icondir+"camera-web-disabled.png"))
         self.fw_camera.clicked.connect(self.foto)
@@ -666,6 +667,7 @@ class FtcGuiApplication(TouchApplication):
         sw_preturn = TouchAuxPicButton(QPixmap(icondir+"key-enter.png")) 
         sw_preturn.clicked.connect(self.layer_show)
         bottbox.addWidget(sw_preturn)
+        bottbox.addStretch()
         
         self.sw_camera = TouchAuxPicButton(QPixmap(icondir+"camera-web-disabled.png")) 
         self.sw_camera.clicked.connect(self.foto)        
@@ -835,6 +837,7 @@ class FtcGuiApplication(TouchApplication):
         tw_preturn = TouchAuxPicButton(QPixmap(icondir+"key-enter.png")) 
         tw_preturn.clicked.connect(self.layer_show)
         bottbox.addWidget(tw_preturn)
+        bottbox.addStretch()
         
         self.tw_camera = TouchAuxPicButton(QPixmap(icondir+"camera-web-disabled.png"))
         self.tw_camera.clicked.connect(self.foto)

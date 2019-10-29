@@ -1,4 +1,6 @@
 News<hr>
+v1.7.5:<br> Delay now also accepts variables as an input<hr>
+v1.7.4:<br> USBRead & USBWrite<hr>
 v1.7.3:<br> I2C for RPi and TXT<hr>
 v1.7.1:<br> added Calc sgnCpy operator<hr>
 <b>v1.7.0(20190119)</b><br>official v1.7 release<hr>

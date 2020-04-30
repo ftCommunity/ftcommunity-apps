@@ -1,4 +1,5 @@
 News<hr>
+<b>v1.8.0(20200429):</b><br>TX-Pi-HAT-GPIO support<hr>
 v1.7.5:<br> Delay now also accepts variables as an input<hr>
 v1.7.4:<br> USBRead & USBWrite<hr>
 v1.7.3:<br> I2C for RPi and TXT<hr>

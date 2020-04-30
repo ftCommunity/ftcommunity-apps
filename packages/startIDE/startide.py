@@ -6,6 +6,7 @@
 #
 
 
+from PyQt4 import QtCore, QtGui
 import sys, time, os, json, shutil
 import threading as thd
 import ftrobopy as txt
@@ -19,7 +20,7 @@ from TouchStyle import *
 from TouchAuxiliary import *
 from robointerface import *
 from datetime import datetime
-from PyQt4 import QtCore, QtGui
+from HAT import TxPiHat
 
 try:
     import ftduino_direct as ftd
@@ -36,10 +37,12 @@ except:
 # set GPIO for display HW buttons to false until checked for display size
 try:
     import RPi.GPIO as gpio
+    GPIO_available=True
 except:
-    pass
-GPIO=False
+    GPIO_available=False
 
+GPIO = False
+HAT_allowed=False
 
 # set serial path for libroboint (i.e. to use Intelligent Interface on USB-Serial-Adapter)
 #RIFSERIAL="/dev/ttyUSB0"
@@ -170,7 +173,7 @@ class execThread(QThread):
     requestArray=pyqtSignal(str,list,str)
     canvasSig=pyqtSignal(str)
     
-    def __init__(self, codeList, output, starter, RIF,TXT,FTD, parent):
+    def __init__(self, codeList, output, starter, RIF,TXT,FTD,HAT, parent):
         QThread.__init__(self, parent)
         
         self.codeList=codeList
@@ -183,6 +186,7 @@ class execThread(QThread):
         self.TXT=TXT
         self.FTD=FTD
         self.SRD=None
+        self.hat=HAT
         self.parent=parent
         
         self.parent.msgBack.connect(self.msgBack)
@@ -213,6 +217,7 @@ class execThread(QThread):
         self.requireRIF=False
         self.requireFTD=False
         self.requireSRD=False
+        self.requireHAT=False
         
         self.jmpTable=[]
         self.LoopStack=[]
@@ -271,6 +276,8 @@ class execThread(QThread):
                 self.requireRIF=True
             elif "FTD" in a[1]:
                 self.requireFTD=True
+            elif "HAT" in a[1]:
+                self.requireHAT=True
             elif "SRD"==a[1]:
                 self.requireSRD=True
             elif "SRDVIDPID" in a[1]:
@@ -513,7 +520,11 @@ class execThread(QThread):
                 elif rif_i[3] or rif_i[4] or rif_i[5] or rif_i[6] or rif_i[7]:
                     self.msgOut(QCoreApplication.translate("exec","I4 to I8 not available\non Robo LT!\nProgram terminated\n"))
                     self.stop()                
-                
+        
+        if not self.halt and self.requireHAT and self.hat == None:
+            self.msgOut(QCoreApplication.translate("exec","HAT not available.\nProgram terminated\n"))
+            self.stop() 
+        
         # TXT I/O initialisieren...
         
         if self.TXT!=None and not self.halt:
@@ -577,18 +588,32 @@ class execThread(QThread):
         
         #if 1:
         try:
-            while not self.halt and self.count<len(self.codeList):
-                line=self.codeList[self.count]
-                if self.trace: self.cmdPrint(str(self.count)+":"+line)
-                self.parseLine(line)
-                if self.singlestep:
-                    while not self.nextStep and not self.halt:
-                        self.parent.processEvents()
-                        time.sleep(0.005)
-                    self.nextStep=False
-                    
-                self.count=self.count+1
-                self.parent.processEvents()
+            if self.trace:
+                while not self.halt and self.count<len(self.codeList):
+                    line=self.codeList[self.count]
+                    self.cmdPrint(str(self.count)+":"+line)
+                    self.parseLine(line)
+                    if self.singlestep:
+                        while not self.nextStep and not self.halt:
+                            self.parent.processEvents()
+                            time.sleep(0.005)
+                        self.nextStep=False
+                        
+                    self.count=self.count+1
+                    self.parent.processEvents()
+            else:
+                while not self.halt and self.count<len(self.codeList):
+                    line=self.codeList[self.count]
+                    self.parseLine(line)
+                    if self.singlestep:
+                        while not self.nextStep and not self.halt:
+                            self.parent.processEvents()
+                            time.sleep(0.005)
+                        self.nextStep=False
+                        
+                    self.count=self.count+1
+                    self.parent.processEvents()
+                
         #else:
         except:
             self.cce=True
@@ -1534,6 +1559,9 @@ class execThread(QThread):
                 v=self.FTD.comm("ultrasonic_get")
             elif stack[3]=="C":
                 v=self.FTD.comm("counter_get c"+stack[2])
+        elif stack[1]== "HAT":
+            v = self.hat.get_input("I"+str(stack[2]))
+            
         ### und noch der variable zuweisen...         
         cc=0
         for i in self.memory:
@@ -1646,6 +1674,8 @@ class execThread(QThread):
                 v=self.FTD.comm("ultrasonic_get")
             elif stack[3]=="C":
                 v=self.FTD.comm("counter_get c"+stack[2])
+        elif stack[1]== "HAT":
+            v = str(self.hat.get_input("I"+str(stack[2])))
         
         self.cmdPrint(tx+" "+v)
     
@@ -1680,7 +1710,18 @@ class execThread(QThread):
                 self.FTD.comm("motor_set M"+stack[2]+" left "+str(v))
             elif stack[3]=="r":
                 self.FTD.comm("motor_set M"+stack[2]+" right "+str(v))             
-            
+        elif stack[1]=="HAT":
+            if stack[3]=="s":
+                self.hat.m_set_mode("M"+stack[2], "Brake")
+                self.hat.m_set_pwm("M"+stack[2], 0)
+            elif stack[3]=="l":
+                self.hat.m_set_mode("M"+stack[2], "Left")
+                self.hat.m_set_pwm("M"+stack[2], int(v/5.12))
+            elif stack[3]=="r":
+                self.hat.m_set_mode("M"+stack[2], "Right")
+                self.hat.m_set_pwm("M"+stack[2], int(v/5.12))
+ 
+ 
     def cmdMotorEncoderSync(self, stack):
         m=int(stack[2])      # Output No.
         o=int(stack[3])   # Sync output
@@ -1807,6 +1848,30 @@ class execThread(QThread):
                 if not a==b: c=c+1
             
             self.FTD.comm("motor_set M"+str(m)+" brake 0")
+        elif stack[1]=="HAT":
+            if e>-1:
+                if d=="l" and ((self.hat.get_input("I"+str(e)))==True): return
+            
+            a=( self.hat.get_input("I"+str(p)) == True)
+
+            if d=="r":
+                self.hat.m_set_mode("M"+str(m), "Right")
+                self.hat.m_set_pwm("M"+str(m), int(s/5.12))
+            else:
+                self.hat.m_set_mode("M"+str(m), "Left")
+                self.hat.m_set_pwm("M"+str(m), int(s/5.12))             
+            
+            c=0
+            while c<n and not self.halt:
+                if e>-1:
+                    if d=="l" and ((self.hat.get_input("I"+str(e)))==True): break
+                b=a
+                a=( self.hat.get_input("I"+str(p)) == True)
+                if not a==b: c=c+1
+            
+            self.hat.m_set_mode("M"+str(m), "Brake")
+            self.hat.m_set_pwm("M"+str(m), 0)            
+
 
     def cmdServo(self, stack):
         v=self.getVal(stack[3])
@@ -2070,7 +2135,24 @@ class execThread(QThread):
                     a=int(self.FTD.comm("input_get i"+stack[2]))
                     self.parent.processEvents()
                     time.sleep(0.001)
-                    
+        elif stack[1]== "HAT":
+            if stack[3]=="Raising":
+                a=self.hat.get_input("I"+str(stack[2]))
+                b=a
+                while not (b<a or self.halt or self.tOut ): 
+                    b=a
+                    a=self.hat.get_input("I"+str(stack[2]))
+                    self.parent.processEvents()
+                    time.sleep(0.001)
+            elif stack[3]=="Falling":
+                a=self.hat.get_input("I"+str(stack[2]))
+                b=a
+                while not (b>a or self.halt or self.tOut ): 
+                    b=a
+                    a=self.hat.get_input("I"+str(stack[2]))
+                    self.parent.processEvents()
+                    time.sleep(0.001)                              
+        
         if self.tAct:
             self.timer.stop()
         
@@ -2204,6 +2286,18 @@ class execThread(QThread):
                     self.halt=True
                 else:
                     self.count=n
+        elif stack[1]=="HAT":
+            v = str(self.hat.get_input("I"+str(stack[2])))
+            if stack[3] == v:
+                n=-1
+                for line in self.jmpTable:
+                    if stack[4]==line[0]: n=line[1]-1
+
+                if n==-1:
+                    self.msgOut("IfInputDig jump tag not found!")
+                    self.halt=True
+                else:
+                    self.count=n
             
     def cmdIfInput(self,stack):
         tx = ""
@@ -2259,6 +2353,8 @@ class execThread(QThread):
                 v=float(self.FTD.comm("ultrasonic_get"))
             elif stack[3]=="C":
                 v=float(self.FTD.comm("counter_get c"+stack[2]))
+        elif stack[1]=="HAT":
+            v = self.hat.get_input("I"+str(stack[2]))
     
         val=float(self.getVal(stack[5]))
         if self.halt: return
@@ -2499,13 +2595,15 @@ class editWaitForInputDig(TouchDialog):
         
         self.interface=QComboBox()
         self.interface.setStyleSheet("font-size: 20px;")
-        self.interface.addItems(["RIF","TXT","FTD"])
+        self.interface.addItems(["RIF","TXT","FTD","HAT"])
+
 
         if self.cmdline.split()[1]=="TXT": self.interface.setCurrentIndex(1)
         if self.cmdline.split()[1]=="FTD": self.interface.setCurrentIndex(2)
+        if self.cmdline.split()[1]=="HAT": self.interface.setCurrentIndex(3)
         
         k1.addWidget(self.interface)
-        
+        self.interface.currentIndexChanged.connect(self.on_if)
         
         k2=QVBoxLayout()
         l=QLabel(QCoreApplication.translate("ecl","Port"))
@@ -2514,7 +2612,10 @@ class editWaitForInputDig(TouchDialog):
         
         self.port=QComboBox()
         self.port.setStyleSheet("font-size: 20px;")
-        self.port.addItems(["I 1","I 2","I 3","I 4","I 5","I 6","I 7","I 8"])
+        if self.interface.currentText()=="HAT":
+            self.port.addItems(["I 1","I 2","I 3","I 4"])
+        else:
+            self.port.addItems(["I 1","I 2","I 3","I 4","I 5","I 6","I 7","I 8"])
 
         self.port.setCurrentIndex(int(self.cmdline.split()[2])-1)
         k2.addWidget(self.port)
@@ -2556,6 +2657,13 @@ class editWaitForInputDig(TouchDialog):
         
         TouchDialog.exec_(self)
         return self.cmdline
+    
+    def on_if(self):
+        self.port.clear()
+        if self.interface.currentText()=="HAT":
+            self.port.addItems(["I 1","I 2","I 3","I 4"])
+        else:
+            self.port.addItems(["I 1","I 2","I 3","I 4","I 5","I 6","I 7","I 8"])
     
     def on_confirm(self):
         self.cmdline="WaitInDig " +self.interface.currentText()+ " " + self.port.currentText()[2:] + " " + self.thd.currentText() + " " + self.value.text()
@@ -2614,13 +2722,14 @@ class editIfInputDig(TouchDialog):
         
         self.interface=QComboBox()
         self.interface.setStyleSheet("font-size: 20px;")
-        self.interface.addItems(["RIF","TXT","FTD"])
+        self.interface.addItems(["RIF","TXT","FTD","HAT"])
 
         if self.cmdline.split()[1]=="TXT": self.interface.setCurrentIndex(1)
         if self.cmdline.split()[1]=="FTD": self.interface.setCurrentIndex(2)
-
-        k1.addWidget(self.interface)
+        if self.cmdline.split()[1]=="HAT": self.interface.setCurrentIndex(3)
         
+        k1.addWidget(self.interface)
+        self.interface.currentIndexChanged.connect(self.on_if)
         
         k2=QVBoxLayout()
         l=QLabel(QCoreApplication.translate("ecl","Port"))
@@ -2629,10 +2738,10 @@ class editIfInputDig(TouchDialog):
         
         self.port=QComboBox()
         self.port.setStyleSheet("font-size: 20px;")
-        self.port.addItems(["I 1","I 2","I 3","I 4","I 5","I 6","I 7","I 8"])
-
-        self.port.setCurrentIndex(int(self.cmdline.split()[2])-1)
         k2.addWidget(self.port)
+
+        self.on_if()
+        self.port.setCurrentIndex(int(self.cmdline.split()[2])-1)
         
         k9=QHBoxLayout()
         k9.addLayout(k1)
@@ -2678,6 +2787,13 @@ class editIfInputDig(TouchDialog):
         
         TouchDialog.exec_(self)
         return self.cmdline
+    
+    def on_if(self):
+        self.port.clear()
+        if self.interface.currentText()=="HAT":
+            self.port.addItems(["I 1","I 2","I 3","I 4"])
+        else:
+            self.port.addItems(["I 1","I 2","I 3","I 4","I 5","I 6","I 7","I 8"])
     
     def on_confirm(self):
         self.cmdline="IfInDig " +self.interface.currentText()+ " " + self.port.currentText()[2:] + " " + self.thd.currentText() + " " + self.tags.itemText(self.tags.currentIndex())
@@ -3009,10 +3125,11 @@ class editMotor(TouchDialog):
         
         self.interface=QComboBox()
         self.interface.setStyleSheet("font-size: 20px;")
-        self.interface.addItems(["RIF","TXT","FTD"])
+        self.interface.addItems(["RIF","TXT","FTD","HAT"])
 
         if self.cmdline.split()[1]=="TXT": self.interface.setCurrentIndex(1)
         if self.cmdline.split()[1]=="FTD": self.interface.setCurrentIndex(2)
+        if self.cmdline.split()[1]=="HAT": self.interface.setCurrentIndex(3)
         self.interface.currentIndexChanged.connect(self.ifChanged)
         k1.addWidget(self.interface)
         
@@ -3025,7 +3142,7 @@ class editMotor(TouchDialog):
         
         self.port=QComboBox()
         self.port.setStyleSheet("font-size: 20px;")
-        self.port.addItems(["M 1","M 2","M 3","M 4"])
+        self.ifChanged()
 
         self.port.setCurrentIndex(int(self.cmdline.split()[2])-1)
         k2.addWidget(self.port)
@@ -3091,6 +3208,12 @@ class editMotor(TouchDialog):
         self.close()
     
     def ifChanged(self):
+        self.port.clear()
+        if self.interface.currentText()=="HAT":
+            self.port.addItems(["M 1","M 2"])
+        else:
+            self.port.addItems(["M 1","M 2","M 3","M 4"])
+                
         self.valueChanged()
         
     def valPress(self,sender):
@@ -3158,10 +3281,11 @@ class editMotorPulsewheel(TouchDialog):
         
         self.interface=QComboBox()
         self.interface.setStyleSheet("font-size: 20px;")
-        self.interface.addItems(["RIF","TXT","FTD"])
+        self.interface.addItems(["RIF","TXT","FTD","HAT"])
 
         if self.cmdline.split()[1]=="TXT": self.interface.setCurrentIndex(1)
         if self.cmdline.split()[1]=="FTD": self.interface.setCurrentIndex(2)
+        if self.cmdline.split()[1]=="HAT": self.interface.setCurrentIndex(3)
         
         self.interface.currentIndexChanged.connect(self.ifChanged)
         k1.addWidget(self.interface)
@@ -3175,9 +3299,8 @@ class editMotorPulsewheel(TouchDialog):
         
         self.port=QComboBox()
         self.port.setStyleSheet("font-size: 20px;")
-        self.port.addItems(["M 1","M 2","M 3","M 4"])
 
-        self.port.setCurrentIndex(int(self.cmdline.split()[2])-1)
+
         k2.addWidget(self.port)
         
         k8=QHBoxLayout()
@@ -3230,8 +3353,6 @@ class editMotorPulsewheel(TouchDialog):
         
         self.endSw=QComboBox()
         self.endSw.setStyleSheet("font-size: 20px;")
-        self.endSw.addItems(["I 1","I 2","I 3","I 4","I 5","I 6","I 7","I 8"])
-        self.endSw.setCurrentIndex(int(self.cmdline.split()[3])-1)
 
         k5.addWidget(self.endSw)
         
@@ -3244,9 +3365,7 @@ class editMotorPulsewheel(TouchDialog):
         
         self.pulseSw=QComboBox()
         self.pulseSw.setStyleSheet("font-size: 20px;")
-        self.pulseSw.addItems(["I 1","I 2","I 3","I 4","I 5","I 6","I 7","I 8"])
-
-        self.pulseSw.setCurrentIndex(int(self.cmdline.split()[4])-1)
+        
         k6.addWidget(self.pulseSw)
         
         k10=QHBoxLayout()
@@ -3273,6 +3392,10 @@ class editMotorPulsewheel(TouchDialog):
         k13.addWidget(self.pulses)
         
         self.layout.addLayout(k13)
+        self.ifChanged()
+        self.port.setCurrentIndex(int(self.cmdline.split()[2])-1)
+        self.endSw.setCurrentIndex(int(self.cmdline.split()[3])-1)
+        self.pulseSw.setCurrentIndex(int(self.cmdline.split()[4])-1)
         
         self.centralWidget.setLayout(self.layout)
         
@@ -3294,6 +3417,19 @@ class editMotorPulsewheel(TouchDialog):
         self.close()
     
     def ifChanged(self):
+        self.port.clear()
+        self.pulseSw.clear()
+        self.endSw.clear()
+        
+        if self.interface.currentText()=="HAT":
+            self.port.addItems(["M 1","M 2"])
+            self.pulseSw.addItems(["I 1","I 2","I 3","I 4"])
+            self.endSw.addItems(["I 1","I 2","I 3","I 4"])
+        else:
+            self.port.addItems(["M 1","M 2","M 3","M 4"])
+            self.pulseSw.addItems(["I 1","I 2","I 3","I 4","I 5","I 6","I 7","I 8"])
+            self.endSw.addItems(["I 1","I 2","I 3","I 4","I 5","I 6","I 7","I 8"])
+
         self.valueChanged()
     
     def valPress(self,sender):
@@ -3991,10 +4127,11 @@ class editQueryIn(TouchDialog):
         
         self.interface=QComboBox()
         self.interface.setStyleSheet("font-size: 20px;")
-        self.interface.addItems(["RIF","TXT","FTD"])
+        self.interface.addItems(["RIF","TXT","FTD","HAT"])
 
         if self.cmdline.split()[1]=="TXT": self.interface.setCurrentIndex(1)
         elif self.cmdline.split()[1]=="FTD": self.interface.setCurrentIndex(2)
+        elif self.cmdline.split()[1]=="HAT": self.interface.setCurrentIndex(3)
         
         self.interface.activated.connect(self.ifChanged)
         k1.addWidget(self.interface)
@@ -4098,12 +4235,15 @@ class editQueryIn(TouchDialog):
                                 QCoreApplication.translate("ecl","voltage"),
                                 QCoreApplication.translate("ecl","resistance"),
                                 QCoreApplication.translate("ecl","distance")])
-        else:
+        elif self.interface.currentText()=="TXT" or self.interface.currentText()=="FTD":
             self.iType.addItems([QCoreApplication.translate("ecl","switch"),
                                 QCoreApplication.translate("ecl","voltage"),
                                 QCoreApplication.translate("ecl","resistance"),
                                 QCoreApplication.translate("ecl","distance"),
                                 QCoreApplication.translate("ecl","counter")])
+        else:
+            self.iType.addItems([QCoreApplication.translate("ecl","switch")])
+            
         self.iType.setCurrentIndex(m)
 
         m=self.port.currentIndex()
@@ -4128,7 +4268,10 @@ class editQueryIn(TouchDialog):
             elif self.iType.currentIndex()==3:
                 self.port.addItems(["C 1"]) 
             elif self.iType.currentIndex()==4:
-                self.port.addItems(["C 1","C 2","C 3","C 4"]) 
+                self.port.addItems(["C 1","C 2","C 3","C 4"])
+        elif self.interface.currentText()=="HAT":
+            self.port.addItems(["I 1","I 2","I 3","I 4"])
+            
         self.port.setCurrentIndex(min(max(0,m),self.port.count()-1))
         
     
@@ -5097,10 +5240,11 @@ class editFromIn(TouchDialog):
         
         self.interface=QComboBox()
         self.interface.setStyleSheet("font-size: 20px;")
-        self.interface.addItems(["RIF","TXT","FTD"])
+        self.interface.addItems(["RIF","TXT","FTD","HAT"])
 
         if self.cmdline.split()[1]=="TXT": self.interface.setCurrentIndex(1)
         elif self.cmdline.split()[1]=="FTD": self.interface.setCurrentIndex(2)
+        elif self.cmdline.split()[1]=="HAT": self.interface.setCurrentIndex(3)
         
         self.interface.activated.connect(self.ifChanged)
         k1.addWidget(self.interface)
@@ -5195,7 +5339,10 @@ class editFromIn(TouchDialog):
     def ifChanged(self):
         m=max(self.iType.currentIndex(),0)
         self.iType.clear()
-        if self.interface.currentIndex()==0:
+        if self.interface.currentText()=="HAT":
+            self.iType.addItems([QCoreApplication.translate("ecl","switch")])
+                                
+        elif self.interface.currentIndex()==0:
             self.iType.addItems([QCoreApplication.translate("ecl","switch"),
                                 QCoreApplication.translate("ecl","voltage"),
                                 QCoreApplication.translate("ecl","resistance"),
@@ -5206,6 +5353,7 @@ class editFromIn(TouchDialog):
                                 QCoreApplication.translate("ecl","resistance"),
                                 QCoreApplication.translate("ecl","distance"),
                                 QCoreApplication.translate("ecl","counter")])
+            
         self.iType.setCurrentIndex(m)
 
         m=self.port.currentIndex()
@@ -5231,6 +5379,9 @@ class editFromIn(TouchDialog):
                 self.port.addItems(["C 1"]) 
             elif self.iType.currentIndex()==4:
                 self.port.addItems(["C 1","C 2","C 3","C 4"]) 
+        elif self.interface.currentText()=="HAT":
+            self.port.addItems(["I 1", "I 2","I 3","I 4"])
+            
         self.port.setCurrentIndex(min(max(0,m),self.port.count()-1))
         
     
@@ -7926,6 +8077,7 @@ class FtcGuiApplication(TouchApplication):
             self.orientation=PORTRAIT
         
         # set GPIO for 240x320 displays
+        GPIO = False
         try:
             if (mww==240 and mwh==320) or (mww==320 and mwh==240) :
                 gpio.setmode(gpio.BOARD)
@@ -7936,8 +8088,11 @@ class FtcGuiApplication(TouchApplication):
         except:
             GPIO=False
         
-        
-        
+        if GPIO_available & (GPIO == False):
+            self.HAT_allowed = True
+        else: 
+            self.HAT_allowed = False
+                
         # add a menu
         
         self.menu=self.mainwindow.addMenu()
@@ -8612,6 +8767,12 @@ class FtcGuiApplication(TouchApplication):
         else:
             self.FTD=None
         
+        if self.HAT_allowed:
+            self.hat = TxPiHat()
+        else:
+            self.hat = None
+            
+        
             
     def codeFromListWidget(self):
         self.code=[]
@@ -8640,7 +8801,7 @@ class FtcGuiApplication(TouchApplication):
             if self.start:
                 self.codeFromListWidget()
                 self.setMainWindow(False)
-                self.et = execThread(self.code, self.output, self.starter, self.RIF, self.TXT, self.FTD, self)
+                self.et = execThread(self.code, self.output, self.starter, self.RIF, self.TXT, self.FTD, self.hat, self)
                 self.et.updateText.connect(self.updateText)
                 self.et.clearText.connect(self.clearText)
                 self.et.execThreadFinished.connect(self.execThreadFinished)

@@ -8,5 +8,5 @@ url: http://localhost/
 exec: script.py
 managed: yes
 uuid: 3434343-5199-11e6-beb8-9e71128cae7
-version: 0.9.5
+version: 0.9.6
 firmware: >=0.9.0, <0.9.3

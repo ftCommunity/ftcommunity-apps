@@ -645,6 +645,11 @@ Blockly.Python['thread'] = function(block) {
     // this will cause a function block named thread to be created for every
     // single thread. This needs some special preprocessing to be used
     var statements = Blockly.Python.statementToCode(block, 'code');
+
+    // allow modification of global variables in parallel threads
+    if(Blockly.Variables.allUsedVariables(block).length > 0)
+    	statements = "  global " + Blockly.Variables.allUsedVariables(block).join(', ') + "\n"
+                     + statements;
     return 'def thread():\n' + statements;
 };
 

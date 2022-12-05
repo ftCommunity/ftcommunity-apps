@@ -11,16 +11,19 @@ import stat
 import json
 from TouchStyle import *
 
+#from logger import *
+#init_logger("/tmp/radio.log")
+
 LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
 JSON_PATH = os.path.join(LOCAL_PATH, 'stations.json')
-# currently on TXT the mpg123 tools are stored below the app directory
+MPG123 = "mpg123 -f 8000 -q --stdout --encoding u8 --rate 22050 --mono"
+
 if platform.machine() == "armv7l":
-    MPG123 = os.path.join(LOCAL_PATH, "mpg123", "mpg123") + " -q --stdout --encoding u8 --rate 22050 --mono"
     TXT_PLAY = os.path.join(LOCAL_PATH, "txt_snd_cat")
     # check if the executables really are executable
     # as the file came from a zip during installation it
     # may not have the executable flag set
-    EXECS = [MPG123.split()[0], TXT_PLAY]
+    EXECS = [TXT_PLAY]
     for e in EXECS:
         st = os.stat(e)
         if not (st.st_mode & stat.S_IEXEC):
@@ -28,7 +31,6 @@ if platform.machine() == "armv7l":
 else:
     # on a PC play through sox and use the same encoding for
     # authentic sound (minus the TXTs static noise ...)
-    MPG123 = "mpg123 --stdout --encoding u8 --rate 22050 --mono"
     TXT_PLAY = "play -q -t raw -b 8 -e unsigned -r 22050 -c 1 -"
 
 
@@ -83,12 +85,13 @@ class StationListWidget(QListWidget):
 
         station, url = item.data(Qt.UserRole)
         mpg123_cmd = MPG123.split() + [url]
-        # make sure the local mpg123/lib directory is being searched
-        # for libraries
-        env = os.environ.copy()
-        env["LD_LIBRARY_PATH"] = os.path.join(LOCAL_PATH, "mpg123", "lib")
-        self.proc_mpg123 = subprocess.Popen(mpg123_cmd, env=env, stdout=subprocess.PIPE)
-        self.proc_txt_snd_cat = subprocess.Popen(TXT_PLAY.split(), stdin=self.proc_mpg123.stdout, stdout=subprocess.PIPE)
+        txtplay_cmd = TXT_PLAY.split()
+
+        print("Piping %s | %s" % (mpg123_cmd, txtplay_cmd))
+        self.proc_mpg123 = subprocess.Popen(mpg123_cmd, stdout=subprocess.PIPE,
+            stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.proc_txt_snd_cat = subprocess.Popen(txtplay_cmd, stdin=self.proc_mpg123.stdout,
+            stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         self.proc_mpg123.stdout.close()  # Allow mpg123 to receive a SIGPIPE if txt_play exits.
 
         self.play.emit(station)

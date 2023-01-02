@@ -5,6 +5,23 @@
 from TouchStyle import *
 from qjoystick import QJoystick
 
+try:
+    import sys
+    sys._excepthook = sys.excepthook # always save before overriding
+
+    def application_exception_hook(exctype, value, traceback):
+        # Let's try to write the problem
+        print("Exctype : %s, value : %s traceback : %s"%(exctype, value, traceback))
+        # Call the normal Exception hook after (this will probably abort application)
+        sys._excepthook(exctype, value, traceback)
+        sys.exit(1)
+
+    # Do not forget to our exception hook
+    sys.excepthook = application_exception_hook
+except:
+    print("Failed to install an exception hook")
+    
+
 PORT = 9002
 CLIENT = ""    # any client
 
@@ -1089,7 +1106,7 @@ class BricklyTextEdit(QPlainTextEdit):
         self.pos_button()
         
     def pos_button(self):
-        self.run_but.move((self.width()-self.run_but.width())/2,
+        self.run_but.move((self.width()-self.run_but.width())//2,
                           (self.height()-2*self.run_but.height()));
         
     def on_run_clicked(self):

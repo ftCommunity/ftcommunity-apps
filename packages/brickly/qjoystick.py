@@ -12,8 +12,13 @@
 import os, struct, array, time
 from fcntl import ioctl
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+try:
+    from PyQt5.QtCore import *
+    from PyQt5.QtGui import *
+except:
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
+    
 
 DEV_DIR = '/dev/input'
 

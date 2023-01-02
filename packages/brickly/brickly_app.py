@@ -1106,7 +1106,7 @@ class BricklyTextEdit(QPlainTextEdit):
         self.pos_button()
         
     def pos_button(self):
-        self.run_but.move((self.width()-self.run_but.width())/2,
+        self.run_but.move((self.width()-self.run_but.width())//2,
                           (self.height()-2*self.run_but.height()));
         
     def on_run_clicked(self):

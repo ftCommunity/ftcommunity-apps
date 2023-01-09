@@ -8,4 +8,4 @@ exec: ftdb.py
 managed: yes
 uuid: dce63db7-1327-4cb3-a04e-c358ac04b794
 version: 1.3
-firmware: >=0.9
+firmware: >=1.0.0

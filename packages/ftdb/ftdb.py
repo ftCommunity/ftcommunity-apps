@@ -35,6 +35,7 @@ class PicDialog(TouchDialog):
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(lb)
+        QScroller.grabGesture(self.scroll.viewport(), QScroller.LeftMouseButtonGesture)
         
         self.vbox.addWidget(self.scroll)
         self.centralWidget.setLayout(self.vbox)
@@ -138,8 +139,10 @@ class SearchResultDialog(TouchDialog):
         self.vbox = QVBoxLayout()
         
         self.list = QListWidget()
-        self.list.setIconSize(QSize(100, 100))
+        self.list.setIconSize(QSize(50, 50))
         self.list.itemClicked.connect(self.art)
+        QScroller.grabGesture(self.list.viewport(), QScroller.LeftMouseButtonGesture)
+        self.list.setVerticalScrollMode(self.list.ScrollPerPixel)
         try:
             search_str = search_str.replace(" ", "+")
             self.search(search_str)

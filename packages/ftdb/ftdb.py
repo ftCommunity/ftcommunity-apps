@@ -89,7 +89,7 @@ class TicketDialog(TouchDialog):
     def get_html(self, dt):
         html = ""
         try:
-            html += "<h1>" + dt["title"] + "</h1>"
+            html += "<h3>" + dt["title"] + "</h3>"
         except:
             pass
         try:

@@ -139,7 +139,7 @@ class SearchResultDialog(TouchDialog):
         self.vbox = QVBoxLayout()
         
         self.list = QListWidget()
-        self.list.setIconSize(QSize(50, 50))
+        self.list.setIconSize(QSize(40, 40))
         self.list.itemClicked.connect(self.art)
         QScroller.grabGesture(self.list.viewport(), QScroller.LeftMouseButtonGesture)
         self.list.setVerticalScrollMode(self.list.ScrollPerPixel)

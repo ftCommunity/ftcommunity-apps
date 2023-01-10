@@ -56,8 +56,8 @@ desc: ft:db search app. Icon partly by http://www.webalys.com/
 exec: ftdb.py
 managed: yes
 uuid: dce63db7-1327-4cb3-a04e-c358ac04b794
-version: 1.3
-firmware: >=1.0.0
+version: 1.4
+firmware: >= 1.0.0
 
 [I2C]
 name: I2C

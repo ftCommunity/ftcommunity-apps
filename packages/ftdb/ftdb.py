@@ -2,29 +2,38 @@
 # -*- coding: utf-8 -*-
 #
 
-import sys
+import sys, os, time
 from TouchStyle import *
+from TouchAuxiliary import *
 from urllib.request import *
 import ssl
 import json
-
 
 search_url = "https://ft-datenbank.de/api/tickets?fulltext="
 icon_url = "https://ft-datenbank.de/thumbnail/"
 big_icon_url = "https://ft-datenbank.de/binary/"
 article_url = "https://ft-datenbank.de/api/ticket/"
 
+hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
+showdir=showdir = hostdir + "../37681ea0-dc00-11e6-9598-0800200c9a66/pics/"
+if not os.path.exists(showdir):
+    showdir = None
+if showdir:
+    if not os.path.exists(showdir + "ftdb/"):
+        os.mkdir(showdir + "ftdb")
+
 class PicDialog(TouchDialog):
     def __init__(self, parent, img_name):
         TouchDialog.__init__(self, "Picture", parent)
         
         self.vbox = QVBoxLayout()
+        self.img_name = img_name
         
         self.ctx = ssl.create_default_context()
         self.ctx.check_hostname = False
         self.ctx.verify_mode = ssl.CERT_NONE
         
-        data = urlopen(big_icon_url + img_name, context=self.ctx).read()
+        data = urlopen(big_icon_url + self.img_name, context=self.ctx).read()
         image = QImage()
         image.loadFromData(data)
         t = QPixmap(image)
@@ -37,8 +46,26 @@ class PicDialog(TouchDialog):
         self.scroll.setWidget(lb)
         QScroller.grabGesture(self.scroll.viewport(), QScroller.LeftMouseButtonGesture)
         
+        save_btn = QPushButton("save pic in TXTShow")
+        save_btn.clicked.connect(self.save_pic)
+        
         self.vbox.addWidget(self.scroll)
+        self.vbox.addWidget(save_btn)
         self.centralWidget.setLayout(self.vbox)
+        
+    def save_pic(self):
+        ssl._create_default_https_context = ssl._create_unverified_context
+        if showdir:
+            urlretrieve(big_icon_url + self.img_name, showdir + "ftdb/" + time.strftime("%y%m%d%H%M%S") + ".png")
+            msg=TouchAuxMessageBox("info", self)
+            msg.setText("The picture was successfully saved in TXTShow.")
+            msg.setPosButton("Okay")
+            msg.exec_()
+        else:
+            msg=TouchAuxMessageBox("Error", self)
+            msg.setText("TXTShow is not installed.")
+            msg.setPosButton("Okay")
+            msg.exec_()
         
 
 class PicButton(QLabel):

@@ -5,8 +5,10 @@
 #          (c) 2017-2019 Peter David Habermehl
 #
 
-
-from PyQt4 import QtCore, QtGui
+try:
+    from PyQt5 import QtCore, QtGui
+except:
+    from PyQt4 import QtCore, QtGui
 import sys, time, os, json, shutil
 import threading as thd
 import ftrobopy as txt

@@ -10,6 +10,10 @@ from PyQt4.QtCore import QTimer
 import queue, pty, subprocess, select, os
 import urllib.request, urllib.parse, urllib.error
 import avrdude_widget
+try:
+    from PyQt5 import QtCore, QtGui
+except:
+    from PyQt4 import QtCore, QtGui
 
 MAX_TEXT_LINES=50
 

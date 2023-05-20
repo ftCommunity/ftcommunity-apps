@@ -4,7 +4,10 @@
 
 import cgi, shutil
 import sys, os, shlex, time, json
-from PyQt4 import QtGui, QtCore
+try:
+    from PyQt5 import QtCore, QtGui
+except:
+    from PyQt4 import QtCore, QtGui
 from subprocess import Popen, call, PIPE
 
 hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"

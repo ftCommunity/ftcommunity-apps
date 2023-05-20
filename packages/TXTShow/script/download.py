@@ -7,6 +7,10 @@ import sys, os, shlex, time, json
 from PyQt4.QtGui import * 
 from PyQt4.QtCore import *
 from subprocess import Popen, call, PIPE
+try:
+    from PyQt5 import QtCore, QtGui
+except:
+    from PyQt4 import QtCore, QtGui
 
 hostdir = os.path.dirname(os.path.realpath(__file__)) + "/"
 local = ""

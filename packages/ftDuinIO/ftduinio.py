@@ -3,17 +3,18 @@
 #
 import sys, time, serial
 import ftduino_direct as ftd
-from PyQt4 import QtCore
 from TouchStyle import *
 from TouchAuxiliary import *
-from PyQt4.QtCore import QTimer
 import queue, pty, subprocess, select, os
 import urllib.request, urllib.parse, urllib.error
 import avrdude_widget
 try:
-    from PyQt5 import QtCore, QtGui
+    from PyQt5 import QtCore
+    from PyQt5.QtCore import QTimer    
 except:
-    from PyQt4 import QtCore, QtGui
+    from PyQt4 import QtCore
+    from PyQt4.QtCore import QTimer
+
 
 MAX_TEXT_LINES=50
 

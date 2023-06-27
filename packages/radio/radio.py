@@ -9,6 +9,7 @@ import sys
 import subprocess
 import stat
 import json
+import platform
 from TouchStyle import *
 
 #from logger import *

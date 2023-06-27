@@ -8,6 +8,6 @@ html: web.py
 exec: radio.py
 managed: yes
 uuid: ad5e0ea4-4606-4254-add6-60c452c3db36
-version: 1.1
+version: 1.2
 firmware: >= 1.0.0
 

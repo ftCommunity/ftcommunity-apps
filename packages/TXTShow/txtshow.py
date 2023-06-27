@@ -123,8 +123,8 @@ class FtcGuiApplication(TouchApplication):
         
     def paint_zoom(self):
         if not self.allowZoom: return()
-        base_x = (self.currpixmap.width()/2)-(self.width/2)
-        base_y = (self.currpixmap.height()/2)-(self.height/2)
+        base_x = (self.currpixmap.width()//2)-(self.width//2)
+        base_y = (self.currpixmap.height()//2)-(self.height//2)
         target=QPixmap(self.width,self.height)
         p = QPainter()
         p.begin(target)
@@ -292,13 +292,13 @@ class FtcGuiApplication(TouchApplication):
         y = event.pos().y()
         
         lm = 0.2*self.width
-        lmm = (self.width-lm)/2
-        rmm = (self.width+lm)/2
+        lmm = (self.width-lm)//2
+        rmm = (self.width+lm)//2
         rm = self.width - lm
         
         tm = 0.2*self.height
-        tmm = (self.height-lm)/2
-        bmm = (self.height+lm)/2
+        tmm = (self.height-lm)//2
+        bmm = (self.height+lm)//2
         bm = self.height - lm
         
         
@@ -338,13 +338,13 @@ class FtcGuiApplication(TouchApplication):
         y = event.pos().y()
         
         lm = 0.2*self.width
-        lmm = (self.width-lm)/2
-        rmm = (self.width+lm)/2
+        lmm = (self.width-lm)//2
+        rmm = (self.width+lm)//2
         rm = self.width - lm
         
         tm = 0.2*self.height
-        tmm = (self.height-lm)/2
-        bmm = (self.height+lm)/2
+        tmm = (self.height-lm)//2
+        bmm = (self.height+lm)//2
         bm = self.height - lm
         
         if x<lm: column="left"
@@ -391,16 +391,16 @@ class FtcGuiApplication(TouchApplication):
             elif row=="middle" and column=="middle":
                 row="empty"
             elif row=="middle" and column=="left":
-                self.offset_x=max(0-(self.currpixmap.width()/2)+(self.width/2),self.offset_x-64)
+                self.offset_x=max(0-(self.currpixmap.width()//2)+(self.width//2),self.offset_x-64)
                 self.paint_zoom()
             elif row=="middle" and column=="right":
-                self.offset_x=min((self.currpixmap.width()/2)-(self.width/2),self.offset_x+64)
+                self.offset_x=min((self.currpixmap.width()//2)-(self.width//2),self.offset_x+64)
                 self.paint_zoom()
             elif row=="top" and column=="middle":
-                self.offset_y=max(0-(self.currpixmap.height()/2)+(self.height/2),self.offset_y-64)
+                self.offset_y=max(0-(self.currpixmap.height()//2)+(self.height//2),self.offset_y-64)
                 self.paint_zoom()
             elif row=="bottom" and column=="middle":
-                self.offset_y=min((self.currpixmap.height()/2)-(self.height/2),self.offset_y+64)
+                self.offset_y=min((self.currpixmap.height()//2)-(self.height//2),self.offset_y+64)
                 self.paint_zoom()
             elif row=="top" and column=="right":
                 row="empty"
@@ -440,7 +440,7 @@ class FtcGuiApplication(TouchApplication):
             f.write("delay="+str(int(self.timerdelay))+"\n")
         
     def set_delay(self):
-        msg=TouchAuxRequestInteger(QCoreApplication.translate("context","Delay"),QCoreApplication.translate("context","Set slide show delay:"),self.timerdelay/1000,2,30,QCoreApplication.translate("context","Set"))
+        msg=TouchAuxRequestInteger(QCoreApplication.translate("context","Delay"),QCoreApplication.translate("context","Set slide show delay:"),self.timerdelay//1000,2,30,QCoreApplication.translate("context","Set"))
         (void,tim)=msg.exec_()
         self.timerdelay=tim*1000
     

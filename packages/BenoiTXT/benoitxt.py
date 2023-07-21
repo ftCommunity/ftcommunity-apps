@@ -620,7 +620,7 @@ class FtcGuiApplication(TouchApplication):
                 im.setPixel(height-j-3,width-i-1,pen[mand2[i,j+2]])
                 im.setPixel(height-j-4,width-i-1,pen[mand2[i,j+3]])
                 im.setPixel(height-j-5,width-i-1,pen[mand2[i,j+4]])
-            progress.setValue(st*j)
+            progress.setValue(int(st*j))
             e.processEvents()
         p = QPainter()
         p.begin(pixmap)
@@ -657,7 +657,7 @@ def mandelbrot_numpy(c, maxiter, precision, progress, e):
         output[notdone] = it
         z[notdone] = z[notdone]**2 + c[notdone]
         e.processEvents()
-        progress.setValue(100*it/maxiter)
+        progress.setValue(100*it//maxiter)
     output[output == 0] = 1
     output[output == maxiter-1] = 0
     return output

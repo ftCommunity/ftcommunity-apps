@@ -8,7 +8,7 @@ from TouchStyle import *
 
 #camera section
 WIDTH=320
-HEIGHT=(WIDTH*3/4)
+HEIGHT=(WIDTH*3//4)
 FPS=10
 
 # check if there's a camera device index supplied via
@@ -31,7 +31,7 @@ class CamWidget(QWidget):
 
         timer = QTimer(self)
         timer.timeout.connect(self.update)
-        timer.start(1000/FPS)
+        timer.start(1000//FPS)
 
         qsp = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         qsp.setHeightForWidth(True)
@@ -41,7 +41,7 @@ class CamWidget(QWidget):
         return QSize(WIDTH,HEIGHT)
 
     def heightForWidth(self,w):
-        return w*3/4
+        return w*3//4
 
     def grab(self):
         self.frame = self.cap.read()[1]

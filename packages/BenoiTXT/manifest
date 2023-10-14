@@ -8,8 +8,8 @@ exec: benoitxt.py
 #html: index.py
 managed: yes
 uuid: cb8adf72-f23b-11e6-bc64-92361f002671
-version: 2.1.1
-firmware: >=0.9.3
+version: 2.1.2
+firmware: >=1.0.0
 [de]
 desc: Mandelbrot-Bilder-Generator
 #html: index.py?lang=de

@@ -7,5 +7,5 @@ desc: This tool is used for testing the IOs of the TXT without a computer nearby
 exec: script.py
 managed: yes
 uuid: 3434343-5199-11e6-beb8-9e71128cae7
-version: 0.9.6
-firmware: >=0.9.2
+version: 0.9.7
+firmware: >=1.0.0

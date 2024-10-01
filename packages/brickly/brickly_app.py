@@ -4,6 +4,7 @@
 
 from TouchStyle import *
 from qjoystick import QJoystick
+from semantic_version import Version
 
 try:
     import sys
@@ -244,8 +245,11 @@ class RunThread(QThread):
             txt_ip = os.environ.get('TXT_IP')
             if not txt_ip: txt_ip = "localhost"
             self.txt = ftrobopy.ftrobopy(txt_ip, 65000)
+            min_version = Version("1.68") #format before 2.0.0
+            self.txt_js = Version(ftrobopy.version().split()[0]) >= min_version
         except:
             self.txt = None
+            self.txt_js = False
 
         if self.txt:
             # all outputs normal mode
@@ -529,7 +533,7 @@ class RunThread(QThread):
         self.acquire()
         
         # try ir remote if support present
-        if self.txt and float(ftrobopy.version()) >= 1.68:
+        if self.txt and self.txt_js:
             if axis == "x":
                 val = self.txt.joystick(0).leftright()
             elif axis == "y":
@@ -555,7 +559,7 @@ class RunThread(QThread):
         self.acquire()
         
         # try ir remote if support present
-        if self.txt and float(ftrobopy.version()) >= 1.68:
+        if self.txt and self.txt_js:
             if button == "ir_on":
                 val = self.txt.joybutton(0).pressed()
             elif button == "ir_off":

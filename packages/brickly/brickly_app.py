@@ -245,9 +245,9 @@ class RunThread(QThread):
             txt_ip = os.environ.get('TXT_IP')
             if not txt_ip: txt_ip = "localhost"
             self.txt = ftrobopy.ftrobopy(txt_ip, 65000)
-            min_version = Version("1.68") #format before 2.0.0
-            self.txt_js = Version(ftrobopy.version().split()[0]) >= min_version
-        except:
+            min_version = Version.coerce("1.68")
+            self.txt_js = Version.coerce(ftrobopy.version()) >= min_version
+        except ConnectionRefusedError:
             self.txt = None
             self.txt_js = False
 
